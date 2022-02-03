@@ -17,6 +17,9 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'db.sqlite3')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    FLASK_ADMIN_SWATCH = 'cerulean'
+
+
 
 class ProductionConfig(Config):
     DEBUG = False
@@ -35,10 +38,20 @@ class ProductionConfig(Config):
         config('DB_PORT', default=5432),
         config('DB_NAME', default='appseed-flask')
     )
-
+    
 
 class DebugConfig(Config):
     DEBUG = True
+
+    # PostgreSQL database
+    SQLALCHEMY_DATABASE_URI = '{}://{}:{}@{}:{}/{}'.format(
+        os.getenv('DB_ENGINE'),
+        os.getenv('DB_USERNAME'),
+        os.getenv('DB_PASS'),
+        os.getenv('DB_HOST'),
+        os.getenv('DB_PORT'),
+        os.getenv('DB_NAME')
+    )
 
 
 # Load all possible configurations

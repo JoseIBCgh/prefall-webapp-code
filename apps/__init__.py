@@ -8,6 +8,8 @@ from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from importlib import import_module
 
+from flask_admin import Admin
+
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -41,4 +43,10 @@ def create_app(config):
     register_extensions(app)
     register_blueprints(app)
     configure_database(app)
+
+    from apps.authentication.models import Role, Users
+    from apps.authentication.modelViews import AdminModelView
+    admin = Admin(app, name='webapp', template_mode='bootstrap3')
+    admin.add_view(AdminModelView(Users, db.session))
+    admin.add_view(AdminModelView(Role, db.session))
     return app

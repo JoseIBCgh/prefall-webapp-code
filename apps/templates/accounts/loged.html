@@ -1,0 +1,37 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Dashboard {% endblock %} 
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="pcoded-content">
+        <div class="pcoded-inner-content">
+            <!-- [ breadcrumb ] start -->
+
+            <!-- [ breadcrumb ] end -->
+            <div class="main-body">
+                <div class="page-wrapper">
+                    {% if current_user.is_authenticated %}
+                    <h1>Loged</h1>
+                    {% endif %}
+
+                    {% if current_user.can(Permission.DATOS_PERSONALES_PACIENTES_ASOCIADOS) %}
+                    <h2>Puede editar los datos personales de los pacientes asociados</h2>
+                    {% else %}
+                    <h2>No puede editar los datos personales de los pacientes asociados</h2>
+                    {% endif %}
+
+                    {% if current_user.can(Permission.DATOS_PERSONALES_PACIENTES_CENTRO) %}
+                    <h2>Puede editar los datos personales de todos los pacientes del centro</h2>
+                    {% else %}
+                    <h2>No puede editar los datos personales de todos los pacientes del centro</h2>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

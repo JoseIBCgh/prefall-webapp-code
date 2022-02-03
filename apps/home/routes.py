@@ -8,11 +8,14 @@ from flask import render_template, request
 from flask_login import login_required
 from jinja2 import TemplateNotFound
 
+from apps.authentication.models import Permission
+
 
 @blueprint.route('/index')
 @login_required
 def index():
 
+    return render_template('accounts/loged.html', Permission=Permission)
     return render_template('home/index.html', segment='index')
 
 
