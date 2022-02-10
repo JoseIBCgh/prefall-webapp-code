@@ -11,3 +11,16 @@
     {% endif %}
 {% endmacro %}
 
+{% macro render_field_with_label(field) %}
+    <dt>{{ field.label }}
+    <div class="input-group mb-3">
+    {{ field(class="form-control") }}
+    </div>
+    {% if field.errors %}
+        <ul class=errors>
+        {% for error in field.errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+{% endmacro %}
