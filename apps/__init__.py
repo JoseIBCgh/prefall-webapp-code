@@ -10,9 +10,26 @@ from importlib import import_module
 
 from flask_admin import Admin
 
+from flask_security import (
+    Security,
+    SQLAlchemyUserDatastore,
+    auth_required,
+    current_user,
+    hash_password,
+    permissions_accepted,
+    permissions_required,
+    roles_accepted,
+    logout_user,
+)
+
+from flask_mail import Mail
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+mail = Mail()
+
+from apps.authentication.models import Role, User
+user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 
 
 def register_extensions(app):
@@ -21,7 +38,7 @@ def register_extensions(app):
 
 
 def register_blueprints(app):
-    for module_name in ('authentication', 'home'):
+    for module_name in ('authentication', 'home', 'prefall'):
         module = import_module('apps.{}.routes'.format(module_name))
         app.register_blueprint(module.blueprint)
 
@@ -44,9 +61,13 @@ def create_app(config):
     register_blueprints(app)
     configure_database(app)
 
-    from apps.authentication.models import Role, Users
+    app.security = Security(app, user_datastore)
+
     from apps.authentication.modelViews import AdminModelView
     admin = Admin(app, name='webapp', template_mode='bootstrap3')
-    admin.add_view(AdminModelView(Users, db.session))
+    admin.add_view(AdminModelView(User, db.session))
     admin.add_view(AdminModelView(Role, db.session))
+
+    mail.init_app(app)
+    
     return app

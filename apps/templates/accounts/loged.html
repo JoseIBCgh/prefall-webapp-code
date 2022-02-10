@@ -16,18 +16,11 @@
                 <div class="page-wrapper">
                     {% if current_user.is_authenticated %}
                     <h1>Loged</h1>
+                    <a href="{{url_for('security.change_password')}}">Cambiar contraseña</a>
                     {% endif %}
-
-                    {% if current_user.can(Permission.DATOS_PERSONALES_PACIENTES_ASOCIADOS) %}
-                    <h2>Puede editar los datos personales de los pacientes asociados</h2>
-                    {% else %}
-                    <h2>No puede editar los datos personales de los pacientes asociados</h2>
-                    {% endif %}
-
-                    {% if current_user.can(Permission.DATOS_PERSONALES_PACIENTES_CENTRO) %}
-                    <h2>Puede editar los datos personales de todos los pacientes del centro</h2>
-                    {% else %}
-                    <h2>No puede editar los datos personales de todos los pacientes del centro</h2>
+                    <br>
+                    {% if current_user.has_role('auxiliar') %}
+                    <a href="{{url_for('prefall_blueprint.crear_paciente')}}" >Crear paciente</a>
                     {% endif %}
                 </div>
             </div>

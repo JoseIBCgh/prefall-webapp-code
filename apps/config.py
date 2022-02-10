@@ -5,6 +5,11 @@ Copyright (c) 2019 - present AppSeed.us
 
 import os
 from decouple import config
+import bleach
+
+def uia_username_mapper(identity):
+    # we allow pretty much anything - but we bleach it.
+    return bleach.clean(identity, strip=True)
 
 class Config(object):
 
@@ -16,8 +21,31 @@ class Config(object):
     # This will create a file in <app> FOLDER
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'db.sqlite3')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+    }
 
+    SECURITY_PASSWORD_SALT = os.environ.get("SECURITY_PASSWORD_SALT", '146585145368132386173505678016728509634')
+
+    SECURITY_CHANGEABLE = True
+    SECURITY_POST_CHANGE_VIEW = "/login"
+    SECURITY_SEND_PASSWORD_CHANGE_EMAIL = False
+
+    SECURITY_RECOVERABLE = True
+
+
+    SECURITY_USER_IDENTITY_ATTRIBUTES = [
+        {"username": {"mapper": uia_username_mapper}}
+    ]
+    
     FLASK_ADMIN_SWATCH = 'cerulean'
+
+    MAIL_SERVER = "smtp.gmail.com"
+    MAIL_PORT = 465
+    MAIL_USE_SSL = False
+    MAIL_USE_TLS = True
+    MAIL_USERNAME = "webapptest2022@gmail.com"
+    MAIL_PASSWORD = "webapp1234"
 
 
 
@@ -52,6 +80,8 @@ class DebugConfig(Config):
         os.getenv('DB_PORT'),
         os.getenv('DB_NAME')
     )
+
+    SQLALCHEMY_DATABASE_URI = 'mysql://zAKPC936JP:UloEGPhfyS@remotemysql.com/zAKPC936JP'
 
 
 # Load all possible configurations
