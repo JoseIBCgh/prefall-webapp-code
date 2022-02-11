@@ -13616,6 +13616,9 @@ div.code-toolbar > .toolbar span:hover {
     -webkit-box-shadow: none;
     box-shadow: none;
   }
+  .pcoded-navbar .slimScrollDiv {
+    height: fit-content !important;
+  }
   .pcoded-navbar .navbar-content {
     height: fit-content !important;
   }
