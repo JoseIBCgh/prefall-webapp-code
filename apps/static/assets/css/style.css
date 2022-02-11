@@ -3145,13 +3145,6 @@ p.text-muted {
     padding-right: 60px;
   }
 
-  .pcoded-navbar {
-    margin-left: -264px;
-    position: absolute;
-    height: 100%;
-    -webkit-box-shadow: none;
-    box-shadow: none;
-  }
   .pcoded-navbar .scroll-div.navbar-content {
     height: 100%;
   }
@@ -13615,8 +13608,6 @@ div.code-toolbar > .toolbar span:hover {
   }
 }
 
-/** custom code 
-
 @media only screen and (max-width: 991px) {
   .pcoded-navbar {
     width: 100%;
@@ -13630,13 +13621,14 @@ div.code-toolbar > .toolbar span:hover {
     -webkit-box-direction: normal;
     -ms-flex-direction: row;
     flex-direction: row;
+    white-space: nowrap;
   }
-
-  .pcoded-navbar .pcoded-inner-navbar .nav-link {
-    max-width: fit-content !important;
+  .pcoded-navbar .pcoded-inner-navbar > li {
+    min-width: 150px;
+    vertical-align: middle !important;
   }
 }
-**/
+
 .errors {
   list-style: none;
   color: red;
