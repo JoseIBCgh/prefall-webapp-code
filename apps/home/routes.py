@@ -10,13 +10,25 @@ from jinja2 import TemplateNotFound
 from flask_security import (
     auth_required,
     roles_accepted,
+    current_user,
 )
 
 @blueprint.route('/index')
 @auth_required()
 def index():
+    from apps import db
+    from apps.authentication.models import User, Centro, Role
+    if(current_user.has_role("medico")):
+        pacientes = current_user.pacientes_asociados
+        return render_template('accounts/loged.html', pacientes=pacientes)
+    if(current_user.has_role("auxiliar")):
+        userRole = Role.query.filter_by(name="paciente").first()
+        center = current_user.centro
+        pacientesCentro = User.query.\
+            filter(User.roles.contains(userRole)).\
+                filter_by(centro = center).all()
 
-    return render_template('accounts/loged.html')
+        return render_template('accounts/loged.html', pacientes=pacientesCentro)
     return render_template('home/index.html', segment='index')
 
 '''

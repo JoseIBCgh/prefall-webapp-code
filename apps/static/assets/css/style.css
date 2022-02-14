@@ -3132,31 +3132,19 @@ p.text-muted {
     width: 100%;
     height: 70px;
   }
-  .pcoded-header .m-header .b-brand {
-    margin-left: 20px;
-  }
-  .pcoded-header .m-header .mobile-menu {
-    right: 20px;
-  }
+
   .pcoded-header .full-screen {
     display: none;
   }
   .pcoded-header .navbar-nav > li:last-child {
     padding-right: 60px;
   }
-
   .pcoded-navbar .scroll-div.navbar-content {
     height: 100%;
   }
-  .pcoded-navbar ~ .pcoded-header,
-  .pcoded-navbar ~ .pcoded-main-container {
-    margin-left: 0;
-  }
+
   .pcoded-navbar ~ .pcoded-header {
     width: 100%;
-  }
-  .pcoded-navbar .navbar-brand {
-    display: none;
   }
   .pcoded-navbar.mob-open {
     margin-left: 0;
@@ -3216,49 +3204,7 @@ p.text-muted {
     margin-bottom: 15px;
   }
 }
-@media only screen and (max-width: 1200px) and (min-width: 768px) {
-  .pcoded-navbar .header-logo {
-    -webkit-transition: none;
-    transition: none;
-  }
-  .pcoded-navbar.navbar-collapsed {
-    -webkit-transition: none;
-    transition: none;
-  }
-  .pcoded-navbar.navbar-collapsed .header-logo img {
-    -webkit-transition: none;
-    transition: none;
-  }
-  .pcoded-navbar.navbar-collapsed .pcoded-menu-caption > label {
-    -webkit-transition: none;
-    transition: none;
-  }
-  .pcoded-navbar.navbar-collapsed
-    .pcoded-inner-navbar
-    > li
-    > a
-    > .pcoded-mtext {
-    -webkit-transition: none;
-    transition: none;
-  }
-  .pcoded-navbar.navbar-collapsed
-    .pcoded-inner-navbar
-    > li.pcoded-hasmenu
-    > a:after {
-    -webkit-transition: none;
-    transition: none;
-    -webkit-transition-delay: 0;
-    transition-delay: 0;
-  }
-  .pcoded-navbar.navbar-collapsed .pcoded-badge {
-    -webkit-transition: none;
-    transition: none;
-  }
-  .pcoded-navbar.navbar-collapsed:hover .pcoded-badge {
-    -webkit-transition-delay: 0;
-    transition-delay: 0;
-  }
-}
+
 /* responsive horizontal menu */
 @media only screen and (max-width: 992px) {
   .pcoded-navbar.theme-horizontal {
@@ -13605,32 +13551,6 @@ div.code-toolbar > .toolbar span:hover {
   100% {
     -webkit-box-shadow: 0 0 0 0 rgba(4, 169, 245, 0);
     box-shadow: 0 0 0 0 rgba(4, 169, 245, 0);
-  }
-}
-
-@media only screen and (max-width: 991px) {
-  .pcoded-navbar {
-    width: 100%;
-    position: relative;
-    height: fit-content !important;
-    -webkit-box-shadow: none;
-    box-shadow: none;
-  }
-  .pcoded-navbar .slimScrollDiv {
-    height: fit-content !important;
-  }
-  .pcoded-navbar .navbar-content {
-    height: fit-content !important;
-  }
-  .pcoded-navbar .pcoded-inner-navbar {
-    -webkit-box-orient: horizontal;
-    -webkit-box-direction: normal;
-    -ms-flex-direction: row;
-    flex-direction: row;
-    white-space: nowrap;
-  }
-  .pcoded-navbar .pcoded-inner-navbar > li {
-    min-width: 150px;
   }
 }
 
