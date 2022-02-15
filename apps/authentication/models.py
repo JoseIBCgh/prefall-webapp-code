@@ -105,18 +105,21 @@ def create_data():
     if not user_datastore.find_user(username="paciente11"):
         user_datastore.create_user(
             username="paciente11", email="paciente11@kruay.com", centro = centro1,
+            sexo="V", altura=1.79, peso=97, antecedentes_clinicos="diabetis",
             password=hash_password("paciente11"),nombre="paciente11", roles=["paciente"]
         )
     
     if not user_datastore.find_user(username="paciente12"):
         user_datastore.create_user(
             username="paciente12", email="paciente12@kruay.com", centro = centro1,
+            sexo="M", altura=1.56, peso=57, antecedentes_clinicos="cancer de mama",
             password=hash_password("paciente12"), nombre="paciente12", roles=["paciente"]
         )
     
     if not user_datastore.find_user(username="paciente21"):
         user_datastore.create_user(
             username="paciente21", email="paciente21@kruay.com", centro = centro2,
+            sexo="V", altura=1.91, peso=75, antecedentes_clinicos="cancer de pulmon, cancer de prostata, problemas hepaticos",
             password=hash_password("paciente21"),nombre="paciente21", roles=["paciente"]
         )
     

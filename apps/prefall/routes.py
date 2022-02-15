@@ -1,6 +1,8 @@
+from apps.authentication.models import User
 from apps.prefall import blueprint
 from flask import render_template, request, redirect, url_for
 from jinja2 import TemplateNotFound
+from apps.prefall.decorators import clinical_data_access, personal_data_access
 from apps.prefall.forms import CreatePatientForm
 
 from flask_security import (
@@ -41,3 +43,15 @@ def crear_paciente():
 
 
     return render_template('prefall/create_patient.html', form=create_patient_form)
+
+@blueprint.route('detalles_personales/<id>', methods=['GET', 'POST'])
+@personal_data_access()
+def detalles_personales(id):
+    paciente = User.query.filter_by(id=id).first()
+    return render_template('prefall/detalles_personales.html', paciente=paciente)
+
+@blueprint.route('detalles_clinicos/<id>', methods=['GET', 'POST'])
+@clinical_data_access()
+def detalles_clinicos(id):
+    paciente = User.query.filter_by(id=id).first()
+    return render_template('prefall/detalles_clinicos.html', paciente=paciente)

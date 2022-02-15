@@ -45,7 +45,11 @@
                                         <td>
                                             <h6 class="text-muted">{{paciente["nombre"]}}</h6>
                                         </td>
-                                        <td><a href="#!" class="label theme-bg text-white f-12">Ver detalles</a></td>
+                                        {% if current_user.has_role('medico') %}
+                                        <td><a href="{{url_for('prefall_blueprint.detalles_clinicos', id=paciente['id'])}}" class="label theme-bg text-white f-12">Ver detalles</a></td>
+                                        {% elif current_user.has_role('auxiliar') %}
+                                        <td><a href="{{url_for('prefall_blueprint.detalles_personales', id=paciente['id'])}}" class="label theme-bg text-white f-12">Ver detalles</a></td>
+                                        {% endif %}
                                     </tr> 
                                     {% endfor %}                               
                                 </tbody>
