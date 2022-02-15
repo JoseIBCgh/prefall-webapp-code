@@ -23,7 +23,6 @@
                                 <thead>
                                     <tr>
                                         <th>Nombre</th>
-                                        <th>Valor</th>
                                         <th class="text-right"></th>
                                     </tr>
                                 </thead>
@@ -35,7 +34,6 @@
                                         <td>
                                             <h6 class="text-muted">{{paciente["nombre"]}}</h6>
                                         </td>
-                                        <td><a href="#" class="label theme-bg text-white f-12">Editar</a></td>
                                     </tr> 
                                     <tr class="unread">
                                         <td>
@@ -44,7 +42,6 @@
                                         <td>
                                             <h6 class="text-muted">{{paciente["fecha_nacimiento"]}}</h6>
                                         </td>
-                                        <td><a href="#" class="label theme-bg text-white f-12">Editar</a></td>
                                     </tr> 
                                     <tr class="unread">
                                         <td>
@@ -53,7 +50,6 @@
                                         <td>
                                             <h6 class="text-muted">{{paciente["sexo"]}}</h6>
                                         </td>
-                                        <td><a href="#" class="label theme-bg text-white f-12">Editar</a></td>
                                     </tr> 
                                     <tr class="unread">
                                         <td>
@@ -62,7 +58,6 @@
                                         <td>
                                             <h6 class="text-muted">{{paciente["altura"]}}</h6>
                                         </td>
-                                        <td><a href="#" class="label theme-bg text-white f-12">Editar</a></td>
                                     </tr> 
                                     <tr class="unread">
                                         <td>
@@ -71,10 +66,10 @@
                                         <td>
                                             <h6 class="text-muted">{{paciente["peso"]}}</h6>
                                         </td>
-                                        <td><a href="#" class="label theme-bg text-white f-12">Editar</a></td>
                                     </tr>                            
                                 </tbody>
                             </table>
+                            <a href="{{url_for('prefall_blueprint.editar_detalles_personales', id=paciente['id'])}}" class="label theme-bg text-white f-12">Editar</a>
                         </div>
                     </div>
                 </div>
