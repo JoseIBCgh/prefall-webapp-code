@@ -1,6 +1,6 @@
 from apps.authentication.models import User
 from apps.prefall import blueprint
-from flask import render_template, request, redirect, url_for
+from flask import jsonify, render_template, request, redirect, url_for
 from jinja2 import TemplateNotFound
 from apps.prefall.decorators import clinical_data_access, personal_data_access
 from apps.prefall.forms import CreatePatientForm, EditClinicalDataForm, EditPersonalDataForm
@@ -116,3 +116,7 @@ def editar_detalles_clinicos(id):
     return render_template(
         'prefall/editar_detalles_clinicos.html', 
         form=form, paciente=paciente)
+
+@blueprint.route('debug/<info>')
+def debug(info):
+    return info

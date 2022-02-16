@@ -38,3 +38,16 @@
         </ul>
     {% endif %}
 {% endmacro %}
+
+{% macro render_table_field(field, placeholder) %}
+    <th>
+    {{ field(placeholder=placeholder, class="form-control") }}
+    {% if field.errors %}
+        <ul class=errors>
+        {% for error in field.errors %}
+            <li>{{ error }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+    </th>
+{% endmacro %}

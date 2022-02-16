@@ -4,7 +4,7 @@ Copyright (c) 2019 - present AppSeed.us
 """
 
 from apps.home import blueprint
-from flask import render_template, request
+from flask import redirect, render_template, request, url_for
 from jinja2 import TemplateNotFound
 
 from flask_security import (
@@ -13,24 +13,41 @@ from flask_security import (
     current_user,
 )
 
-@blueprint.route('/index')
+from apps.home.forms import FilterBarForm
+
+@blueprint.route('/index', methods=['GET', 'POST'])
 @auth_required()
 def index():
     from apps import db
     from apps.authentication.models import User, Centro, Role
     if(current_user.has_role("medico")):
+        form = FilterBarForm()
         pacientes = current_user.pacientes_asociados
-        return render_template('accounts/loged.html', pacientes=pacientes)
+        if "filter" in request.form and form.validate():
+            pacientes = apply_filters(pacientes, request.form)
+
+        return render_template('accounts/loged.html', pacientes=pacientes, form=form)
     if(current_user.has_role("auxiliar")):
+        form = FilterBarForm()
         userRole = Role.query.filter_by(name="paciente").first()
         center = current_user.centro
-        pacientesCentro = User.query.\
+        pacientes = User.query.\
             filter(User.roles.contains(userRole)).\
                 filter_by(centro = center).all()
+        if "filter" in request.form and form.validate():
+            pacientes = apply_filters(pacientes, request.form)
 
-        return render_template('accounts/loged.html', pacientes=pacientesCentro)
+        return render_template('accounts/loged.html', pacientes=pacientes, form=form)
     return render_template('home/index.html', segment='index')
 
+def apply_filters(pacientes, form):
+    id = form['id']
+    nombre = form['nombre']
+    if id != '':
+        pacientes = filter(lambda p: p.id == int(id), pacientes)
+    if nombre != '':
+        pacientes = filter(lambda p: nombre in p.nombre, pacientes)
+    return pacientes
 '''
 @blueprint.route('/<template>')
 @auth_required()
