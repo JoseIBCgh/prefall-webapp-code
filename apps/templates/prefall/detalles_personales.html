@@ -70,6 +70,15 @@
                                 </tbody>
                             </table>
                             <a href="{{url_for('prefall_blueprint.editar_detalles_personales', id=paciente['id'])}}" class="label theme-bg text-white f-12">Editar</a>
+                            <br><br>
+                            <form method=post enctype=multipart/form-data>
+                                <div class="form-group">
+                                  <label for="fileInput">Introducir test de la marcha</label>
+                                  <input type="file" name="file" class="form-control-file" id="fileInput">
+                                  <br>
+                                  <input type=submit value=Upload class="btn btn-primary shadow-2 mb-4">
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>

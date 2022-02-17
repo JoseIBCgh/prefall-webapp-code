@@ -28,7 +28,7 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
 
-from apps.authentication.models import Role, User
+from apps.authentication.models import Role, Test, User
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 
 
@@ -67,6 +67,7 @@ def create_app(config):
     admin = Admin(app, name='webapp', template_mode='bootstrap3')
     admin.add_view(AdminModelView(User, db.session))
     admin.add_view(AdminModelView(Role, db.session))
+    admin.add_view(AdminModelView(Test, db.session))
 
     mail.init_app(app)
     

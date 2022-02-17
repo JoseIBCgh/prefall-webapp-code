@@ -27,8 +27,8 @@ class User(db.Model, fsqla.FsUserMixin):
     nombre = db.Column(db.String(50))
     fecha_nacimiento = db.Column(db.Date)
     sexo = db.Column(db.String(1))
-    altura = db.Column(db.Numeric)
-    peso = db.Column(db.Numeric)
+    altura = db.Column(db.Float)
+    peso = db.Column(db.Float)
     antecedentes_clinicos = db.Column(db.Text)
     centro_id = db.Column(db.Integer, db.ForeignKey('centros.id'))
     pacientes_asociados = db.relationship(
@@ -48,6 +48,22 @@ class Centro(db.Model):
     nombre = db.Column(db.String(50))
     usuarios = db.relationship("User", backref="centro")
 
+
+class Test(db.Model):
+    __tablename__ = 'test'
+    num_test = db.Column(db.Integer)
+    id_paciente = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    date = db.Column(db.Date)
+    time = db.Column(db.Float(precision=32), primary_key=True)
+    acc_x = db.Column(db.Float)
+    acc_y = db.Column(db.Float)
+    acc_z = db.Column(db.Float)
+    gyr_x = db.Column(db.Float)
+    gyr_y = db.Column(db.Float)
+    gyr_z = db.Column(db.Float)
+    mag_x = db.Column(db.Float)
+    mag_y = db.Column(db.Float)
+    mag_z = db.Column(db.Float)
 '''
 @login_manager.user_loader
 def user_loader(id):

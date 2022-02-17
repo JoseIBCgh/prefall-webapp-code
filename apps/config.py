@@ -47,6 +47,10 @@ class Config(object):
     MAIL_USERNAME = "webapptest2022@gmail.com"
     MAIL_PASSWORD = "webapp1234"
 
+    UPLOAD_FOLDER = 'apps\static\csv'
+    
+
+
 
 
 class ProductionConfig(Config):
