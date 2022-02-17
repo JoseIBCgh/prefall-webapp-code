@@ -87,7 +87,7 @@ class DebugConfig(Config):
 
     SQLALCHEMY_DATABASE_URI = 'mysql://zAKPC936JP:UloEGPhfyS@remotemysql.com/zAKPC936JP'
 
-    UPLOAD_FOLDER = 'apps\static\csv'
+    UPLOAD_FOLDER = 'tmp'
 
 # Load all possible configurations
 config_dict = {
