@@ -46,8 +46,6 @@ class Config(object):
     MAIL_USE_TLS = False
     MAIL_USERNAME = "webapptest2022@gmail.com"
     MAIL_PASSWORD = "webapp1234"
-
-    UPLOAD_FOLDER = 'apps\static\csv'
     
 
 
@@ -70,6 +68,8 @@ class ProductionConfig(Config):
         config('DB_PORT', default=5432),
         config('DB_NAME', default='appseed-flask')
     )
+
+    UPLOAD_FOLDER = 'tmp'
     
 
 class DebugConfig(Config):
@@ -87,6 +87,7 @@ class DebugConfig(Config):
 
     SQLALCHEMY_DATABASE_URI = 'mysql://zAKPC936JP:UloEGPhfyS@remotemysql.com/zAKPC936JP'
 
+    UPLOAD_FOLDER = 'apps\static\csv'
 
 # Load all possible configurations
 config_dict = {
