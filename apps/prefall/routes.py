@@ -77,7 +77,6 @@ def detalles_personales(id):
         except exc.IntegrityError:
             form.test.errors.append("Duplicated data")
         os.remove(file_path)
-        return redirect(request.url)
     return render_template('prefall/detalles_personales.html', paciente=paciente, form=form)
 
 @blueprint.route('detalles_clinicos/<id>', methods=['GET', 'POST'])
@@ -100,7 +99,6 @@ def detalles_clinicos(id):
         except exc.IntegrityError:
             form.test.errors.append("Duplicated data")
         os.remove(file_path)
-        return redirect(request.url)
     return render_template('prefall/detalles_clinicos.html', paciente=paciente, form=form)
 
 ALLOWED_EXTENSIONS = {'txt', 'csv'}
