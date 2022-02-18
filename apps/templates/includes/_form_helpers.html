@@ -41,7 +41,7 @@
 
 {% macro render_table_field(field, placeholder) %}
     <th>
-    {{ field(placeholder=placeholder, class="form-control") }}
+    {{ field(placeholder=placeholder, class="form-control form-table-input") }}
     {% if field.errors %}
         <ul class=errors>
         {% for error in field.errors %}

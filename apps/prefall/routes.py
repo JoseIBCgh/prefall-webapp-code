@@ -12,7 +12,7 @@ from flask_security import (
 )
 from random import randint
 
-from flask import flash, current_app
+from flask import flash, current_app, Response
 from werkzeug.utils import secure_filename
 import os
 from pathlib import Path
@@ -24,6 +24,9 @@ from apps.prefall.forms import (
     EditPersonalDataForm,
     UploadTestForm
 )
+
+import csv
+import pandas as pd
 
 @blueprint.route('crear_paciente', methods=['GET', 'POST'])
 @roles_accepted("auxiliar")
@@ -60,7 +63,9 @@ def crear_paciente():
 @blueprint.route('detalles_personales/<id>', methods=['GET', 'POST'])
 @personal_data_access()
 def detalles_personales(id):
+    from apps import db
     paciente = User.query.filter_by(id=id).first()
+    tests = db.session.query(Test.num_test, Test.date).filter_by(id_paciente=id).group_by(Test.num_test, Test.date).all()
     form = UploadTestForm()
 
     if form.validate_on_submit():
@@ -77,12 +82,14 @@ def detalles_personales(id):
         except exc.IntegrityError:
             form.test.errors.append("Duplicated data")
         os.remove(file_path)
-    return render_template('prefall/detalles_personales.html', paciente=paciente, form=form)
+    return render_template('prefall/detalles_personales.html', paciente=paciente, tests=tests, form=form)
 
 @blueprint.route('detalles_clinicos/<id>', methods=['GET', 'POST'])
 @clinical_data_access()
 def detalles_clinicos(id):
+    from apps import db
     paciente = User.query.filter_by(id=id).first()
+    tests = db.session.query(Test.num_test, Test.date).filter_by(id_paciente=id).group_by(Test.num_test, Test.date).all()
     form = UploadTestForm()
 
     if form.validate_on_submit():
@@ -99,7 +106,7 @@ def detalles_clinicos(id):
         except exc.IntegrityError:
             form.test.errors.append("Duplicated data")
         os.remove(file_path)
-    return render_template('prefall/detalles_clinicos.html', paciente=paciente, form=form)
+    return render_template('prefall/detalles_clinicos.html', paciente=paciente, tests=tests, form=form)
 
 ALLOWED_EXTENSIONS = {'txt', 'csv'}
 
@@ -108,7 +115,6 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def read_csv(filename):
-    import pandas as pd
     colnames = ["date", "time", "acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z", "mag_x", "mag_y", "mag_z"]
     df = pd.read_csv(
         filename, delim_whitespace=True, skiprows=6, usecols=range(1,12), 
@@ -205,3 +211,15 @@ def editar_detalles_clinicos(id):
 @blueprint.route('debug/<info>')
 def debug(info):
     return info
+
+@blueprint.route("/get_test/<paciente>/<test>")
+def get_test(paciente, test):
+    from apps import db
+    query = Test.query.filter_by(id_paciente=paciente).filter_by(num_test=test)
+    df = pd.read_sql(query.statement, db.session.bind)
+    csv = df.to_csv()
+    return Response(
+        csv,
+        mimetype="text/csv",
+        headers={"Content-disposition":
+                 "attachment; filename=test.csv"})

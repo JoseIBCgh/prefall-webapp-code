@@ -13558,3 +13558,9 @@ div.code-toolbar > .toolbar span:hover {
   list-style: none;
   color: red;
 }
+
+@media only screen and (max-width: 575px) {
+  .form-table-input {
+    padding: 5px 2px;
+  }
+}
