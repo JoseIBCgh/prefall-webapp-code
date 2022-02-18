@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, DecimalField, DateField, TextAreaField
 from wtforms.validators import DataRequired, AnyOf, Optional
+from flask_wtf.file import FileField, FileAllowed, FileRequired
 
 class CreatePatientForm(FlaskForm):
     id = IntegerField('Identificador',id='id_create_patient', validators=[DataRequired()])
@@ -25,3 +26,9 @@ class EditClinicalDataForm(FlaskForm):
     altura = DecimalField('Altura', id='height_edit_personal_data', validators=[Optional()])
     peso = DecimalField('Peso', id='weight_edit_personal_data', validators=[Optional()])
     antecedentes = TextAreaField('Antecedentes clínicos', id='antecedentes_edit_personal_data', validators=[Optional()])
+
+class UploadTestForm(FlaskForm):
+    test = FileField('Introducir test de la marcha', validators=[
+        FileRequired(),
+        FileAllowed(['txt', 'csv'], 'csv only')
+    ])

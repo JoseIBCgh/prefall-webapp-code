@@ -81,10 +81,18 @@
                             <br><br>
                             <form method=post enctype=multipart/form-data>
                                 <div class="form-group">
-                                  <label for="fileInput">Introducir test de la marcha</label>
-                                  <input type="file" name="file" class="form-control-file" id="fileInput">
-                                  <br>
-                                  <input type=submit value=Upload class="btn btn-primary shadow-2 mb-4">
+                                    {{ form.csrf_token }}
+                                    {{form.test.label}}
+                                    {{form.test(class="form-control-file")}}
+                                    <br>
+                                    <input type=submit value=Upload class="btn btn-primary shadow-2 mb-4">
+                                    {% if form.test.errors %}
+                                        <ul class=errors>
+                                        {% for error in form.test.errors %}
+                                        <li>{{ error }}</li>
+                                        {% endfor %}
+                                        </ul>
+                                    {% endif %}
                                 </div>
                             </form>
                         </div>
