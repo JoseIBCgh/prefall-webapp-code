@@ -45,7 +45,13 @@ class Role(db.Model, fsqla.FsRoleMixin):
 class Centro(db.Model):
     __tablename__ = 'centros'
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(50))
+    cif = db.Column(db.String(20), unique=True)
+    nombreFiscal = db.Column(db.String(50))
+    direccion = db.Column(db.String(100))
+    CP = db.Column(db.Integer)
+    ciudad = db.Column(db.String(30))
+    provincia = db.Column(db.String(30))
+    pais = db.Column(db.String(20))
     usuarios = db.relationship("User", backref="centro")
 
 
@@ -83,6 +89,7 @@ def create_data():
         name="admin",
         permissions={"datos-personales-pacientes-centro", "datos-personales-personal-centro"},
     )
+    
     user_datastore.find_or_create_role(
         name="medico",
         permissions={"datos-personales-pacientes-asociados", "datos-clinicos-pacientes-asociados"},
@@ -96,10 +103,21 @@ def create_data():
         permissions={},
     )
 
-    centro1 = Centro(id = 1, nombre="nombre1")
-    centro2 = Centro(id = 2, nombre="nombre2")
+    cif = db.Column(db.String(20), unique=True)
+    nombreFiscal = db.Column(db.String(50))
+    direccion = db.Column(db.String(100))
+    CP = db.Column(db.Integer)
+    ciudad = db.Column(db.String(30))
+    provincia = db.Column(db.String(30))
+    pais = db.Column(db.String(20))
+    centro1 = Centro(
+        cif="cif1", nombreFiscal="nombre1", direccion="direccion1", CP=1, ciudad="ciudad1",
+        provincia="provincia1", pais="pais1")
+    centro2 = Centro(
+        cif="cif2", nombreFiscal="nombre2", direccion="direccion2", CP=2, ciudad="ciudad2",
+        provincia="provincia2", pais="pais2")
     db.session.add_all([centro1, centro2])
-
+    
     if not user_datastore.find_user(username="admin"):
         user_datastore.create_user(
             username="admin", email="admin@kruay.com", 
@@ -141,13 +159,23 @@ def create_data():
     
     paciente11 = user_datastore.find_user(username="paciente11")
     paciente21 = user_datastore.find_user(username="paciente21")
-
     if not user_datastore.find_user(username="medico"):
         user_datastore.create_user(
             username="medico", email="medico@kruay.com", centro = centro1,
-            password=hash_password("medico"), roles=["medico"], 
+            password=hash_password("medico"), roles=["medico"], nombre="medico",
             pacientes_asociados=[paciente11, paciente21]
         )
+    if not user_datastore.find_user(username="medico1"):
+        user_datastore.create_user(
+            username="medico1", email="medico1@kruay.com", centro = centro1,
+            password=hash_password("medico1"), roles=["medico"], nombre="medico1"
+        )  
+
+    if not user_datastore.find_user(username="medico2"):
+        user_datastore.create_user(
+            username="medico2", email="medico2@kruay.com", centro = centro2,
+            password=hash_password("medico2"), roles=["medico"], nombre="medico2"
+        )  
     
     db.session.commit()
 

@@ -1,4 +1,5 @@
 {% extends "layouts/base.html" %}
+{% from "includes/_form_helpers.html" import render_table_field %}
 
 {% block title %} Detalles personales {% endblock %} 
 
@@ -73,14 +74,14 @@
                             <br><br>
                             <form method=post enctype=multipart/form-data>
                                 <div class="form-group">
-                                    {{ form.csrf_token }}
-                                    {{form.test.label}}
-                                    {{form.test(class="form-control-file")}}
+                                    {{ uploadTestForm.csrf_token }}
+                                    {{uploadTestForm.test.label}}
+                                    {{uploadTestForm.test(class="form-control-file")}}
                                     <br>
-                                    <input type=submit value=Upload class="label theme-bg text-white f-12">
-                                    {% if form.test.errors %}
+                                    {{uploadTestForm.submit(class="label theme-bg text-white f-12")}}
+                                    {% if uploadTestForm.test.errors %}
                                         <ul class=errors>
-                                        {% for error in form.test.errors %}
+                                        {% for error in uploadTestForm.test.errors %}
                                         <li>{{ error }}</li>
                                         {% endfor %}
                                         </ul>
@@ -107,6 +108,68 @@
                                                     <h6 class="text-muted">{{test["date"]}}</h6>
                                                 </td>
                                                 <td><a href="{{url_for('prefall_blueprint.get_test', paciente=paciente['id'], test=test['num_test'])}}" class="label theme-bg text-white f-12">Descargar</a></td>
+                                            </tr> 
+                                            {% endfor %}                               
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-block px-0 py-3">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Nombre</th>
+                                                <th class="text-right"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for medico in medicos_asociados %}
+                                            <tr class="unread">
+                                                <td>
+                                                    <h6 class="text-muted">{{medico["id"]}}</h6>
+                                                </td>
+                                                <td>
+                                                    <h6 class="text-muted">{{medico["nombre"]}}</h6>
+                                                </td>
+                                                <td><a href="{{url_for('prefall_blueprint.desasociar_medico', id=paciente['id'], id_medico=medico['id'])}}" class="label theme-bg text-white f-12">Desasociar medico</a></td>
+                                            </tr> 
+                                            {% endfor %}                               
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-block px-0 py-3">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Nombre</th>
+                                                <th class="text-right"></th>
+                                            </tr>
+                                            <tr>
+                                                <form role="form" method="post" action="">
+                                                    {{ searchDoctorForm.csrf_token }}
+                                                    {{ render_table_field(searchDoctorForm.id, "ID") }}
+                                                    {{ render_table_field(searchDoctorForm.nombre, "Nombre") }}
+                                                    <th>{{searchDoctorForm.submit(class="label theme-bg text-white f-12")}}</th>
+                                                </form>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for medico in medicos %}
+                                            <tr class="unread">
+                                                <td>
+                                                    <h6 class="text-muted">{{medico["id"]}}</h6>
+                                                </td>
+                                                <td>
+                                                    <h6 class="text-muted">{{medico["nombre"]}}</h6>
+                                                </td>
+                                                <td>
+                                                    <td><a href="{{url_for('prefall_blueprint.asociar_medico', id=paciente['id'], id_medico=medico['id'])}}" class="label theme-bg text-white f-12">Asociar medico</a></td>
+                                                </td>
                                             </tr> 
                                             {% endfor %}                               
                                         </tbody>

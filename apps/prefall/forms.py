@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, IntegerField, DecimalField, DateField, TextAreaField
+from wtforms import StringField, IntegerField, DecimalField, DateField, TextAreaField, SubmitField
 from wtforms.validators import DataRequired, AnyOf, Optional
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
@@ -32,3 +32,18 @@ class UploadTestForm(FlaskForm):
         FileRequired(),
         FileAllowed(['txt', 'csv'], 'csv only')
     ])
+    submit = SubmitField('Upload', id="submit_upload_test")
+
+class CreateCenterForm(FlaskForm):
+    cif = StringField('CIF', id='cif_create_health_center', validators=[DataRequired()])
+    nombre = StringField('Nombre fiscal', id='nombre_create_health_center', validators=[DataRequired()])
+    direccion = StringField('Dirección', id='direccion_create_health_center', validators=[DataRequired()])
+    CP = IntegerField('CP', id='cp_create_health_center', validators=[DataRequired()])
+    ciudad = StringField('Ciudad', id='ciudad_create_health_center', validators=[DataRequired()])
+    provincia = StringField('Provincia', id='provincia_create_health_center', validators=[DataRequired()])
+    pais = StringField('País', id='pais_create_health_center', validators=[DataRequired()])
+
+class FilterBarForm(FlaskForm):
+    id = IntegerField('Identificador',id='id_filter_bar', validators=[Optional()])
+    nombre = StringField('Nombre', id='name_filter_bar', validators=[Optional()])
+    submit = SubmitField('Filtrar', id="submit_filter_bar")

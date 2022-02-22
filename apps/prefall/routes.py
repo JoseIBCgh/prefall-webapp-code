@@ -1,6 +1,6 @@
 from sqlalchemy import null, desc, create_engine, exc
 
-from apps.authentication.models import Test, User
+from apps.authentication.models import Role, Test, User, Centro
 from apps.prefall import blueprint
 from flask import jsonify, render_template, request, redirect, url_for
 from jinja2 import TemplateNotFound
@@ -19,10 +19,12 @@ from pathlib import Path
 
 from apps.prefall.decorators import clinical_data_access, personal_data_access
 from apps.prefall.forms import (
+    CreateCenterForm,
     CreatePatientForm, 
     EditClinicalDataForm, 
     EditPersonalDataForm,
-    UploadTestForm
+    UploadTestForm,
+    FilterBarForm
 )
 
 import csv
@@ -59,6 +61,39 @@ def crear_paciente():
 
 
     return render_template('prefall/create_patient.html', form=create_patient_form)
+'''
+@blueprint.route("/livesearch",methods=["POST","GET"])
+def livesearch():
+    searchbox = request.form.get("text")
+    result = User.query.filter(User.nombre.like('%'+searchbox+'%')).order_by(User.nombre).all()
+    return jsonify(result)
+'''
+@blueprint.route('crear_centro', methods=['GET', 'POST'])
+@roles_accepted("admin")
+def crear_centro():
+    form = CreateCenterForm(request.form)
+    if 'create_center' in request.form and form.validate():
+
+        # read form data
+        cif = request.form['cif']
+        nombre = request.form['nombre']
+        direccion = request.form['direccion']
+        CP = request.form['CP']
+        ciudad = request.form['ciudad']
+        provincia = request.form['provincia']
+        pais = request.form['pais']
+
+        from apps import db
+        centro = Centro(
+            cif = cif, nombreFiscal = nombre, direccion=direccion, CP=CP, ciudad=ciudad,
+            provincia=provincia, pais=pais)
+        db.session.add(centro)
+        db.session.commit()
+
+        return redirect(url_for('home_blueprint.index'))
+
+
+    return render_template('prefall/create_center.html', form=form)
 
 @blueprint.route('detalles_personales/<id>', methods=['GET', 'POST'])
 @personal_data_access()
@@ -66,10 +101,12 @@ def detalles_personales(id):
     from apps import db
     paciente = User.query.filter_by(id=id).first()
     tests = db.session.query(Test.num_test, Test.date).filter_by(id_paciente=id).group_by(Test.num_test, Test.date).all()
-    form = UploadTestForm()
+    medicos_asociados = paciente.medicos_asociados
+    uploadTestForm = UploadTestForm()
+    searchDoctorForm = FilterBarForm()
 
-    if form.validate_on_submit():
-        file = form.test.data
+    if uploadTestForm.validate_on_submit():
+        file = uploadTestForm.test.data
         filename = secure_filename(file.filename)
         Path(os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'])).mkdir(parents=True, exist_ok=True)
         file_path = os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'], filename)
@@ -80,9 +117,47 @@ def detalles_personales(id):
         try:
             add_df_to_sql(df)
         except exc.IntegrityError:
-            form.test.errors.append("Duplicated data")
+            uploadTestForm.test.errors.append("Duplicated data")
         os.remove(file_path)
-    return render_template('prefall/detalles_personales.html', paciente=paciente, tests=tests, form=form)
+
+    rolMedico = Role.query.filter_by(name="medico").first()
+    if searchDoctorForm.validate_on_submit():
+        nombre = searchDoctorForm.nombre.data
+        medicos = User.query.\
+            filter(User.roles.contains(rolMedico)).\
+                filter(User.nombre.like('%'+nombre+'%')).order_by(User.nombre).all()
+    else:
+        medicos = User.query.\
+            filter(User.roles.contains(rolMedico)).order_by(User.nombre).all()
+
+    return render_template(
+        'prefall/detalles_personales.html', paciente=paciente, medicos_asociados = medicos_asociados, 
+        medicos= medicos, tests=tests, uploadTestForm=uploadTestForm, searchDoctorForm=searchDoctorForm)
+
+
+@blueprint.route('asociar_medico/<id>/<id_medico>', methods=['GET','POST'])
+@personal_data_access()
+def asociar_medico(id, id_medico):
+    from apps import db
+    paciente = User.query.filter_by(id=id).first()
+    medico = User.query.filter_by(id=id_medico).first()
+    paciente.medicos_asociados.append(medico)
+
+    db.session.commit()
+
+    return redirect(url_for("prefall_blueprint.detalles_personales", id=id))
+
+@blueprint.route('desasociar_medico/<id>/<id_medico>', methods=['GET','POST'])
+@personal_data_access()
+def desasociar_medico(id, id_medico):
+    from apps import db
+    paciente = User.query.filter_by(id=id).first()
+    medico = User.query.filter_by(id=id_medico).first()
+    paciente.medicos_asociados.remove(medico)
+
+    db.session.commit()
+
+    return redirect(url_for("prefall_blueprint.detalles_personales", id=id))
 
 @blueprint.route('detalles_clinicos/<id>', methods=['GET', 'POST'])
 @clinical_data_access()
