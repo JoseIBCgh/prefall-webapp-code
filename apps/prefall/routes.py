@@ -8,7 +8,8 @@ from jinja2 import TemplateNotFound
 from flask_security import (
     auth_required,
     roles_accepted,
-    hash_password
+    hash_password,
+    current_user
 )
 from random import randint
 
@@ -95,6 +96,39 @@ def crear_centro():
 
     return render_template('prefall/create_center.html', form=form)
 
+@blueprint.route('/lista_pacientes', methods=['GET', 'POST'])
+@roles_accepted("auxiliar", "medico")
+def lista_pacientes():
+    from apps import db
+    from apps.authentication.models import User, Centro, Role
+    if(current_user.has_role("medico")):
+        form = FilterBarForm()
+        pacientes = current_user.pacientes_asociados
+        if "filter" in request.form and form.validate():
+            pacientes = apply_filters(pacientes, request.form)
+
+        return render_template('prefall/patients_list.html', pacientes=pacientes, form=form)
+    if(current_user.has_role("auxiliar")):
+        form = FilterBarForm()
+        userRole = Role.query.filter_by(name="paciente").first()
+        center = current_user.centro
+        pacientes = User.query.\
+            filter(User.roles.contains(userRole)).\
+                filter_by(centro = center).all()
+        if "filter" in request.form and form.validate():
+            pacientes = apply_filters(pacientes, request.form)
+
+        return render_template('prefall/patients_list.html', pacientes=pacientes, form=form)
+
+def apply_filters(pacientes, form):
+    id = form['id']
+    nombre = form['nombre']
+    if id != '':
+        pacientes = filter(lambda p: p.id == int(id), pacientes)
+    if nombre != '':
+        pacientes = filter(lambda p: nombre in p.nombre, pacientes)
+    return pacientes
+
 @blueprint.route('detalles_personales/<id>', methods=['GET', 'POST'])
 @personal_data_access()
 def detalles_personales(id):
@@ -105,7 +139,7 @@ def detalles_personales(id):
     uploadTestForm = UploadTestForm()
     searchDoctorForm = FilterBarForm()
 
-    if uploadTestForm.validate_on_submit():
+    if uploadTestForm.submitUpload.data and uploadTestForm.validate():
         file = uploadTestForm.test.data
         filename = secure_filename(file.filename)
         Path(os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'])).mkdir(parents=True, exist_ok=True)
@@ -121,14 +155,17 @@ def detalles_personales(id):
         os.remove(file_path)
 
     rolMedico = Role.query.filter_by(name="medico").first()
-    if searchDoctorForm.validate_on_submit():
+    id_asociados = [ma.id for ma in medicos_asociados]
+    if searchDoctorForm.submitFilter.data and searchDoctorForm.validate():
         nombre = searchDoctorForm.nombre.data
         medicos = User.query.\
             filter(User.roles.contains(rolMedico)).\
-                filter(User.nombre.like('%'+nombre+'%')).order_by(User.nombre).all()
+                filter(User.nombre.like('%'+nombre+'%')).\
+                    filter(db.not_(User.id.in_(id_asociados))).order_by(User.nombre).all()
     else:
         medicos = User.query.\
-            filter(User.roles.contains(rolMedico)).order_by(User.nombre).all()
+            filter(User.roles.contains(rolMedico)).\
+                filter(db.not_(User.id.in_(id_asociados))).order_by(User.nombre).all()
 
     return render_template(
         'prefall/detalles_personales.html', paciente=paciente, medicos_asociados = medicos_asociados, 

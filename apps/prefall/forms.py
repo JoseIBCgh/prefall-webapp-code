@@ -32,7 +32,7 @@ class UploadTestForm(FlaskForm):
         FileRequired(),
         FileAllowed(['txt', 'csv'], 'csv only')
     ])
-    submit = SubmitField('Upload', id="submit_upload_test")
+    submitUpload = SubmitField('Upload', id="submit_upload_test")
 
 class CreateCenterForm(FlaskForm):
     cif = StringField('CIF', id='cif_create_health_center', validators=[DataRequired()])
@@ -46,4 +46,4 @@ class CreateCenterForm(FlaskForm):
 class FilterBarForm(FlaskForm):
     id = IntegerField('Identificador',id='id_filter_bar', validators=[Optional()])
     nombre = StringField('Nombre', id='name_filter_bar', validators=[Optional()])
-    submit = SubmitField('Filtrar', id="submit_filter_bar")
+    submitFilter = SubmitField('Filtrar', id="submit_filter_bar")

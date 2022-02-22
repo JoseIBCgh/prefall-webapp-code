@@ -48,8 +48,13 @@
     {% include 'includes/navigation.html' %}
 
     <!-- SideBar -->
-    {% include 'includes/sidebar.html' %}
-
+    {% if current_user.has_role('auxiliar')%}
+    {% include 'includes/sidebar-auxiliar.html' %}
+    {% elif current_user.has_role('medico') %}
+    {% include 'includes/sidebar-medico.html' %}
+    {% elif current_user.has_role('admin') %}
+    {% include 'includes/sidebar-admin.html' %}
+    {% endif %}
     <div class="pcoded-main-container">
         <div class="pcoded-wrapper">
 
