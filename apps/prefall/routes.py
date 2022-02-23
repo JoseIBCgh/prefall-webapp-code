@@ -21,7 +21,8 @@ from pathlib import Path
 from apps.prefall.decorators import clinical_data_access, personal_data_access
 from apps.prefall.forms import (
     CreateCenterForm,
-    CreatePatientForm, 
+    CreatePatientForm,
+    EditCenterDataForm, 
     EditClinicalDataForm, 
     EditPersonalDataForm,
     UploadTestForm,
@@ -95,6 +96,17 @@ def crear_centro():
 
 
     return render_template('prefall/create_center.html', form=form)
+
+@blueprint.route('/lista_centros', methods=['GET', 'POST'])
+@roles_accepted("admin")
+def lista_centros():
+    from apps import db
+    from apps.authentication.models import Centro
+
+    centros = Centro.query.order_by(Centro.nombreFiscal).all()
+    
+
+    return render_template('prefall/center_list.html', centros=centros)
 
 @blueprint.route('/lista_pacientes', methods=['GET', 'POST'])
 @roles_accepted("auxiliar", "medico")
@@ -258,6 +270,26 @@ def add_df_to_sql(df):
         sql_engine.dispose()
         raise e
 
+@blueprint.route('detalles_centro/<id>', methods=['GET', 'POST'])
+@roles_accepted("admin")
+def detalles_centro(id):
+    from apps import db
+    centro = Centro.query.filter_by(id=id).first()
+    users = User.query.filter_by(centro_id=id).all()
+
+    return render_template(
+        'prefall/detalles_centro.html', centro=centro, users=users)
+
+@blueprint.route('borrar_usuario/<id_centro>/<id_user>', methods=['GET','POST'])
+@roles_accepted("admin")
+def borrar_usuario(id_centro, id_user):
+    from apps import db, user_datastore
+    user = User.query.filter_by(id=id_user).first()
+    user_datastore.delete_user(user)
+
+    db.session.commit()
+
+    return redirect(url_for("prefall_blueprint.detalles_centro", id=id_centro))
 
 @blueprint.route('editar_detalles_personales/<id>', methods=['GET', 'POST'])
 @personal_data_access()
@@ -319,6 +351,41 @@ def editar_detalles_clinicos(id):
     return render_template(
         'prefall/editar_detalles_clinicos.html', 
         form=form, paciente=paciente)
+
+@blueprint.route('editar_detalles_centro/<id>', methods=['GET', 'POST'])
+@roles_accepted("admin")
+def editar_detalles_centro(id):
+    centro = Centro.query.filter_by(id=id).first()
+    form = EditCenterDataForm(request.form)
+    if 'editar_detalles_centro' in request.form and form.validate():
+        cif = request.form['cif']
+        nombreFiscal = request.form['nombreFiscal']
+        direccion = request.form['direccion']
+        CP = request.form['CP']
+        ciudad = request.form['ciudad']
+        provincia = request.form['provincia']
+        pais = request.form['pais']
+        if cif != "":
+            centro.cif = cif
+        if nombreFiscal != "":
+            centro.nombreFiscal = nombreFiscal
+        if direccion != "":
+            centro.direccion = direccion
+        if CP != "":
+            centro.CP = CP
+        if ciudad != "":
+            centro.ciudad = ciudad
+        if provincia != "":
+            centro.provincia = provincia
+        if pais != "":
+            centro.pais = pais
+        from apps import db
+        db.session.commit()
+        return redirect(url_for('prefall_blueprint.detalles_centro', id=id))
+        
+    return render_template(
+        'prefall/editar_detalles_centro.html', 
+        form=form, centro=centro)
 
 @blueprint.route('debug/<info>')
 def debug(info):

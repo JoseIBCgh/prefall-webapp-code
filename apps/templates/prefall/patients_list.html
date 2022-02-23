@@ -15,7 +15,6 @@
             <!-- [ breadcrumb ] end -->
             <div class="main-body">
                 <div class="page-wrapper">
-                    {% if current_user.has_role('auxiliar') or current_user.has_role('medico') %}
                     <div class="card-header">
                         <h5>Pacientes</h5>
                     </div>
@@ -57,7 +56,6 @@
                             </table>
                         </div>
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>

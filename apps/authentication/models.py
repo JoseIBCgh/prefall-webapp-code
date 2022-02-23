@@ -30,7 +30,8 @@ class User(db.Model, fsqla.FsUserMixin):
     altura = db.Column(db.Float)
     peso = db.Column(db.Float)
     antecedentes_clinicos = db.Column(db.Text)
-    centro_id = db.Column(db.Integer, db.ForeignKey('centros.id'))
+    centro_id = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
+    #tests = db.relationship("Test", backref="paciente", cascade='all, delete-orphan')
     pacientes_asociados = db.relationship(
         "User", secondary='pacientes_asociados',
         primaryjoin=PacienteAsociado.medico_id==id,
@@ -103,13 +104,6 @@ def create_data():
         permissions={},
     )
 
-    cif = db.Column(db.String(20), unique=True)
-    nombreFiscal = db.Column(db.String(50))
-    direccion = db.Column(db.String(100))
-    CP = db.Column(db.Integer)
-    ciudad = db.Column(db.String(30))
-    provincia = db.Column(db.String(30))
-    pais = db.Column(db.String(20))
     centro1 = Centro(
         cif="cif1", nombreFiscal="nombre1", direccion="direccion1", CP=1, ciudad="ciudad1",
         provincia="provincia1", pais="pais1")
@@ -127,13 +121,13 @@ def create_data():
     if not user_datastore.find_user(username="auxiliar"):
         user_datastore.create_user(
             username="auxiliar", email="webapptest2022@gmail.com", centro = centro1,
-            password=hash_password("auxiliar"), roles=["auxiliar"]
+            password=hash_password("auxiliar"), nombre="auxiliar", roles=["auxiliar"]
         )
 
     if not user_datastore.find_user(username="auxiliar2"):
         user_datastore.create_user(
             username="auxiliar2", email="auxiliar@kruay.com", centro = centro2,
-            password=hash_password("auxiliar2"), roles=["auxiliar"]
+            password=hash_password("auxiliar2"), nombre="auxiliar2", roles=["auxiliar"]
         )
     
     if not user_datastore.find_user(username="paciente11"):
@@ -191,3 +185,15 @@ def asociar_pacientes():
     db.session.add(medico)
 
     db.session.commit()
+
+def create_test_data():
+    from apps import user_datastore
+    user_datastore.find_or_create_role(
+        name="auxiliar",
+        permissions={"datos-personales-pacientes-centro"},
+    )
+    if not user_datastore.find_user(username="auxiliar2"):
+        user_datastore.create_user(
+            username="auxiliar2", email="auxiliar@kruay.com",
+            password=hash_password("auxiliar2"), nombre="auxiliar2", roles=["auxiliar"]
+        )

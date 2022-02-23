@@ -1,0 +1,57 @@
+{% extends "layouts/base-fullscreen.html" %}
+{% from "includes/_form_helpers.html" import render_field_with_label_and_placeholder %}
+
+{% block title %} Editar detalles personales {% endblock %}
+
+{% block content %}   
+
+    <div class="auth-wrapper">
+        <div class="auth-content">
+            <div class="auth-bg">
+                <span class="r"></span>
+                <span class="r s"></span>
+                <span class="r s"></span>
+                <span class="r"></span>
+            </div>
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="feather icon-unlock auth-icon"></i>
+                    </div>
+                    <h3 class="mb-4">Editar detalles del centro</h3>
+
+                    <span class="mb-0 text-muted">
+                        {% if msg %}
+                            {{ msg | safe }}
+                        {% else %}
+                            
+                        {% endif %} 
+                    </span>
+
+                    <br />
+                    <br />
+                    
+                    <form role="form" method="post" action="">
+
+                        {{ form.hidden_tag() }}                    
+                        
+                        {{ render_field_with_label_and_placeholder(form.cif, centro["cif"]) }}
+                        {{ render_field_with_label_and_placeholder(form.nombreFiscal, centro["nombreFiscal"]) }}
+                        {{ render_field_with_label_and_placeholder(form.direccion, centro["direccion"]) }}
+                        {{ render_field_with_label_and_placeholder(form.CP, centro["CP"]) }}
+                        {{ render_field_with_label_and_placeholder(form.ciudad, centro["ciudad"]) }}
+                        {{ render_field_with_label_and_placeholder(form.provincia, centro["provincia"]) }}
+                        {{ render_field_with_label_and_placeholder(form.pais, centro["pais"]) }}
+                        
+                        
+                        <button type="submit" name="editar_detalles_centro" class="btn btn-primary shadow-2 mb-4">Editar</button>
+
+                    </form>
+
+                    <br />
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

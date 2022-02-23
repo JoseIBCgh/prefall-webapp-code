@@ -27,6 +27,15 @@ class EditClinicalDataForm(FlaskForm):
     peso = DecimalField('Peso', id='weight_edit_personal_data', validators=[Optional()])
     antecedentes = TextAreaField('Antecedentes clínicos', id='antecedentes_edit_personal_data', validators=[Optional()])
 
+class EditCenterDataForm(FlaskForm):
+    cif = StringField('CIF', id='cif_edit_center_data', validators=[Optional()])
+    nombreFiscal = StringField('Nombre fiscal', id='name_edit_center_data', validators=[Optional()])
+    direccion = StringField('Dirección', id='direccion_edit_center_data', validators=[Optional()])
+    CP = IntegerField('CP', id='CP_edit_center_data', validators=[Optional()])
+    ciudad = StringField('Ciudad', id='ciudad_edit_center_data', validators=[Optional()])
+    provincia = StringField('Provincia', id='provincia_edit_center_data', validators=[Optional()])
+    pais = StringField('País', id='pais_edit_center_data', validators=[Optional()])
+
 class UploadTestForm(FlaskForm):
     test = FileField('Introducir test de la marcha', validators=[
         FileRequired(),
