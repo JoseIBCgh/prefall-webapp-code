@@ -16,7 +16,7 @@
             <div class="main-body">
                 <div class="page-wrapper">
                     <div class="card-header">
-                        <h5>Pacientes</h5>
+                        <h5>Pacientes del hospital</h5>
                     </div>
                     <div class="card-block px-0 py-3">
                         <div class="table-responsive">
@@ -29,10 +29,10 @@
                                     </tr>
                                     <tr>
                                         <form role="form" method="post" action="">
-                                            {{ form.csrf_token }}
-                                            {{ render_table_field(form.id, "ID") }}
-                                            {{ render_table_field(form.nombre, "Nombre") }}
-                                            <th><input type="submit" name="filter" value="Filtrar" class="label theme-bg text-white f-12"></th>
+                                            {{ formPacientes.csrf_token }}
+                                            {{ render_table_field(formPacientes.id, "ID") }}
+                                            {{ render_table_field(formPacientes.nombre, "Nombre") }}
+                                            <th>{{formPacientes.submitFilterUser(value="Filtrar", class="label theme-bg text-white f-12")}}</th>
                                         </form>
                                     </tr>
                                 </thead>
@@ -45,11 +45,7 @@
                                         <td>
                                             <h6 class="text-muted">{{paciente["nombre"]}}</h6>
                                         </td>
-                                        {% if current_user.has_role('medico') %}
-                                        <td><a href="{{url_for('prefall_blueprint.detalles_clinicos', id=paciente['id'])}}" class="label theme-bg text-white f-12">Ver detalles</a></td>
-                                        {% elif current_user.has_role('auxiliar') %}
                                         <td><a href="{{url_for('prefall_blueprint.detalles_personales', id=paciente['id'])}}" class="label theme-bg text-white f-12">Ver detalles</a></td>
-                                        {% endif %}
                                     </tr> 
                                     {% endfor %}                               
                                 </tbody>

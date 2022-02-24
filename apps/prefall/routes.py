@@ -1,6 +1,8 @@
-from sqlalchemy import null, desc, create_engine, exc
+from sqlite3 import IntegrityError
+from sqlalchemy import null, desc, create_engine, exc, cast
+import sqlalchemy
 
-from apps.authentication.models import Role, Test, User, Centro
+from apps.authentication.models import Role, Test, TestUnit, User, Centro
 from apps.prefall import blueprint
 from flask import jsonify, render_template, request, redirect, url_for
 from jinja2 import TemplateNotFound
@@ -22,54 +24,20 @@ from apps.prefall.decorators import clinical_data_access, personal_data_access
 from apps.prefall.forms import (
     CreateCenterForm,
     CreatePatientForm,
+    DiagnosticarTestForm,
     EditCenterDataForm, 
     EditClinicalDataForm, 
     EditPersonalDataForm,
+    FilterTestForm,
+    FilterUserForm,
     UploadTestForm,
-    FilterBarForm
 )
 
 import csv
 import pandas as pd
 
-@blueprint.route('crear_paciente', methods=['GET', 'POST'])
-@roles_accepted("auxiliar")
-def crear_paciente():
-    create_patient_form = CreatePatientForm(request.form)
-    if 'create_patient' in request.form and create_patient_form.validate():
+### BEGIN ADMIN ###
 
-        # read form data
-        id = request.form['id']
-        nombre = request.form['nombre']
-        fecha = request.form['fecha']
-        sexo = request.form['sexo']
-        altura = request.form['altura']
-        peso = request.form['peso']
-        antecedentes = request.form['antecedentes']
-
-        default_password = "password"
-        n = randint(0,1000000)
-        default_email = "default"+ str(n) +"@kruay.com"
-
-        from apps import user_datastore, db
-        user_datastore.create_user(
-            id=id, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
-            peso=peso, antecedentes_clinicos=antecedentes, 
-            password=hash_password(default_password), email=default_email, roles=["paciente"]
-        )
-        db.session.commit()
-
-        return redirect(url_for('home_blueprint.index'))
-
-
-    return render_template('prefall/create_patient.html', form=create_patient_form)
-'''
-@blueprint.route("/livesearch",methods=["POST","GET"])
-def livesearch():
-    searchbox = request.form.get("text")
-    result = User.query.filter(User.nombre.like('%'+searchbox+'%')).order_by(User.nombre).all()
-    return jsonify(result)
-'''
 @blueprint.route('crear_centro', methods=['GET', 'POST'])
 @roles_accepted("admin")
 def crear_centro():
@@ -97,6 +65,7 @@ def crear_centro():
 
     return render_template('prefall/create_center.html', form=form)
 
+
 @blueprint.route('/lista_centros', methods=['GET', 'POST'])
 @roles_accepted("admin")
 def lista_centros():
@@ -108,167 +77,6 @@ def lista_centros():
 
     return render_template('prefall/center_list.html', centros=centros)
 
-@blueprint.route('/lista_pacientes', methods=['GET', 'POST'])
-@roles_accepted("auxiliar", "medico")
-def lista_pacientes():
-    from apps import db
-    from apps.authentication.models import User, Centro, Role
-    if(current_user.has_role("medico")):
-        form = FilterBarForm()
-        pacientes = current_user.pacientes_asociados
-        if "filter" in request.form and form.validate():
-            pacientes = apply_filters(pacientes, request.form)
-
-        return render_template('prefall/patients_list.html', pacientes=pacientes, form=form)
-    if(current_user.has_role("auxiliar")):
-        form = FilterBarForm()
-        userRole = Role.query.filter_by(name="paciente").first()
-        center = current_user.centro
-        pacientes = User.query.\
-            filter(User.roles.contains(userRole)).\
-                filter_by(centro = center).all()
-        if "filter" in request.form and form.validate():
-            pacientes = apply_filters(pacientes, request.form)
-
-        return render_template('prefall/patients_list.html', pacientes=pacientes, form=form)
-
-def apply_filters(pacientes, form):
-    id = form['id']
-    nombre = form['nombre']
-    if id != '':
-        pacientes = filter(lambda p: p.id == int(id), pacientes)
-    if nombre != '':
-        pacientes = filter(lambda p: nombre in p.nombre, pacientes)
-    return pacientes
-
-@blueprint.route('detalles_personales/<id>', methods=['GET', 'POST'])
-@personal_data_access()
-def detalles_personales(id):
-    from apps import db
-    paciente = User.query.filter_by(id=id).first()
-    tests = db.session.query(Test.num_test, Test.date).filter_by(id_paciente=id).group_by(Test.num_test, Test.date).all()
-    medicos_asociados = paciente.medicos_asociados
-    uploadTestForm = UploadTestForm()
-    searchDoctorForm = FilterBarForm()
-
-    if uploadTestForm.submitUpload.data and uploadTestForm.validate():
-        file = uploadTestForm.test.data
-        filename = secure_filename(file.filename)
-        Path(os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'])).mkdir(parents=True, exist_ok=True)
-        file_path = os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-        df = read_csv(file_path)
-        df = add_columns(df, id)
-        df = df.drop_duplicates(subset=["time"])
-        try:
-            add_df_to_sql(df)
-        except exc.IntegrityError:
-            uploadTestForm.test.errors.append("Duplicated data")
-        os.remove(file_path)
-
-    rolMedico = Role.query.filter_by(name="medico").first()
-    id_asociados = [ma.id for ma in medicos_asociados]
-    if searchDoctorForm.submitFilter.data and searchDoctorForm.validate():
-        nombre = searchDoctorForm.nombre.data
-        medicos = User.query.\
-            filter(User.roles.contains(rolMedico)).\
-                filter(User.nombre.like('%'+nombre+'%')).\
-                    filter(db.not_(User.id.in_(id_asociados))).order_by(User.nombre).all()
-    else:
-        medicos = User.query.\
-            filter(User.roles.contains(rolMedico)).\
-                filter(db.not_(User.id.in_(id_asociados))).order_by(User.nombre).all()
-
-    return render_template(
-        'prefall/detalles_personales.html', paciente=paciente, medicos_asociados = medicos_asociados, 
-        medicos= medicos, tests=tests, uploadTestForm=uploadTestForm, searchDoctorForm=searchDoctorForm)
-
-
-@blueprint.route('asociar_medico/<id>/<id_medico>', methods=['GET','POST'])
-@personal_data_access()
-def asociar_medico(id, id_medico):
-    from apps import db
-    paciente = User.query.filter_by(id=id).first()
-    medico = User.query.filter_by(id=id_medico).first()
-    paciente.medicos_asociados.append(medico)
-
-    db.session.commit()
-
-    return redirect(url_for("prefall_blueprint.detalles_personales", id=id))
-
-@blueprint.route('desasociar_medico/<id>/<id_medico>', methods=['GET','POST'])
-@personal_data_access()
-def desasociar_medico(id, id_medico):
-    from apps import db
-    paciente = User.query.filter_by(id=id).first()
-    medico = User.query.filter_by(id=id_medico).first()
-    paciente.medicos_asociados.remove(medico)
-
-    db.session.commit()
-
-    return redirect(url_for("prefall_blueprint.detalles_personales", id=id))
-
-@blueprint.route('detalles_clinicos/<id>', methods=['GET', 'POST'])
-@clinical_data_access()
-def detalles_clinicos(id):
-    from apps import db
-    paciente = User.query.filter_by(id=id).first()
-    tests = db.session.query(Test.num_test, Test.date).filter_by(id_paciente=id).group_by(Test.num_test, Test.date).all()
-    form = UploadTestForm()
-
-    if form.validate_on_submit():
-        file = form.test.data
-        filename = secure_filename(file.filename)
-        Path(os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'])).mkdir(parents=True, exist_ok=True)
-        file_path = os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-        df = read_csv(file_path)
-        df = add_columns(df, id)
-        df = df.drop_duplicates(subset=["time"])
-        try:
-            add_df_to_sql(df)
-        except exc.IntegrityError:
-            form.test.errors.append("Duplicated data")
-        os.remove(file_path)
-    return render_template('prefall/detalles_clinicos.html', paciente=paciente, tests=tests, form=form)
-
-ALLOWED_EXTENSIONS = {'txt', 'csv'}
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def read_csv(filename):
-    colnames = ["date", "time", "acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z", "mag_x", "mag_y", "mag_z"]
-    df = pd.read_csv(
-        filename, delim_whitespace=True, skiprows=6, usecols=range(1,12), 
-        names=colnames)
-    return df
-
-def add_columns(df, id_paciente):
-    df["id_paciente"] = id_paciente
-    
-    from apps import db
-    
-    test = db.session.query(Test).filter(
-        Test.id_paciente == id_paciente).order_by(
-        db.desc(Test.num_test)).limit(1).first()
-    if test is None:
-        next_num = 0
-    else:
-        next_num = test.num_test + 1
-    df["num_test"] = next_num
-    
-    return df
-
-def add_df_to_sql(df):
-    try:
-        sql_engine = create_engine(current_app.config['SQLALCHEMY_DATABASE_URI'])
-        df.to_sql('test', sql_engine, if_exists='append', index=False)
-        sql_engine.dispose()
-    except exc.IntegrityError as e:
-        sql_engine.dispose()
-        raise e
 
 @blueprint.route('detalles_centro/<id>', methods=['GET', 'POST'])
 @roles_accepted("admin")
@@ -280,77 +88,6 @@ def detalles_centro(id):
     return render_template(
         'prefall/detalles_centro.html', centro=centro, users=users)
 
-@blueprint.route('borrar_usuario/<id_centro>/<id_user>', methods=['GET','POST'])
-@roles_accepted("admin")
-def borrar_usuario(id_centro, id_user):
-    from apps import db, user_datastore
-    user = User.query.filter_by(id=id_user).first()
-    user_datastore.delete_user(user)
-
-    db.session.commit()
-
-    return redirect(url_for("prefall_blueprint.detalles_centro", id=id_centro))
-
-@blueprint.route('editar_detalles_personales/<id>', methods=['GET', 'POST'])
-@personal_data_access()
-def editar_detalles_personales(id):
-    paciente = User.query.filter_by(id=id).first()
-    form = EditPersonalDataForm(request.form)
-    if 'editar_detalles_personales' in request.form and form.validate():
-        nombre = request.form['nombre']
-        fecha = request.form['fecha']
-        sexo = request.form['sexo']
-        altura = request.form['altura']
-        peso = request.form['peso']
-        if nombre != "":
-            paciente.nombre = nombre
-        if fecha != "":
-            paciente.fecha_nacimiento = fecha
-        if sexo != "":
-            paciente.sexo = sexo
-        if altura != "":
-            paciente.altura = altura
-        if peso != "":
-            paciente.peso = peso
-        from apps import db
-        db.session.commit()
-        return redirect(url_for('prefall_blueprint.detalles_personales', id=id))
-        
-    return render_template(
-        'prefall/editar_detalles_personales.html', 
-        form=form, paciente=paciente)
-
-@blueprint.route('editar_detalles_clinicos/<id>', methods=['GET', 'POST'])
-@clinical_data_access()
-def editar_detalles_clinicos(id):
-    paciente = User.query.filter_by(id=id).first()
-    form = EditClinicalDataForm(request.form)
-    if 'editar_detalles_clinicos' in request.form and form.validate():
-        nombre = request.form['nombre']
-        fecha = request.form['fecha']
-        sexo = request.form['sexo']
-        altura = request.form['altura']
-        peso = request.form['peso']
-        antecedentes = request.form['antecedentes']
-        if nombre != "":
-            paciente.nombre = nombre
-        if fecha != "":
-            paciente.fecha_nacimiento = fecha
-        if sexo != "":
-            paciente.sexo = sexo
-        if altura != "":
-            paciente.altura = altura
-        if peso != "":
-            paciente.peso = peso
-        if antecedentes != "":
-            paciente.antecedentes_clinicos = antecedentes
-        from apps import db
-        db.session.commit()
-        return redirect(url_for('prefall_blueprint.detalles_clinicos', id=id))
-        
-    return render_template(
-        'prefall/editar_detalles_clinicos.html', 
-        form=form, paciente=paciente)
 
 @blueprint.route('editar_detalles_centro/<id>', methods=['GET', 'POST'])
 @roles_accepted("admin")
@@ -387,6 +124,368 @@ def editar_detalles_centro(id):
         'prefall/editar_detalles_centro.html', 
         form=form, centro=centro)
 
+
+@blueprint.route('borrar_usuario/<id_centro>/<id_user>', methods=['GET','POST'])
+@roles_accepted("admin")
+def borrar_usuario(id_centro, id_user):
+    from apps import db, user_datastore
+    user = User.query.filter_by(id=id_user).first()
+    user_datastore.delete_user(user)
+
+    db.session.commit()
+
+    return redirect(url_for("prefall_blueprint.detalles_centro", id=id_centro))
+
+### END ANDMIN ###
+
+### BEGIN MEDICO ###
+
+@blueprint.route('/pantalla_principal_medico', methods=['GET', 'POST'])
+@roles_accepted("medico")
+def pantalla_principal_medico():
+    from apps import db
+    formPacientes = FilterUserForm()
+
+    if formPacientes.submitFilterUser.data and formPacientes.validate():
+        id = formPacientes.id.data
+        if id != None:
+            id = str(id)
+        else:
+            id = ""
+        nombre = formPacientes.nombre.data
+        pacientes = current_user.pacientes_asociados.\
+                    filter(User.nombre.like('%'+nombre+'%')).\
+                        filter( cast( User.id, db.String ).like( '%'+ id +'%' ) ).all()
+    else:
+        pacientes = current_user.pacientes_asociados
+
+    id_asociados = [pa.id for pa in current_user.pacientes_asociados]
+    formTests = FilterTestForm()
+    if formTests.submitFilterTest.data and formTests.validate():
+        nombre = formTests.nombrePaciente.data
+        numero = formTests.numero.data
+        if numero == None:
+            numero = ""
+        else:
+            numero = str(numero)
+        tests = db.session.query(Test.nuevo, Test.diagnostico, User.nombre, User.id, Test.num_test, Test.date).\
+                    filter(Test.id_paciente.in_(id_asociados)).\
+                        filter(Test.id_paciente == User.id).\
+                            filter(User.nombre.like('%'+nombre+'%')).\
+                                filter(cast(Test.num_test, db.String).like('%'+numero+'%')).all()
+    else:
+        tests = db.session.query(Test.nuevo, Test.diagnostico, User.nombre, User.id, Test.num_test, Test.date).\
+                    filter(Test.id_paciente.in_(id_asociados)).\
+                        filter(Test.id_paciente == User.id).all()
+    
+    alertas = db.session.query(Test.nuevo, Test.diagnostico, User.nombre, User.id, Test.num_test, Test.date).\
+                filter(Test.id_paciente.in_(id_asociados)).\
+                    filter(Test.id_paciente == User.id).\
+                        filter(Test.diagnostico == None).all()
+    
+    return render_template(
+        'prefall/pantalla_principal_medico.html', pacientes=pacientes, formPacientes=formPacientes,
+        tests= tests, alertas=alertas, formTests=formTests)
+
+
+@blueprint.route('detalles_test/<id>/<num>', methods=['GET', 'POST'])
+@clinical_data_access()
+def detalles_test(id, num):
+    from apps import db
+    test = Test.query.filter_by(id_paciente=id).filter_by(num_test=num).first()
+    if test.nuevo:
+        test.nuevo = False
+        db.session.commit()
+    form = DiagnosticarTestForm()
+    if form.submitDiagnosticoTest.data and form.validate():
+        test.diagnostico = form.diagnostico.data
+        db.session.commit()
+    return render_template(
+        'prefall/detalles_test.html', form = form, test = test
+    )
+
+
+@blueprint.route('detalles_clinicos/<id>', methods=['GET', 'POST'])
+@clinical_data_access()
+def detalles_clinicos(id):
+    from apps import db
+    paciente = User.query.filter_by(id=id).first()
+    form = UploadTestForm()
+
+    if form.validate_on_submit():
+        file = form.test.data
+        filename = secure_filename(file.filename)
+        Path(os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'])).mkdir(parents=True, exist_ok=True)
+        file_path = os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        df = read_csv(file_path)
+        df = add_columns(df, id)
+        df = df.drop_duplicates(subset=["time"])
+        add_df_to_sql(df)
+        '''
+        try:
+            add_df_to_sql(df)
+        except sqlalchemy.exc.IntegrityError:
+            form.test.errors.append("Duplicated data")
+        '''
+
+        os.remove(file_path)
+    
+    tests = db.session.query(Test.num_test, Test.date).filter_by(id_paciente=id).all()
+    
+    return render_template('prefall/detalles_clinicos.html', paciente=paciente, tests=tests, form=form)
+
+
+@blueprint.route('editar_detalles_clinicos/<id>', methods=['GET', 'POST'])
+@clinical_data_access()
+def editar_detalles_clinicos(id):
+    paciente = User.query.filter_by(id=id).first()
+    form = EditClinicalDataForm(request.form)
+    if 'editar_detalles_clinicos' in request.form and form.validate():
+        nombre = request.form['nombre']
+        fecha = request.form['fecha']
+        sexo = request.form['sexo']
+        altura = request.form['altura']
+        peso = request.form['peso']
+        antecedentes = request.form['antecedentes']
+        if nombre != "":
+            paciente.nombre = nombre
+        if fecha != "":
+            paciente.fecha_nacimiento = fecha
+        if sexo != "":
+            paciente.sexo = sexo
+        if altura != "":
+            paciente.altura = altura
+        if peso != "":
+            paciente.peso = peso
+        if antecedentes != "":
+            paciente.antecedentes_clinicos = antecedentes
+        from apps import db
+        db.session.commit()
+        return redirect(url_for('prefall_blueprint.detalles_clinicos', id=id))
+        
+    return render_template(
+        'prefall/editar_detalles_clinicos.html', 
+        form=form, paciente=paciente)
+
+### END MEDICO ###
+### BEGIN AUXILIAR ###
+
+@blueprint.route('/pantalla_principal_auxiliar', methods=['GET', 'POST'])
+@roles_accepted("auxiliar")
+def pantalla_principal_auxiliar():
+    from apps import db
+    formPacientes = FilterUserForm()
+    userRole = Role.query.filter_by(name="paciente").first()
+    center = current_user.centro
+
+    if formPacientes.submitFilterUser.data and formPacientes.validate():
+        id = formPacientes.id.data
+        if id != None:
+            id = str(id)
+        else:
+            id = ""
+        nombre = formPacientes.nombre.data
+        pacientes = User.query.\
+            filter(User.roles.contains(userRole)).\
+                filter_by(centro = center).\
+                    filter(User.nombre.like('%'+nombre+'%')).\
+                        filter( cast( User.id, db.String ).like( '%'+ id +'%' ) ).all()
+    else:
+        pacientes = User.query.\
+            filter(User.roles.contains(userRole)).\
+                filter_by(centro = center).all()
+
+    return render_template(
+        'prefall/pantalla_principal_auxiliar.html', pacientes=pacientes, formPacientes=formPacientes)
+
+@blueprint.route('crear_paciente', methods=['GET', 'POST'])
+@roles_accepted("auxiliar")
+def crear_paciente():
+    create_patient_form = CreatePatientForm(request.form)
+    if 'create_patient' in request.form and create_patient_form.validate():
+
+        # read form data
+        id = request.form['id']
+        nombre = request.form['nombre']
+        fecha = request.form['fecha']
+        sexo = request.form['sexo']
+        altura = request.form['altura']
+        peso = request.form['peso']
+        antecedentes = request.form['antecedentes']
+
+        default_password = "password"
+        n = randint(0,1000000)
+        default_email = "default"+ str(n) +"@kruay.com"
+
+        from apps import user_datastore, db
+        user_datastore.create_user(
+            id=id, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
+            peso=peso, antecedentes_clinicos=antecedentes, 
+            password=hash_password(default_password), email=default_email, roles=["paciente"]
+        )
+        db.session.commit()
+
+        return redirect(url_for('home_blueprint.index'))
+
+
+    return render_template('prefall/create_patient.html', form=create_patient_form)
+
+
+@blueprint.route('detalles_personales/<id>', methods=['GET', 'POST'])
+@personal_data_access()
+def detalles_personales(id):
+    from apps import db
+    paciente = User.query.filter_by(id=id).first()
+    medicos_asociados = paciente.medicos_asociados
+    uploadTestForm = UploadTestForm()
+    searchDoctorForm = FilterUserForm()
+
+    if uploadTestForm.submitUpload.data and uploadTestForm.validate():
+        file = uploadTestForm.test.data
+        filename = secure_filename(file.filename)
+        Path(os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'])).mkdir(parents=True, exist_ok=True)
+        file_path = os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+        df = read_csv(file_path)
+        df = add_columns(df, id)
+        df = df.drop_duplicates(subset=["time"])
+        add_df_to_sql(df)
+        os.remove(file_path)
+
+    rolMedico = Role.query.filter_by(name="medico").first()
+    id_asociados = [ma.id for ma in medicos_asociados]
+    if searchDoctorForm.submitFilterUser.data and searchDoctorForm.validate():
+        id = searchDoctorForm.id.data
+        if id != None:
+            id = str(id)
+        else:
+            id = ""
+        nombre = searchDoctorForm.nombre.data
+        medicos = User.query.\
+            filter(User.roles.contains(rolMedico)).\
+                filter(User.nombre.like('%'+nombre+'%')).\
+                    filter( cast( User.id, db.String ).like( '%'+ id +'%' ) ).\
+                        filter(db.not_(User.id.in_(id_asociados))).order_by(User.nombre).all()
+    else:
+        medicos = User.query.\
+            filter(User.roles.contains(rolMedico)).\
+                filter(db.not_(User.id.in_(id_asociados))).order_by(User.nombre).all()
+
+    tests = db.session.query(Test.num_test, Test.date).filter_by(id_paciente=id).all()
+
+    return render_template(
+        'prefall/detalles_personales.html', paciente=paciente, medicos_asociados = medicos_asociados, 
+        medicos= medicos, tests=tests, uploadTestForm=uploadTestForm, searchDoctorForm=searchDoctorForm)
+
+
+@blueprint.route('editar_detalles_personales/<id>', methods=['GET', 'POST'])
+@personal_data_access()
+def editar_detalles_personales(id):
+    paciente = User.query.filter_by(id=id).first()
+    form = EditPersonalDataForm(request.form)
+    if 'editar_detalles_personales' in request.form and form.validate():
+        nombre = request.form['nombre']
+        fecha = request.form['fecha']
+        sexo = request.form['sexo']
+        altura = request.form['altura']
+        peso = request.form['peso']
+        if nombre != "":
+            paciente.nombre = nombre
+        if fecha != "":
+            paciente.fecha_nacimiento = fecha
+        if sexo != "":
+            paciente.sexo = sexo
+        if altura != "":
+            paciente.altura = altura
+        if peso != "":
+            paciente.peso = peso
+        from apps import db
+        db.session.commit()
+        return redirect(url_for('prefall_blueprint.detalles_personales', id=id))
+        
+    return render_template(
+        'prefall/editar_detalles_personales.html', 
+        form=form, paciente=paciente)
+
+
+@blueprint.route('asociar_medico/<id>/<id_medico>', methods=['GET','POST'])
+@personal_data_access()
+def asociar_medico(id, id_medico):
+    from apps import db
+    paciente = User.query.filter_by(id=id).first()
+    medico = User.query.filter_by(id=id_medico).first()
+    paciente.medicos_asociados.append(medico)
+
+    db.session.commit()
+
+    return redirect(url_for("prefall_blueprint.detalles_personales", id=id))
+
+
+@blueprint.route('desasociar_medico/<id>/<id_medico>', methods=['GET','POST'])
+@personal_data_access()
+def desasociar_medico(id, id_medico):
+    from apps import db
+    paciente = User.query.filter_by(id=id).first()
+    medico = User.query.filter_by(id=id_medico).first()
+    paciente.medicos_asociados.remove(medico)
+
+    db.session.commit()
+
+    return redirect(url_for("prefall_blueprint.detalles_personales", id=id))
+
+### END AUXILIAR ###
+
+### BEGIN COMMON ###
+
+ALLOWED_EXTENSIONS = {'txt', 'csv'}
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def read_csv(filename):
+    colnames = ["date", "time", "acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z", "mag_x", "mag_y", "mag_z"]
+    df = pd.read_csv(
+        filename, delim_whitespace=True, skiprows=6, usecols=range(1,12), 
+        names=colnames)
+    return df
+
+def add_columns(df, id_paciente):
+    df["id_paciente"] = id_paciente
+    
+    from apps import db
+    
+    test = db.session.query(Test).filter(
+        Test.id_paciente == id_paciente).order_by(
+        db.desc(Test.num_test)).limit(1).first()
+    if test is None:
+        next_num = 0
+    else:
+        next_num = test.num_test + 1
+    df["num_test"] = next_num
+    
+    return df
+
+def add_df_to_sql(df):
+    from apps import db
+
+    test = Test(
+        num_test = df.at[0,"num_test"], id_paciente= df.at[0,"id_paciente"],
+        date = df.at[0,"date"], nuevo = True, diagnostico=None)
+    db.session.add(test)
+
+    for index, row in df.iterrows():
+        testUnit = TestUnit(
+            num_test = row.at["num_test"], id_paciente= row.at["id_paciente"], time= row.at["time"],
+            acc_x = row.at["acc_x"], acc_y = row.at["acc_y"], acc_z = row.at["acc_z"],
+            gyr_x = row.at["gyr_x"], gyr_y = row.at["gyr_y"], gyr_z = row.at["gyr_z"],
+            mag_x = row.at["mag_x"], mag_y = row.at["mag_y"], mag_z = row.at["mag_z"]
+        )
+        db.session.add(testUnit)
+    
+    db.session.commit()
+
 @blueprint.route('debug/<info>')
 def debug(info):
     return info
@@ -394,7 +493,14 @@ def debug(info):
 @blueprint.route("/get_test/<paciente>/<test>")
 def get_test(paciente, test):
     from apps import db
-    query = Test.query.filter_by(id_paciente=paciente).filter_by(num_test=test)
+    query = db.session.query(
+        Test.num_test, Test.id_paciente, Test.date, TestUnit.time, TestUnit.acc_x,
+        TestUnit.acc_y, TestUnit.acc_z, TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
+        TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z).\
+                        filter(Test.id_paciente == TestUnit.id_paciente).\
+                            filter(Test.num_test == TestUnit.num_test).\
+                                filter(Test.id_paciente==paciente).\
+                                    filter(Test.num_test==test)
     df = pd.read_sql(query.statement, db.session.bind)
     csv = df.to_csv()
     return Response(

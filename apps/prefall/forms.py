@@ -52,7 +52,16 @@ class CreateCenterForm(FlaskForm):
     provincia = StringField('Provincia', id='provincia_create_health_center', validators=[DataRequired()])
     pais = StringField('País', id='pais_create_health_center', validators=[DataRequired()])
 
-class FilterBarForm(FlaskForm):
-    id = IntegerField('Identificador',id='id_filter_bar', validators=[Optional()])
-    nombre = StringField('Nombre', id='name_filter_bar', validators=[Optional()])
-    submitFilter = SubmitField('Filtrar', id="submit_filter_bar")
+class FilterUserForm(FlaskForm):
+    id = IntegerField('Identificador',id='id_filter_user', validators=[Optional()])
+    nombre = StringField('Nombre', id='name_filter_user', validators=[Optional()])
+    submitFilterUser = SubmitField('Filtrar', id="submit_filter_user")
+
+class FilterTestForm(FlaskForm):
+    nombrePaciente = StringField('Nombre', id='name_filter_test', validators=[Optional()])
+    numero = IntegerField('Número',id='id_filter_test', validators=[Optional()])
+    submitFilterTest = SubmitField('Filtrar', id="submit_filter_test")
+
+class DiagnosticarTestForm(FlaskForm):
+    diagnostico = TextAreaField('Diagnostico', id='diagnosticar_test_input', validators=[DataRequired()])
+    submitDiagnosticoTest = SubmitField('Enviar', id="diagnosticar_test_submit")

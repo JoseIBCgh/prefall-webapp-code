@@ -3,7 +3,10 @@
 Copyright (c) 2019 - present AppSeed.us
 """
 
+from email.policy import default
 from enum import unique
+
+from sqlalchemy import ForeignKeyConstraint
 
 from apps import db
 
@@ -36,7 +39,8 @@ class User(db.Model, fsqla.FsUserMixin):
         "User", secondary='pacientes_asociados',
         primaryjoin=PacienteAsociado.medico_id==id,
         secondaryjoin=PacienteAsociado.paciente_id==id,
-        backref='medicos_asociados')
+        backref='medicos_asociados',
+        lazy="dynamic")
 
 
 class Role(db.Model, fsqla.FsRoleMixin):
@@ -55,12 +59,21 @@ class Centro(db.Model):
     pais = db.Column(db.String(20))
     usuarios = db.relationship("User", backref="centro")
 
-
 class Test(db.Model):
     __tablename__ = 'test'
-    num_test = db.Column(db.Integer)
+    num_test = db.Column(db.Integer, primary_key = True)
     id_paciente = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    nuevo = db.Column(db.Boolean, unique=False, default=True)
     date = db.Column(db.Date)
+    diagnostico = db.Column(db.String(200), nullable=True)
+
+class TestUnit(db.Model):
+    __tablename__ = 'test_unit'
+    num_test = db.Column(db.Integer)
+    id_paciente = db.Column(db.Integer, primary_key=True)
+    __table_args__ = (ForeignKeyConstraint([num_test, id_paciente],
+                                           [Test.num_test, Test.id_paciente]),
+                      {})
     time = db.Column(db.Float(precision=32), primary_key=True)
     acc_x = db.Column(db.Float)
     acc_y = db.Column(db.Float)
@@ -71,6 +84,7 @@ class Test(db.Model):
     mag_x = db.Column(db.Float)
     mag_y = db.Column(db.Float)
     mag_z = db.Column(db.Float)
+
 '''
 @login_manager.user_loader
 def user_loader(id):
