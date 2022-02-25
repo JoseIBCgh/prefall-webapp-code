@@ -18,6 +18,19 @@ from apps.home.forms import FilterBarForm
 @blueprint.route('/index', methods=['GET', 'POST'])
 @auth_required()
 def index():
+    if current_user.has_role("paciente"):
+        return redirect(url_for('prefall_blueprint.pantalla_principal_paciente'))
+
+    if current_user.has_role("medico"):
+        return redirect(url_for('prefall_blueprint.pantalla_principal_medico'))
+
+    if current_user.has_role("auxiliar"):
+        return redirect(url_for('prefall_blueprint.pantalla_principal_auxiliar'))
+
+    if current_user.has_role('admin'):
+        return redirect(url_for('prefall_blueprint.lista_centros'))
+
+
     return render_template('home/index.html', segment='index')
     
 '''

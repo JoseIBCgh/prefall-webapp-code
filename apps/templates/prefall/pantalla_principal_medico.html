@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 {% from "includes/_form_helpers.html" import render_table_field %}
 
-{% block title %} Lista de pacientes {% endblock %} 
+{% block title %} Inicio {% endblock %} 
 
 <!-- Specific CSS goes HERE -->
 {% block stylesheets %}{% endblock stylesheets %}
@@ -15,6 +15,9 @@
             <!-- [ breadcrumb ] end -->
             <div class="main-body">
                 <div class="page-wrapper">
+                    <div class="card-header">
+                        <h5>Centro médico: {{current_user.centro.nombreFiscal}}</h5>
+                    </div>
                     <h2 class="mt-3 f-w-300">
                         {{alertas|length}}
                         <sub class="text-muted f-14">Test sin revisar</sub>
@@ -84,6 +87,7 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Nombre</th>
+                                        <th>Centro</th>
                                         <th class="text-right"></th>
                                     </tr>
                                     <tr>
@@ -91,6 +95,7 @@
                                             {{ formPacientes.csrf_token }}
                                             {{ render_table_field(formPacientes.id, "ID") }}
                                             {{ render_table_field(formPacientes.nombre, "Nombre") }}
+                                            {{ render_table_field(formPacientes.centro, "Centro") }}
                                             <th>{{formPacientes.submitFilterUser(class="label theme-bg text-white f-12")}}</th>
                                         </form>
                                     </tr>
@@ -103,6 +108,9 @@
                                         </td>
                                         <td>
                                             <h6 class="text-muted">{{paciente["nombre"]}}</h6>
+                                        </td>
+                                        <td>
+                                            <h6 class="text-muted">{{paciente.centro.nombreFiscal}}</h6>
                                         </td>
                                         <td><a href="{{url_for('prefall_blueprint.detalles_clinicos', id=paciente['id'])}}" class="label theme-bg text-white f-12">Ver detalles</a></td>
                                     </tr> 

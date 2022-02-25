@@ -34,7 +34,7 @@ class User(db.Model, fsqla.FsUserMixin):
     peso = db.Column(db.Float)
     antecedentes_clinicos = db.Column(db.Text)
     centro_id = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
-    #tests = db.relationship("Test", backref="paciente", cascade='all, delete-orphan')
+    tests = db.relationship("Test", backref="paciente", cascade='all, delete-orphan')
     pacientes_asociados = db.relationship(
         "User", secondary='pacientes_asociados',
         primaryjoin=PacienteAsociado.medico_id==id,
@@ -58,11 +58,13 @@ class Centro(db.Model):
     provincia = db.Column(db.String(30))
     pais = db.Column(db.String(20))
     usuarios = db.relationship("User", backref="centro")
+    tests = db.relationship("Test", backref="centro", lazy="dynamic")
 
 class Test(db.Model):
     __tablename__ = 'test'
     num_test = db.Column(db.Integer, primary_key = True)
     id_paciente = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    centro_id = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
     nuevo = db.Column(db.Boolean, unique=False, default=True)
     date = db.Column(db.Date)
     diagnostico = db.Column(db.String(200), nullable=True)

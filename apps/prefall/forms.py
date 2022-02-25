@@ -55,6 +55,7 @@ class CreateCenterForm(FlaskForm):
 class FilterUserForm(FlaskForm):
     id = IntegerField('Identificador',id='id_filter_user', validators=[Optional()])
     nombre = StringField('Nombre', id='name_filter_user', validators=[Optional()])
+    centro = StringField('Centro', id='center_filter_user', validators=[Optional()])
     submitFilterUser = SubmitField('Filtrar', id="submit_filter_user")
 
 class FilterTestForm(FlaskForm):

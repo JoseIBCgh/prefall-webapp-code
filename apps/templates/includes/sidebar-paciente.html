@@ -1,0 +1,11 @@
+{% extends "includes/sidebar-authenticated.html" %}
+
+{% block specific_inner_navbar %}
+<li class="nav-item pcoded-menu-caption">
+    <label>Gestión de tests</label>
+</li>
+<li data-username="form elements advance componant validation masking wizard picker select" 
+    class="nav-item {% if 'ui-forms' in segment %} active {% endif %}">
+    <a href="{{ url_for('prefall_blueprint.pantalla_principal_paciente') }}" class="nav-link "><span class="pcoded-micon"><i class="feather icon-file-text"></i></span><span class="pcoded-mtext">Inicio</span></a>
+</li>
+{% endblock %}

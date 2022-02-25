@@ -20,7 +20,7 @@ from werkzeug.utils import secure_filename
 import os
 from pathlib import Path
 
-from apps.prefall.decorators import clinical_data_access, personal_data_access
+from apps.prefall.decorators import clinical_data_access, patient_data_access, personal_data_access
 from apps.prefall.forms import (
     CreateCenterForm,
     CreatePatientForm,
@@ -153,9 +153,12 @@ def pantalla_principal_medico():
         else:
             id = ""
         nombre = formPacientes.nombre.data
+        centro = formPacientes.centro.data
         pacientes = current_user.pacientes_asociados.\
                     filter(User.nombre.like('%'+nombre+'%')).\
-                        filter( cast( User.id, db.String ).like( '%'+ id +'%' ) ).all()
+                        filter( cast( User.id, db.String ).like( '%'+ id +'%' ) ).\
+                            filter(User.centro_id == Centro.id).\
+                                filter(Centro.nombreFiscal.like('%'+centro+'%')).all()
     else:
         pacientes = current_user.pacientes_asociados
 
@@ -221,7 +224,7 @@ def detalles_clinicos(id):
         df = read_csv(file_path)
         df = add_columns(df, id)
         df = df.drop_duplicates(subset=["time"])
-        add_df_to_sql(df)
+        add_df_to_sql(df, paciente.centro_id)
         '''
         try:
             add_df_to_sql(df)
@@ -286,11 +289,14 @@ def pantalla_principal_auxiliar():
         else:
             id = ""
         nombre = formPacientes.nombre.data
+        centroFiltro = formPacientes.centro.data
         pacientes = User.query.\
             filter(User.roles.contains(userRole)).\
                 filter_by(centro = center).\
                     filter(User.nombre.like('%'+nombre+'%')).\
-                        filter( cast( User.id, db.String ).like( '%'+ id +'%' ) ).all()
+                        filter( cast( User.id, db.String ).like( '%'+ id +'%' ) ).\
+                            filter(User.centro_id == Centro.id).\
+                                filter(Centro.nombreFiscal.like('%'+centroFiltro+'%')).all()
     else:
         pacientes = User.query.\
             filter(User.roles.contains(userRole)).\
@@ -350,7 +356,7 @@ def detalles_personales(id):
         df = read_csv(file_path)
         df = add_columns(df, id)
         df = df.drop_duplicates(subset=["time"])
-        add_df_to_sql(df)
+        add_df_to_sql(df, paciente.centro_id)
         os.remove(file_path)
 
     rolMedico = Role.query.filter_by(name="medico").first()
@@ -436,6 +442,27 @@ def desasociar_medico(id, id_medico):
 
 ### END AUXILIAR ###
 
+### BEGIN PACIENTE ###
+
+@blueprint.route('pantalla_principal_paciente')
+@roles_accepted("paciente")
+def pantalla_principal_paciente():
+    tests = current_user.tests
+
+    return render_template('prefall/pantalla_principal_paciente.html', tests = tests)
+
+@blueprint.route('ver_detalles_test/<id>/<num>', methods=['GET'])
+@patient_data_access()
+def ver_detalles_test(id, num):
+    from apps import db
+    test = Test.query.filter_by(id_paciente=id).filter_by(num_test=num).first()
+
+    return render_template(
+        'prefall/ver_detalles_test.html', test = test
+    )
+
+### END PACIENTE ###
+
 ### BEGIN COMMON ###
 
 ALLOWED_EXTENSIONS = {'txt', 'csv'}
@@ -467,12 +494,12 @@ def add_columns(df, id_paciente):
     
     return df
 
-def add_df_to_sql(df):
+def add_df_to_sql(df, id_centro):
     from apps import db
 
     test = Test(
         num_test = df.at[0,"num_test"], id_paciente= df.at[0,"id_paciente"],
-        date = df.at[0,"date"], nuevo = True, diagnostico=None)
+        date = df.at[0,"date"], centro_id=id_centro, nuevo = True, diagnostico=None)
     db.session.add(test)
 
     for index, row in df.iterrows():

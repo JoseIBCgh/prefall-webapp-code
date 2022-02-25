@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 {% from "includes/_form_helpers.html" import render_table_field %}
 
-{% block title %} Inicio {% endblock %} 
+{% block title %} Lista de pacientes {% endblock %} 
 
 <!-- Specific CSS goes HERE -->
 {% block stylesheets %}{% endblock stylesheets %}
@@ -19,41 +19,30 @@
                         <h5>Centro médico: {{current_user.centro.nombreFiscal}}</h5>
                     </div>
                     <div class="card-header">
-                        <h5>Pacientes del hospital</h5>
+                        <h5>Tests de la marcha</h5>
                     </div>
                     <div class="card-block px-0 py-3">
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
-                                        <th>Nombre</th>
-                                        <th>Centro</th>
+                                        <th>Numero</th>
+                                        <th>Fecha</th>
                                         <th class="text-right"></th>
-                                    </tr>
-                                    <tr>
-                                        <form role="form" method="post" action="">
-                                            {{ formPacientes.csrf_token }}
-                                            {{ render_table_field(formPacientes.id, "ID") }}
-                                            {{ render_table_field(formPacientes.nombre, "Nombre") }}
-                                            {{ render_table_field(formPacientes.centro, "Centro") }}
-                                            <th>{{formPacientes.submitFilterUser(value="Filtrar", class="label theme-bg text-white f-12")}}</th>
-                                        </form>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for paciente in pacientes %}
+                                    {% for test in tests %}
                                     <tr class="unread">
                                         <td>
-                                            <h6 class="text-muted">{{paciente["id"]}}</h6>
+                                            <h6 class="text-muted">{{test["num_test"]}}</h6>
                                         </td>
                                         <td>
-                                            <h6 class="text-muted">{{paciente["nombre"]}}</h6>
+                                            <h6 class="text-muted">{{test["date"]}}</h6>
                                         </td>
                                         <td>
-                                            <h6 class="text-muted">{{paciente.centro.nombreFiscal}}</h6>
+                                            <a href="{{url_for('prefall_blueprint.ver_detalles_test', id=current_user.id, num=test['num_test'])}}" class="label theme-bg text-white f-12">Ver detalles</a>
                                         </td>
-                                        <td><a href="{{url_for('prefall_blueprint.detalles_personales', id=paciente['id'])}}" class="label theme-bg text-white f-12">Ver detalles</a></td>
                                     </tr> 
                                     {% endfor %}                               
                                 </tbody>

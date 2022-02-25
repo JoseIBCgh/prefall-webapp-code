@@ -41,3 +41,16 @@ def clinical_data_access():
             return f(*args, **kwargs)
         return wrapper
     return decorator
+
+def patient_data_access():
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            if not current_user.has_role('paciente'):
+                abort(403)
+            id = request.view_args["id"]
+            if int(id) != current_user.id:
+                abort(403)
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator

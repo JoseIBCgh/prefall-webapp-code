@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 {% from "includes/_form_helpers.html" import render_field_with_label %}
 
-{% block title %} Detalles test {% endblock %} 
+{% block title %} Ver detalles test {% endblock %} 
 
 <!-- Specific CSS goes HERE -->
 {% block stylesheets %}{% endblock stylesheets %}
@@ -44,27 +44,32 @@
                                             <h6 class="text-muted">{{test["date"]}}</h6>
                                         </td>
                                     </tr>
-                                    {% if test["diagnostico"] is not none %}
+                                    <tr class="unread">
+                                        <td>
+                                            <h6 class="text-muted">Centro</h6>
+                                        </td>
+                                        <td>
+                                            <h6 class="text-muted">{{test.centro.nombreFiscal}}</h6>
+                                        </td>
+                                    </tr>
                                     <tr class="unread">
                                         <td>
                                             <h6 class="text-muted">Diagnostico</h6>
                                         </td>
+                                        {% if test["diagnostico"] is not none %}
                                         <td>
                                             <h6 class="text-muted">{{test["diagnostico"]}}</h6>
                                         </td>
+                                        {% else %}
+                                        <td>
+                                            <h6 class="text-muted">No se ha emitido un diagnostico aún</h6>
+                                        </td>
+                                        {% endif %}
                                     </tr>
-                                    {% endif %}
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                    {% if test["diagnostico"] is none %}
-                    <form role="form" method="post" action="">
-                        {{ form.csrf_token }}
-                        {{ render_field_with_label(form.diagnostico) }}
-                        {{form.submitDiagnosticoTest(class="label theme-bg text-white f-12")}}
-                    </form>
-                    {% endif %}
                 </div>
             </div>
         </div>
