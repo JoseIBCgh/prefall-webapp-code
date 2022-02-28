@@ -13564,3 +13564,12 @@ div.code-toolbar > .toolbar span:hover {
     padding: 5px 2px;
   }
 }
+
+.center{
+  text-align: center;
+  vertical-align: center;
+}
+
+.remove-margins{
+  margin: 0;
+}
