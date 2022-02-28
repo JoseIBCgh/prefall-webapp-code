@@ -15,6 +15,11 @@ from flask_security import (
 
 from apps.home.forms import FilterBarForm
 
+@blueprint.route('/old', methods=['GET', 'POST'])
+def old():
+
+    return render_template('home/index.html', segment='index')
+
 @blueprint.route('/index', methods=['GET', 'POST'])
 @auth_required()
 def index():

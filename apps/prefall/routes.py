@@ -327,7 +327,7 @@ def crear_paciente():
         from apps import user_datastore, db
         user_datastore.create_user(
             id=id, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
-            peso=peso, antecedentes_clinicos=antecedentes, 
+            peso=peso, antecedentes_clinicos=antecedentes, centro_id = current_user.centro_id,
             password=hash_password(default_password), email=default_email, roles=["paciente"]
         )
         db.session.commit()
