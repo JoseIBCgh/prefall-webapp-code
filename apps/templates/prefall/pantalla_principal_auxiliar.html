@@ -15,49 +15,49 @@
             <!-- [ breadcrumb ] end -->
             <div class="main-body">
                 <div class="page-wrapper">
-                    <div class="card-header">
-                        <h5>Centro médico: {{current_user.centro.nombreFiscal}}</h5>
-                    </div>
-                    <div class="card-header">
-                        <h5>Pacientes del hospital</h5>
-                    </div>
-                    <div class="card-block px-0 py-3">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Nombre</th>
-                                        <th>Centro</th>
-                                        <th class="text-right"></th>
-                                    </tr>
-                                    <tr>
-                                        <form role="form" method="post" action="">
-                                            {{ formPacientes.csrf_token }}
-                                            {{ render_table_field(formPacientes.id, "ID") }}
-                                            {{ render_table_field(formPacientes.nombre, "Nombre") }}
-                                            {{ render_table_field(formPacientes.centro, "Centro") }}
-                                            <th>{{formPacientes.submitFilterUser(value="Filtrar", class="label theme-bg text-white f-12")}}</th>
-                                        </form>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for paciente in pacientes %}
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">{{paciente["id"]}}</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{paciente["nombre"]}}</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{paciente.centro.nombreFiscal}}</h6>
-                                        </td>
-                                        <td><a href="{{url_for('prefall_blueprint.detalles_personales', id=paciente['id'])}}" class="label theme-bg text-white f-12">Ver detalles</a></td>
-                                    </tr> 
-                                    {% endfor %}                               
-                                </tbody>
-                            </table>
+                    <h5 class="card-title center">Centro médico: {{current_user.centro.nombreFiscal}}</h5>
+                    <div class="card Recent-Users">
+                        <div class="card-header">
+                            <h5>Pacientes del hospital</h5>
+                        </div>
+                        <div class="card-block px-0 py-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th class="center">ID</th>
+                                            <th class="center">Nombre</th>
+                                            <th class="center">Centro</th>
+                                            <th class="text-right"></th>
+                                        </tr>
+                                        <tr>
+                                            <form role="form" method="post" action="">
+                                                {{ formPacientes.csrf_token }}
+                                                {{ render_table_field(formPacientes.id, "ID") }}
+                                                {{ render_table_field(formPacientes.nombre, "Nombre") }}
+                                                {{ render_table_field(formPacientes.centro, "Centro") }}
+                                                <th class="center">{{formPacientes.submitFilterUser(value="Filtrar", class="label theme-bg text-white f-12")}}</th>
+                                            </form>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for paciente in pacientes %}
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted center remove-margins">{{paciente["id"]}}</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted center remove-margins">{{paciente["nombre"]}}</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted center remove-margins">{{paciente.centro.nombreFiscal}}</h6>
+                                            </td>
+                                            <td><a href="{{url_for('prefall_blueprint.detalles_personales', id=paciente['id'])}}" class="label theme-bg text-white f-12 center">Ver detalles</a></td>
+                                        </tr> 
+                                        {% endfor %}                               
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
