@@ -2,7 +2,7 @@ from sqlite3 import IntegrityError
 from sqlalchemy import null, desc, create_engine, exc, cast
 import sqlalchemy
 
-from apps.authentication.models import AccionesTestMedico, Role, Test, TestUnit, User, Centro, PacienteAsociado
+from apps.authentication.models import AccionesTestMedico, Role, Test, TestUnit, User, Centro
 from apps.prefall import blueprint
 from flask import jsonify, render_template, request, redirect, url_for
 from jinja2 import TemplateNotFound
@@ -173,36 +173,37 @@ def pantalla_principal_medico():
         else:
             numero = str(numero)
             
-        tests = current_user.pacientes_asociados.tests.\
-            join(AccionesTestMedico, db.and_(PacienteAsociado.id_medico == AccionesTestMedico.id_medico, 
-            PacienteAsociado.id_paciente == AccionesTestMedico.id_paciente)).\
-                join(User, AccionesTestMedico.id_paciente == User.id).\
-                    join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
-                        AccionesTestMedico.id_paciente == Test.id_paciente)).\
-                            with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
-                            AccionesTestMedico.num_test, Test.date).\
-                                filter(User.nombre.like('%'+nombre+'%')).\
-                                    filter(cast(Test.num_test, db.String).like('%'+numero+'%')).all()
-    
-    else:
-        tests = current_user.pacientes_asociados.\
-            join(AccionesTestMedico, db.and_(PacienteAsociado.id_medico == AccionesTestMedico.id_medico, 
-            PacienteAsociado.id_paciente == AccionesTestMedico.id_paciente)).\
-                join(User, AccionesTestMedico.id_paciente == User.id).\
-                    join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
-                        AccionesTestMedico.id_paciente == Test.id_paciente)).\
-                            with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
-                            AccionesTestMedico.num_test, Test.date).all()
-
-    alertas = current_user.pacientes_asociados.\
-        join(AccionesTestMedico, db.and_(PacienteAsociado.id_medico == AccionesTestMedico.id_medico, 
-            PacienteAsociado.id_paciente == AccionesTestMedico.id_paciente)).\
+        tests = current_user.tests_de_pacientes.\
             join(User, AccionesTestMedico.id_paciente == User.id).\
                 join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
                     AccionesTestMedico.id_paciente == Test.id_paciente)).\
                         with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
                         AccionesTestMedico.num_test, Test.date).\
-                            filter(AccionesTestMedico.diagnostico == None).all()
+                            filter(User.nombre.like('%'+nombre+'%')).\
+                                filter(cast(Test.num_test, db.String).like('%'+numero+'%')).all()
+    
+    else:
+        '''tests = db.session.query(Test.nuevo, Test.diagnostico, User.nombre, User.id, Test.num_test, Test.date).\
+                    filter(Test.id_paciente.in_(id_asociados)).\
+                        filter(Test.id_paciente == User.id).all()'''
+        tests = current_user.tests_de_pacientes.\
+            join(User, AccionesTestMedico.id_paciente == User.id).\
+                join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
+                    AccionesTestMedico.id_paciente == Test.id_paciente)).\
+                        with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
+                        AccionesTestMedico.num_test, Test.date).all()
+    
+    '''alertas = db.session.query(Test.nuevo, Test.diagnostico, User.nombre, User.id, Test.num_test, Test.date).\
+                filter(Test.id_paciente.in_(id_asociados)).\
+                    filter(Test.id_paciente == User.id).\
+                        filter(Test.diagnostico == None).all()'''
+    alertas = current_user.tests_de_pacientes.\
+        join(User, AccionesTestMedico.id_paciente == User.id).\
+            join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
+                AccionesTestMedico.id_paciente == Test.id_paciente)).\
+                    with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
+                    AccionesTestMedico.num_test, Test.date).\
+                        filter(AccionesTestMedico.diagnostico == None).all()
     
     return render_template(
         'prefall/pantalla_principal_medico.html', pacientes=pacientes, formPacientes=formPacientes,
@@ -479,8 +480,10 @@ def editar_detalles_personales(id):
 @personal_data_access()
 def asociar_medico(id, id_medico):
     from apps import db
-    asociacion = PacienteAsociado(id_paciente= id, id_medico=id_medico)
-    db.session.add(asociacion)
+    paciente = User.query.filter_by(id=id).first()
+    medico = User.query.filter_by(id=id_medico).first()
+    paciente.medicos_asociados.append(medico)
+
     db.session.commit()
 
     return redirect(url_for("prefall_blueprint.detalles_personales", id=id))
