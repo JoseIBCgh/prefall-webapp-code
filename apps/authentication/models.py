@@ -6,7 +6,7 @@ Copyright (c) 2019 - present AppSeed.us
 from email.policy import default
 from enum import unique
 
-from sqlalchemy import ForeignKeyConstraint
+from sqlalchemy import ForeignKeyConstraint, event
 
 from apps import db
 
@@ -41,6 +41,7 @@ class User(db.Model, fsqla.FsUserMixin):
         secondaryjoin=PacienteAsociado.paciente_id==id,
         backref='medicos_asociados',
         lazy="dynamic")
+    tests_de_pacientes = db.relationship("AccionesTestMedico", backref="medico", lazy="dynamic", cascade='all, delete-orphan')
 
 
 class Role(db.Model, fsqla.FsRoleMixin):
@@ -65,9 +66,7 @@ class Test(db.Model):
     num_test = db.Column(db.Integer, primary_key = True)
     id_paciente = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     centro_id = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
-    nuevo = db.Column(db.Boolean, unique=False, default=True)
     date = db.Column(db.Date)
-    diagnostico = db.Column(db.String(200), nullable=True)
 
 class TestUnit(db.Model):
     __tablename__ = 'test_unit'
@@ -87,6 +86,37 @@ class TestUnit(db.Model):
     mag_y = db.Column(db.Float)
     mag_z = db.Column(db.Float)
 
+class AccionesTestMedico(db.Model):
+    __tablename__ = "acciones_test_medico"
+    num_test = db.Column(db.Integer, primary_key = True)
+    id_paciente = db.Column(db.Integer, primary_key=True)
+    __table_args__ = (ForeignKeyConstraint([num_test, id_paciente],
+                                           [Test.num_test, Test.id_paciente]),
+                      {})
+    id_medico = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    visto = db.Column(db.Boolean, default = False, nullable=False)
+    diagnostico = db.Column(db.String(200), nullable=True)
+
+import sys
+@event.listens_for(Test, 'after_insert')
+def after_insert_test(mapper, connection, target):
+    print('after insert test', file=sys.stderr)
+    paciente = User.query.filter(User.id == target.id_paciente).first()
+    medicos_asociados = paciente.medicos_asociados
+    new_table = AccionesTestMedico.__table__
+    for medico in medicos_asociados:
+        data = {"num_test": target.num_test, "id_paciente": target.id_paciente, "id_medico": medico.id}
+        connection.execute(new_table.insert(), data)
+
+@event.listens_for(PacienteAsociado, 'after_insert')
+def after_asociate_patient(mapper, connection, target):
+    print('after asociate patient', file=sys.stderr)
+    paciente = User.query.filter(User.id == target.paciente_id).first()
+    tests = paciente.tests
+    new_table = AccionesTestMedico.__table__
+    for test in tests:
+        data = {"num_test": test.num_test, "id_paciente": target.paciente_id, "id_medico": target.medico_id}
+        connection.execute(new_table.insert(), data)
 '''
 @login_manager.user_loader
 def user_loader(id):

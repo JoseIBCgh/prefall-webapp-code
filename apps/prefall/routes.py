@@ -2,7 +2,7 @@ from sqlite3 import IntegrityError
 from sqlalchemy import null, desc, create_engine, exc, cast
 import sqlalchemy
 
-from apps.authentication.models import Role, Test, TestUnit, User, Centro
+from apps.authentication.models import AccionesTestMedico, Role, Test, TestUnit, User, Centro
 from apps.prefall import blueprint
 from flask import jsonify, render_template, request, redirect, url_for
 from jinja2 import TemplateNotFound
@@ -23,7 +23,8 @@ from pathlib import Path
 from apps.prefall.decorators import clinical_data_access, patient_data_access, personal_data_access
 from apps.prefall.forms import (
     CreateCenterForm,
-    CreatePatientForm,
+    CreatePatientClinicalForm,
+    CreatePatientPersonalForm,
     DiagnosticarTestForm,
     EditCenterDataForm, 
     EditClinicalDataForm, 
@@ -171,38 +172,99 @@ def pantalla_principal_medico():
             numero = ""
         else:
             numero = str(numero)
-        tests = db.session.query(Test.nuevo, Test.diagnostico, User.nombre, User.id, Test.num_test, Test.date).\
-                    filter(Test.id_paciente.in_(id_asociados)).\
-                        filter(Test.id_paciente == User.id).\
+            
+        tests = current_user.tests_de_pacientes.\
+            join(User, AccionesTestMedico.id_paciente == User.id).\
+                join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
+                    AccionesTestMedico.id_paciente == Test.id_paciente)).\
+                        with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
+                        AccionesTestMedico.num_test, Test.date).\
                             filter(User.nombre.like('%'+nombre+'%')).\
                                 filter(cast(Test.num_test, db.String).like('%'+numero+'%')).all()
-    else:
-        tests = db.session.query(Test.nuevo, Test.diagnostico, User.nombre, User.id, Test.num_test, Test.date).\
-                    filter(Test.id_paciente.in_(id_asociados)).\
-                        filter(Test.id_paciente == User.id).all()
     
-    alertas = db.session.query(Test.nuevo, Test.diagnostico, User.nombre, User.id, Test.num_test, Test.date).\
+    else:
+        '''tests = db.session.query(Test.nuevo, Test.diagnostico, User.nombre, User.id, Test.num_test, Test.date).\
+                    filter(Test.id_paciente.in_(id_asociados)).\
+                        filter(Test.id_paciente == User.id).all()'''
+        tests = current_user.tests_de_pacientes.\
+            join(User, AccionesTestMedico.id_paciente == User.id).\
+                join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
+                    AccionesTestMedico.id_paciente == Test.id_paciente)).\
+                        with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
+                        AccionesTestMedico.num_test, Test.date).all()
+    
+    '''alertas = db.session.query(Test.nuevo, Test.diagnostico, User.nombre, User.id, Test.num_test, Test.date).\
                 filter(Test.id_paciente.in_(id_asociados)).\
                     filter(Test.id_paciente == User.id).\
-                        filter(Test.diagnostico == None).all()
+                        filter(Test.diagnostico == None).all()'''
+    alertas = current_user.tests_de_pacientes.\
+        join(User, AccionesTestMedico.id_paciente == User.id).\
+            join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
+                AccionesTestMedico.id_paciente == Test.id_paciente)).\
+                    with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
+                    AccionesTestMedico.num_test, Test.date).\
+                        filter(AccionesTestMedico.diagnostico == None).all()
     
     return render_template(
         'prefall/pantalla_principal_medico.html', pacientes=pacientes, formPacientes=formPacientes,
         tests= tests, alertas=alertas, formTests=formTests)
 
+@blueprint.route('crear_paciente_medico', methods=['GET', 'POST'])
+@roles_accepted("medico")
+def crear_paciente_medico():
+    create_patient_form = CreatePatientClinicalForm(request.form)
+    if 'create_patient' in request.form and create_patient_form.validate():
+
+        # read form data
+        id = request.form['id']
+        nombre = request.form['nombre']
+        fecha = request.form['fecha']
+        sexo = request.form['sexo']
+        altura = request.form['altura']
+        peso = request.form['peso']
+        antecedentes = request.form['antecedentes']
+
+        default_password = "password"
+        n = randint(0,1000000)
+        default_email = "default"+ str(n) +"@invented_mail.com"
+
+        from apps import user_datastore, db
+        user_datastore.create_user(
+            id=id, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
+            peso=peso, antecedentes_clinicos=antecedentes, centro_id = current_user.centro_id,
+            password=hash_password(default_password), email=default_email, roles=["paciente"]
+        )
+        db.session.commit()
+
+        return redirect(url_for('home_blueprint.index'))
+
+
+    return render_template('prefall/create_patient_clinical.html', form=create_patient_form)
 
 @blueprint.route('detalles_test/<id>/<num>', methods=['GET', 'POST'])
 @clinical_data_access()
 def detalles_test(id, num):
     from apps import db
-    test = Test.query.filter_by(id_paciente=id).filter_by(num_test=num).first()
-    if test.nuevo:
-        test.nuevo = False
+    test = db.session.query(Test, AccionesTestMedico).\
+        join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
+        AccionesTestMedico.id_paciente == Test.id_paciente)).\
+            with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, Test.num_test, 
+                    Test.date, Test.id_paciente, Test.centro_id).\
+                        filter(AccionesTestMedico.id_medico == current_user.id).\
+                            filter(Test.id_paciente == id).\
+                                filter(Test.num_test == num).first()
+
+    if not test.visto:
+        db.session.query(AccionesTestMedico).filter_by(num_test=num).filter_by(id_paciente=id).\
+            filter_by(id_medico=current_user.id).update({"visto": True})
         db.session.commit()
     form = DiagnosticarTestForm()
     if form.submitDiagnosticoTest.data and form.validate():
-        test.diagnostico = form.diagnostico.data
+        db.session.query(AccionesTestMedico).filter_by(num_test=num).filter_by(id_paciente=id).\
+            filter_by(id_medico=current_user.id).update({"diagnostico": form.diagnostico.data})
         db.session.commit()
+        test = {"visto": True, "diagnostico": form.diagnostico.data, "num_test": test.num_test,
+        "date": test.date, "id_paciente": test.id_paciente, "centro_id": test.centro_id}
     return render_template(
         'prefall/detalles_test.html', form = form, test = test
     )
@@ -307,8 +369,8 @@ def pantalla_principal_auxiliar():
 
 @blueprint.route('crear_paciente', methods=['GET', 'POST'])
 @roles_accepted("auxiliar")
-def crear_paciente():
-    create_patient_form = CreatePatientForm(request.form)
+def crear_paciente_auxiliar():
+    create_patient_form = CreatePatientPersonalForm(request.form)
     if 'create_patient' in request.form and create_patient_form.validate():
 
         # read form data
@@ -318,16 +380,15 @@ def crear_paciente():
         sexo = request.form['sexo']
         altura = request.form['altura']
         peso = request.form['peso']
-        antecedentes = request.form['antecedentes']
 
         default_password = "password"
         n = randint(0,1000000)
-        default_email = "default"+ str(n) +"@kruay.com"
+        default_email = "default"+ str(n) +"@invented_mail.com"
 
         from apps import user_datastore, db
         user_datastore.create_user(
             id=id, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
-            peso=peso, antecedentes_clinicos=antecedentes, centro_id = current_user.centro_id,
+            peso=peso, centro_id = current_user.centro_id,
             password=hash_password(default_password), email=default_email, roles=["paciente"]
         )
         db.session.commit()
@@ -335,7 +396,7 @@ def crear_paciente():
         return redirect(url_for('home_blueprint.index'))
 
 
-    return render_template('prefall/create_patient.html', form=create_patient_form)
+    return render_template('prefall/create_patient_personal.html', form=create_patient_form)
 
 
 @blueprint.route('detalles_personales/<id>', methods=['GET', 'POST'])
@@ -499,7 +560,7 @@ def add_df_to_sql(df, id_centro):
 
     test = Test(
         num_test = df.at[0,"num_test"], id_paciente= df.at[0,"id_paciente"],
-        date = df.at[0,"date"], centro_id=id_centro, nuevo = True, diagnostico=None)
+        date = df.at[0,"date"], centro_id=id_centro)
     db.session.add(test)
 
     for index, row in df.iterrows():

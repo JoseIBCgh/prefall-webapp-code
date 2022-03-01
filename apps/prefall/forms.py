@@ -3,7 +3,7 @@ from wtforms import StringField, IntegerField, DecimalField, DateField, TextArea
 from wtforms.validators import DataRequired, AnyOf, Optional
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
-class CreatePatientForm(FlaskForm):
+class CreatePatientClinicalForm(FlaskForm):
     id = IntegerField('Identificador',id='id_create_patient', validators=[DataRequired()])
     nombre = StringField('Nombre', id='name_create_patient', validators=[DataRequired()])
     fecha = DateField('Fecha de nacimiento', id='date_create_patient', validators=[DataRequired()])
@@ -11,6 +11,14 @@ class CreatePatientForm(FlaskForm):
     altura = DecimalField('Altura', id='height_create_patient', validators=[DataRequired()])
     peso = DecimalField('Peso', id='weight_create_patient', validators=[DataRequired()])
     antecedentes = TextAreaField('Antecedentes clínicos', id='antecedentes_create_patient', validators=[Optional()])
+
+class CreatePatientPersonalForm(FlaskForm):
+    id = IntegerField('Identificador',id='id_create_patient', validators=[DataRequired()])
+    nombre = StringField('Nombre', id='name_create_patient', validators=[DataRequired()])
+    fecha = DateField('Fecha de nacimiento', id='date_create_patient', validators=[DataRequired()])
+    sexo = StringField('Sexo', id='sex_create_patient', validators=[DataRequired(), AnyOf(values=["V", "M"], message="Introduce V o M")])
+    altura = DecimalField('Altura', id='height_create_patient', validators=[DataRequired()])
+    peso = DecimalField('Peso', id='weight_create_patient', validators=[DataRequired()])
 
 class EditPersonalDataForm(FlaskForm):
     nombre = StringField('Nombre', id='name_edit_personal_data', validators=[Optional()])

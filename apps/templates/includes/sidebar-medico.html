@@ -8,4 +8,8 @@
     class="nav-item {% if 'ui-forms' in segment %} active {% endif %}">
     <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico') }}" class="nav-link "><span class="pcoded-micon"><i class="feather icon-file-text"></i></span><span class="pcoded-mtext">Inicio</span></a>
 </li>
+<li data-username="Table bootstrap datatable footable" 
+    class="nav-item {% if 'ui-tables' in segment %} active {% endif %}">
+    <a href="{{ url_for('prefall_blueprint.crear_paciente_medico') }}" class="nav-link "><span class="pcoded-micon"><i class="feather icon-server"></i></span><span class="pcoded-mtext">Crear paciente</span></a>
+</li>
 {% endblock %}

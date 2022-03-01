@@ -49,13 +49,13 @@
                                     <tbody>
                                         {% for test in alertas %}
                                         <tr class="unread">
-                                            {% if test["nuevo"] %}
+                                            {% if test["visto"] %}
                                             <td>
-                                                <h6 class="text-muted center remove-margins">Si</h6>
+                                                <h6 class="text-muted center remove-margins">No</h6>
                                             </td>
                                             {% else %}
                                             <td>
-                                                <h6 class="text-muted center remove-margins">No</h6>
+                                                <h6 class="text-muted center remove-margins">Si</h6>
                                             </td>
                                             {% endif %}
                                             {% if test["diagnostico"] is none %}
@@ -168,13 +168,13 @@
                                     <tbody>
                                         {% for test in tests %}
                                         <tr class="unread">
-                                            {% if test["nuevo"] %}
+                                            {% if test["visto"] %}
                                             <td>
-                                                <h6 class="text-muted center remove-margins">Si</h6>
+                                                <h6 class="text-muted center remove-margins">No</h6>
                                             </td>
                                             {% else %}
                                             <td>
-                                                <h6 class="text-muted center remove-margins">No</h6>
+                                                <h6 class="text-muted center remove-margins">Si</h6>
                                             </td>
                                             {% endif %}
                                             {% if test["diagnostico"] is none %}
