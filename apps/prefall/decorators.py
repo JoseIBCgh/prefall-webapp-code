@@ -17,7 +17,7 @@ def personal_data_access():
                     abort(404)
                 if not paciente.has_role('paciente'):
                     abort(403)
-                if paciente.centro_id == current_user.centro_id:
+                if paciente.id_centro == current_user.id_centro:
                     return f(*args, **kwargs)
             abort(403)
         return wrapper

@@ -18,8 +18,8 @@ fsqla.FsModels.set_db_info(db, user_table_name="users", role_table_name="roles")
 
 class PacienteAsociado(db.Model):
     __tablename__ = 'pacientes_asociados'
-    paciente_id = db.Column(db.Integer,db.ForeignKey('users.id'), primary_key=True)
-    medico_id = db.Column(db.Integer,db.ForeignKey('users.id'), primary_key=True)
+    id_paciente = db.Column(db.Integer,db.ForeignKey('users.id'), primary_key=True)
+    id_medico = db.Column(db.Integer,db.ForeignKey('users.id'), primary_key=True)
 
 class User(db.Model, fsqla.FsUserMixin):
 
@@ -33,12 +33,12 @@ class User(db.Model, fsqla.FsUserMixin):
     altura = db.Column(db.Float)
     peso = db.Column(db.Float)
     antecedentes_clinicos = db.Column(db.Text)
-    centro_id = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
+    id_centro = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
     tests = db.relationship("Test", backref="paciente", cascade='all, delete-orphan')
     pacientes_asociados = db.relationship(
         "User", secondary='pacientes_asociados',
-        primaryjoin=PacienteAsociado.medico_id==id,
-        secondaryjoin=PacienteAsociado.paciente_id==id,
+        primaryjoin=PacienteAsociado.id_medico==id,
+        secondaryjoin=PacienteAsociado.id_paciente==id,
         backref='medicos_asociados',
         lazy="dynamic")
     tests_de_pacientes = db.relationship("AccionesTestMedico", backref="medico", lazy="dynamic", cascade='all, delete-orphan')
@@ -65,7 +65,7 @@ class Test(db.Model):
     __tablename__ = 'test'
     num_test = db.Column(db.Integer, primary_key = True)
     id_paciente = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
-    centro_id = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
+    id_centro = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
     date = db.Column(db.Date)
 
 class TestUnit(db.Model):
@@ -111,11 +111,11 @@ def after_insert_test(mapper, connection, target):
 @event.listens_for(PacienteAsociado, 'after_insert')
 def after_asociate_patient(mapper, connection, target):
     print('after asociate patient', file=sys.stderr)
-    paciente = User.query.filter(User.id == target.paciente_id).first()
+    paciente = User.query.filter(User.id == target.id_paciente).first()
     tests = paciente.tests
     new_table = AccionesTestMedico.__table__
     for test in tests:
-        data = {"num_test": test.num_test, "id_paciente": target.paciente_id, "id_medico": target.medico_id}
+        data = {"num_test": test.num_test, "id_paciente": target.id_paciente, "id_medico": target.id_medico}
         connection.execute(new_table.insert(), data)
 '''
 @login_manager.user_loader

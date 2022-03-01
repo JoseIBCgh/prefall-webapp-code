@@ -2,7 +2,7 @@ from sqlite3 import IntegrityError
 from sqlalchemy import null, desc, create_engine, exc, cast
 import sqlalchemy
 
-from apps.authentication.models import AccionesTestMedico, Role, Test, TestUnit, User, Centro
+from apps.authentication.models import AccionesTestMedico, PacienteAsociado, Role, Test, TestUnit, User, Centro
 from apps.prefall import blueprint
 from flask import jsonify, render_template, request, redirect, url_for
 from jinja2 import TemplateNotFound
@@ -84,7 +84,7 @@ def lista_centros():
 def detalles_centro(id):
     from apps import db
     centro = Centro.query.filter_by(id=id).first()
-    users = User.query.filter_by(centro_id=id).all()
+    users = User.query.filter_by(id_centro=id).all()
 
     return render_template(
         'prefall/detalles_centro.html', centro=centro, users=users)
@@ -158,7 +158,7 @@ def pantalla_principal_medico():
         pacientes = current_user.pacientes_asociados.\
                     filter(User.nombre.like('%'+nombre+'%')).\
                         filter( cast( User.id, db.String ).like( '%'+ id +'%' ) ).\
-                            filter(User.centro_id == Centro.id).\
+                            filter(User.id_centro == Centro.id).\
                                 filter(Centro.nombreFiscal.like('%'+centro+'%')).all()
     else:
         pacientes = current_user.pacientes_asociados
@@ -231,7 +231,7 @@ def crear_paciente_medico():
         from apps import user_datastore, db
         user_datastore.create_user(
             id=id, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
-            peso=peso, antecedentes_clinicos=antecedentes, centro_id = current_user.centro_id,
+            peso=peso, antecedentes_clinicos=antecedentes, id_centro = current_user.id_centro,
             password=hash_password(default_password), email=default_email, roles=["paciente"]
         )
         db.session.commit()
@@ -249,7 +249,7 @@ def detalles_test(id, num):
         join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
         AccionesTestMedico.id_paciente == Test.id_paciente)).\
             with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, Test.num_test, 
-                    Test.date, Test.id_paciente, Test.centro_id).\
+                    Test.date, Test.id_paciente, Test.id_centro).\
                         filter(AccionesTestMedico.id_medico == current_user.id).\
                             filter(Test.id_paciente == id).\
                                 filter(Test.num_test == num).first()
@@ -264,7 +264,7 @@ def detalles_test(id, num):
             filter_by(id_medico=current_user.id).update({"diagnostico": form.diagnostico.data})
         db.session.commit()
         test = {"visto": True, "diagnostico": form.diagnostico.data, "num_test": test.num_test,
-        "date": test.date, "id_paciente": test.id_paciente, "centro_id": test.centro_id}
+        "date": test.date, "id_paciente": test.id_paciente, "id_centro": test.id_centro}
     return render_template(
         'prefall/detalles_test.html', form = form, test = test
     )
@@ -286,7 +286,7 @@ def detalles_clinicos(id):
         df = read_csv(file_path)
         df = add_columns(df, id)
         df = df.drop_duplicates(subset=["time"])
-        add_df_to_sql(df, paciente.centro_id)
+        add_df_to_sql(df, paciente.id_centro)
         '''
         try:
             add_df_to_sql(df)
@@ -357,7 +357,7 @@ def pantalla_principal_auxiliar():
                 filter_by(centro = center).\
                     filter(User.nombre.like('%'+nombre+'%')).\
                         filter( cast( User.id, db.String ).like( '%'+ id +'%' ) ).\
-                            filter(User.centro_id == Centro.id).\
+                            filter(User.id_centro == Centro.id).\
                                 filter(Centro.nombreFiscal.like('%'+centroFiltro+'%')).all()
     else:
         pacientes = User.query.\
@@ -388,7 +388,7 @@ def crear_paciente_auxiliar():
         from apps import user_datastore, db
         user_datastore.create_user(
             id=id, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
-            peso=peso, centro_id = current_user.centro_id,
+            peso=peso, id_centro = current_user.id_centro,
             password=hash_password(default_password), email=default_email, roles=["paciente"]
         )
         db.session.commit()
@@ -417,7 +417,7 @@ def detalles_personales(id):
         df = read_csv(file_path)
         df = add_columns(df, id)
         df = df.drop_duplicates(subset=["time"])
-        add_df_to_sql(df, paciente.centro_id)
+        add_df_to_sql(df, paciente.id_centro)
         os.remove(file_path)
 
     rolMedico = Role.query.filter_by(name="medico").first()
@@ -480,10 +480,8 @@ def editar_detalles_personales(id):
 @personal_data_access()
 def asociar_medico(id, id_medico):
     from apps import db
-    paciente = User.query.filter_by(id=id).first()
-    medico = User.query.filter_by(id=id_medico).first()
-    paciente.medicos_asociados.append(medico)
-
+    asociacion = PacienteAsociado(id_paciente= id, id_medico=id_medico)
+    db.session.add(asociacion)
     db.session.commit()
 
     return redirect(url_for("prefall_blueprint.detalles_personales", id=id))
@@ -560,7 +558,7 @@ def add_df_to_sql(df, id_centro):
 
     test = Test(
         num_test = df.at[0,"num_test"], id_paciente= df.at[0,"id_paciente"],
-        date = df.at[0,"date"], centro_id=id_centro)
+        date = df.at[0,"date"], id_centro=id_centro)
     db.session.add(test)
 
     for index, row in df.iterrows():
