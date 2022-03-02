@@ -85,7 +85,7 @@
                                     </tr>                        
                                 </tbody>
                             </table>
-                            <a href="{{url_for('prefall_blueprint.editar_detalles_centro', id=centro['id'])}}" class="label theme-bg text-white f-12">Editar</a>
+                            <a href="{{url_for('prefall_blueprint.editar_detalles_centro', id_centro=centro['id'])}}" class="label theme-bg text-white f-12">Editar</a>
                         </div>
                     </div>
                     <div class="card-header">
@@ -119,6 +119,7 @@
                             </table>
                         </div>
                     </div>
+                    {% block after_tables %}{% endblock %}
                 </div>
             </div>
         </div>

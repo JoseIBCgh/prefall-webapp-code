@@ -35,6 +35,11 @@ def index():
     if current_user.has_role('admin'):
         return redirect(url_for('prefall_blueprint.lista_centros'))
 
+    if current_user.has_role('admin-centro'):
+        from apps.authentication.models import Centro
+        centro = Centro.query.filter(Centro.id_admin == current_user.id).first()
+        return redirect(url_for('prefall_blueprint.detalles_centro', id_centro=centro.id))
+
 
     return render_template('home/index.html', segment='index')
     

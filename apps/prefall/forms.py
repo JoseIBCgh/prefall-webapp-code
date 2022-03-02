@@ -1,5 +1,8 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, IntegerField, DecimalField, DateField, TextAreaField, SubmitField
+from wtforms import (
+    StringField, IntegerField, DecimalField, DateField, 
+    TextAreaField, SubmitField, PasswordField, EmailField
+)
 from wtforms.validators import DataRequired, AnyOf, Optional
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
@@ -19,6 +22,11 @@ class CreatePatientPersonalForm(FlaskForm):
     sexo = StringField('Sexo', id='sex_create_patient', validators=[DataRequired(), AnyOf(values=["V", "M"], message="Introduce V o M")])
     altura = DecimalField('Altura', id='height_create_patient', validators=[DataRequired()])
     peso = DecimalField('Peso', id='weight_create_patient', validators=[DataRequired()])
+
+class CreateCenterAdminForm(FlaskForm):
+    username = StringField('Usuario', id='username_admin', validators=[DataRequired()])
+    password = PasswordField('Contraseña', id='password_admin', validators=[DataRequired()])
+    email = EmailField("Email", id="email_admin", validators=[DataRequired()])
 
 class EditPersonalDataForm(FlaskForm):
     nombre = StringField('Nombre', id='name_edit_personal_data', validators=[Optional()])

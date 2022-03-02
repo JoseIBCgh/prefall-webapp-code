@@ -1,0 +1,5 @@
+{% extends "prefall/detalles_centro.html" %}
+
+{% block after_tables %}
+<a href="{{url_for('prefall_blueprint.crear_admin_centro', id=centro['id'])}}" class="label theme-bg text-white f-12">Crear administrador</a>
+{% endblock %}

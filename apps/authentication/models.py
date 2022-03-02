@@ -58,8 +58,10 @@ class Centro(db.Model):
     ciudad = db.Column(db.String(30))
     provincia = db.Column(db.String(30))
     pais = db.Column(db.String(20))
-    usuarios = db.relationship("User", backref="centro")
+    usuarios = db.relationship("User", backref="centro", foreign_keys=[User.id_centro])
     tests = db.relationship("Test", backref="centro", lazy="dynamic")
+    id_admin = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL', 
+    use_alter=True, name='fk_id_admin'))
 
 class Test(db.Model):
     __tablename__ = 'test'
@@ -107,7 +109,7 @@ def after_insert_test(mapper, connection, target):
     for medico in medicos_asociados:
         data = {"num_test": target.num_test, "id_paciente": target.id_paciente, "id_medico": medico.id}
         connection.execute(new_table.insert(), data)
-
+'''
 @event.listens_for(PacienteAsociado, 'after_insert')
 def after_asociate_patient(mapper, connection, target):
     print('after asociate patient', file=sys.stderr)
@@ -117,6 +119,7 @@ def after_asociate_patient(mapper, connection, target):
     for test in tests:
         data = {"num_test": test.num_test, "id_paciente": target.id_paciente, "id_medico": target.id_medico}
         connection.execute(new_table.insert(), data)
+'''
 '''
 @login_manager.user_loader
 def user_loader(id):
@@ -134,6 +137,11 @@ def create_data():
     from apps import user_datastore
     user_datastore.find_or_create_role(
         name="admin",
+        permissions={"datos-personales-pacientes-centro", "datos-personales-personal-centro"},
+    )
+
+    user_datastore.find_or_create_role(
+        name="admin-centro",
         permissions={"datos-personales-pacientes-centro", "datos-personales-personal-centro"},
     )
     

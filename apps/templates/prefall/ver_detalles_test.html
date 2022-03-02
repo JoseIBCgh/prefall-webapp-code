@@ -52,24 +52,43 @@
                                             <h6 class="text-muted">{{test.centro.nombreFiscal}}</h6>
                                         </td>
                                     </tr>
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">Diagnostico</h6>
-                                        </td>
-                                        {% if test["diagnostico"] is not none %}
-                                        <td>
-                                            <h6 class="text-muted">{{test["diagnostico"]}}</h6>
-                                        </td>
-                                        {% else %}
-                                        <td>
-                                            <h6 class="text-muted">No se ha emitido un diagnostico aún</h6>
-                                        </td>
-                                        {% endif %}
-                                    </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
+                    {% if diagnosticos|length > 0 %}
+                    <div class="card-header">
+                        <h5>Diagnosticos</h5>
+                    </div>
+                    <div class="card-block px-0 py-3">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre médico</th>
+                                        <th>Diagnóstico</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for diagnostico in diagnosticos %}
+                                    <tr class="unread">
+                                        <td>
+                                            <h6 class="text-muted">{{diagnostico["nombre"]}}</h6>
+                                        </td>
+                                        <td>
+                                            <h6 class="text-muted">{{diagnostico["diagnostico"]}}</h6>
+                                        </td>
+                                    </tr> 
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="card-header">
+                        <h5>No se ha emitido un diagnóstico aún</h5>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

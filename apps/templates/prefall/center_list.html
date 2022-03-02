@@ -33,7 +33,7 @@
                                         <td>
                                             <h6 class="text-muted">{{centro["nombreFiscal"]}}</h6>
                                         </td>
-                                        <td><a href="{{url_for('prefall_blueprint.detalles_centro', id=centro['id'])}}" class="label theme-bg text-white f-12">Ver detalles</a></td>
+                                        <td><a href="{{url_for('prefall_blueprint.detalles_centro', id_centro=centro['id'])}}" class="label theme-bg text-white f-12">Ver detalles</a></td>
                                     </tr> 
                                     {% endfor %}                               
                                 </tbody>

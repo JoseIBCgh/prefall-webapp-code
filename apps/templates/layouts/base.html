@@ -56,6 +56,8 @@
     {% include 'includes/sidebar-medico.html' %}
     {% elif current_user.has_role('admin') %}
     {% include 'includes/sidebar-admin.html' %}
+    {% elif current_user.has_role('admin-centro') %}
+    {% include 'includes/sidebar-admin-centro.html' %}
     {% endif %}
     <div class="pcoded-main-container">
         <div class="pcoded-wrapper">

@@ -4,7 +4,7 @@ import sqlalchemy
 
 from apps.authentication.models import AccionesTestMedico, PacienteAsociado, Role, Test, TestUnit, User, Centro
 from apps.prefall import blueprint
-from flask import jsonify, render_template, request, redirect, url_for
+from flask import abort, jsonify, render_template, request, redirect, url_for
 from jinja2 import TemplateNotFound
 
 from flask_security import (
@@ -20,8 +20,9 @@ from werkzeug.utils import secure_filename
 import os
 from pathlib import Path
 
-from apps.prefall.decorators import clinical_data_access, patient_data_access, personal_data_access
+from apps.prefall.decorators import admin_centro_access, clinical_data_access, patient_data_access, personal_data_access
 from apps.prefall.forms import (
+    CreateCenterAdminForm,
     CreateCenterForm,
     CreatePatientClinicalForm,
     CreatePatientPersonalForm,
@@ -79,21 +80,82 @@ def lista_centros():
     return render_template('prefall/center_list.html', centros=centros)
 
 
-@blueprint.route('detalles_centro/<id>', methods=['GET', 'POST'])
+@blueprint.route('detalles_centro_admin/<id>', methods=['GET', 'POST'])
 @roles_accepted("admin")
-def detalles_centro(id):
+def detalles_centro_admin(id):
     from apps import db
     centro = Centro.query.filter_by(id=id).first()
     users = User.query.filter_by(id_centro=id).all()
 
     return render_template(
+        'prefall/detalles_centro_admin.html', centro=centro, users=users)
+
+
+@blueprint.route('crear_admin_centro/<id>', methods=['GET', 'POST'])
+@roles_accepted("admin")
+def crear_admin_centro(id):
+    centro = Centro.query.filter_by(id=id).first()
+    form = CreateCenterAdminForm()
+    if form.validate_on_submit():
+        username = form["username"].data
+        password = form["password"].data
+        email = form["email"].data
+        from apps import user_datastore, db
+        user_datastore.create_user(
+            username= username, id_centro = id,
+            password=hash_password(password), email=email, roles=["admin-centro"]
+        )
+        user_created = User.query.filter_by(email=email).first()
+        centro.id_admin = user_created.id
+        db.session.add(centro)
+        db.session.commit()
+
+        return redirect(url_for('prefall_blueprint.detalles_centro', id_centro=id))
+
+    return render_template(
+        'prefall/create_admin_center.html', centro= centro, form=form
+    )
+
+### END ADMIN ###
+
+### BEGIN ADMIN CENTRO ###
+
+@blueprint.route('detalles_centro/<id_centro>', methods=['GET', 'POST'])
+@admin_centro_access()
+def detalles_centro(id_centro):
+    if current_user.has_role("admin"):
+        return redirect(url_for("prefall_blueprint.detalles_centro_admin", id=id_centro))
+
+    from apps import db
+    centro = Centro.query.filter_by(id=id_centro).first()
+    admin_centro_role = Role.query.filter_by(name="admin-centro").first()
+    users = User.query.filter_by(id_centro=id_centro).\
+        filter(db.not_(User.roles.contains(admin_centro_role))).all()
+
+    return render_template(
         'prefall/detalles_centro.html', centro=centro, users=users)
 
 
-@blueprint.route('editar_detalles_centro/<id>', methods=['GET', 'POST'])
-@roles_accepted("admin")
-def editar_detalles_centro(id):
-    centro = Centro.query.filter_by(id=id).first()
+@blueprint.route('borrar_usuario/<id_centro>/<id_user>', methods=['GET','POST'])
+@admin_centro_access()
+def borrar_usuario(id_centro, id_user):
+    from apps import db, user_datastore
+    user = User.query.filter_by(id=id_user).filter_by(id_centro=id_centro).first()
+    if user.has_role("admin_centro") and current_user.has_role("admin_centro"):
+        abort(403)
+
+    else:
+        user_datastore.delete_user(user)
+
+        db.session.commit()
+
+        return redirect(url_for("prefall_blueprint.detalles_centro", id_centro=id_centro))
+
+
+@blueprint.route('editar_detalles_centro/<id_centro>', methods=['GET', 'POST'])
+@admin_centro_access()
+def editar_detalles_centro(id_centro):
+    centro = Centro.query.filter_by(id=id_centro).first()
     form = EditCenterDataForm(request.form)
     if 'editar_detalles_centro' in request.form and form.validate():
         cif = request.form['cif']
@@ -119,25 +181,13 @@ def editar_detalles_centro(id):
             centro.pais = pais
         from apps import db
         db.session.commit()
-        return redirect(url_for('prefall_blueprint.detalles_centro', id=id))
+        return redirect(url_for('prefall_blueprint.detalles_centro', id_centro=id_centro))
         
     return render_template(
         'prefall/editar_detalles_centro.html', 
         form=form, centro=centro)
 
-
-@blueprint.route('borrar_usuario/<id_centro>/<id_user>', methods=['GET','POST'])
-@roles_accepted("admin")
-def borrar_usuario(id_centro, id_user):
-    from apps import db, user_datastore
-    user = User.query.filter_by(id=id_user).first()
-    user_datastore.delete_user(user)
-
-    db.session.commit()
-
-    return redirect(url_for("prefall_blueprint.detalles_centro", id=id_centro))
-
-### END ANDMIN ###
+### END ADMIN CENTRO ###
 
 ### BEGIN MEDICO ###
 
@@ -515,9 +565,16 @@ def pantalla_principal_paciente():
 def ver_detalles_test(id, num):
     from apps import db
     test = Test.query.filter_by(id_paciente=id).filter_by(num_test=num).first()
-
+    diagnosticos = db.session.query(Test, AccionesTestMedico, User).\
+        join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
+        AccionesTestMedico.id_paciente == Test.id_paciente)).\
+            join(User, AccionesTestMedico.id_medico == User.id).\
+                with_entities(User.nombre, AccionesTestMedico.diagnostico).\
+                    filter(AccionesTestMedico.diagnostico != None).\
+                        filter(Test.num_test == test.num_test).\
+                            filter(Test.id_paciente == test.id_paciente).all()
     return render_template(
-        'prefall/ver_detalles_test.html', test = test
+        'prefall/ver_detalles_test.html', test = test, diagnosticos=diagnosticos
     )
 
 ### END PACIENTE ###
