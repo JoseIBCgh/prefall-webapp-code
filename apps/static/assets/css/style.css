@@ -13565,11 +13565,49 @@ div.code-toolbar > .toolbar span:hover {
   }
 }
 
-.center{
+.center {
   text-align: center;
   vertical-align: center;
 }
 
-.remove-margins{
+.right {
+  text-align: right;
+  vertical-align: center;
+}
+
+.left {
+  text-align: left;
+  vertical-align: center;
+}
+
+.remove-margins {
   margin: 0;
+}
+
+.small-column-2 {
+  width: 30%;
+}
+
+.big-column-2 {
+  width: 70%;
+}
+
+.equal-width-3 {
+  width: calc(100% / 3);
+}
+
+.equal-width-4 {
+  width: calc(100% / 4);
+}
+
+.equal-width-4-90 {
+  width: calc(90% / 4);
+}
+
+.equal-width-4-80 {
+  width: calc(100% / 6);
+}
+
+.width-10 {
+  width: 10%;
 }

@@ -14,109 +14,118 @@
             <!-- [ breadcrumb ] end -->
             <div class="main-body">
                 <div class="page-wrapper">
-                    <div class="card-header">
-                        <h5>Detalles centro</h5>
-                    </div>
-                    <div class="card-block px-0 py-3">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Nombre</th>
-                                        <th class="text-right"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">CIF</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{centro["cif"]}}</h6>
-                                        </td>
-                                    </tr> 
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">Nombre fiscal</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{centro["nombreFiscal"]}}</h6>
-                                        </td>
-                                    </tr> 
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">Dirección</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{centro["direccion"]}}</h6>
-                                        </td>
-                                    </tr> 
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">CP</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{centro["CP"]}}</h6>
-                                        </td>
-                                    </tr> 
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">Ciudad</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{centro["ciudad"]}}</h6>
-                                        </td>
-                                    </tr>  
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">Provincia</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{centro["provincia"]}}</h6>
-                                        </td>
-                                    </tr>   
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">País</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{centro["pais"]}}</h6>
-                                        </td>
-                                    </tr>                        
-                                </tbody>
-                            </table>
-                            <a href="{{url_for('prefall_blueprint.editar_detalles_centro', id_centro=centro['id'])}}" class="label theme-bg text-white f-12">Editar</a>
+                    <div class="card Recent-Users">
+                        <div class="card-header">
+                            <h5>Detalles centro</h5>
+                        </div>
+                        <div class="card-block px-0 py-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre</th>
+                                            <th class="text-right"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">CIF</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{centro["cif"]}}</h6>
+                                            </td>
+                                        </tr> 
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Nombre fiscal</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{centro["nombreFiscal"]}}</h6>
+                                            </td>
+                                        </tr> 
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Dirección</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{centro["direccion"]}}</h6>
+                                            </td>
+                                        </tr> 
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">CP</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{centro["CP"]}}</h6>
+                                            </td>
+                                        </tr> 
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Ciudad</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{centro["ciudad"]}}</h6>
+                                            </td>
+                                        </tr>  
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Provincia</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{centro["provincia"]}}</h6>
+                                            </td>
+                                        </tr>   
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">País</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{centro["pais"]}}</h6>
+                                            </td>
+                                        </tr>
+                                        <tr class="unread">
+                                            <td class="text-right"></td>
+                                            <td>
+                                                <a href="{{url_for('prefall_blueprint.editar_detalles_centro', id_centro=centro['id'])}}" class="label theme-bg text-white f-12">Editar</a>
+                                            </td>
+                                        </tr>                        
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                    <div class="card-header">
-                        <h5>Usuarios del centro</h5>
-                    </div>
-                    <div class="card-block px-0 py-3">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Tipo de usuario</th>
-                                        <th>Nombre</th>
-                                        <th class="text-right"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for user in users %}
-                                    <tr class="unread">
-                                        <td>
-                                            {% for role in user.roles %}
-                                            <h6 class="text-muted">{{role.name}}</h6>
-                                            {% endfor %}
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{user["nombre"]}}</h6>
-                                        </td>
-                                        <td><a href="{{url_for('prefall_blueprint.borrar_usuario', id_centro=centro['id'], id_user=user['id'])}}" class="label theme-bg text-white f-12">Borrar</a></td>
-                                    </tr> 
-                                    {% endfor %}                               
-                                </tbody>
-                            </table>
+                    <div class="card Recent-Users">
+                        <div class="card-header">
+                            <h5>Usuarios del centro</h5>
+                        </div>
+                        <div class="card-block px-0 py-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Tipo de usuario</th>
+                                            <th>Nombre</th>
+                                            <th class="text-right"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user in users %}
+                                        <tr class="unread">
+                                            <td>
+                                                {% for role in user.roles %}
+                                                <h6 class="text-muted">{{role.name}}</h6>
+                                                {% endfor %}
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{user["nombre"]}}</h6>
+                                            </td>
+                                            <td><a href="{{url_for('prefall_blueprint.borrar_usuario', id_centro=centro['id'], id_user=user['id'])}}" class="label theme-bg text-white f-12">Borrar</a></td>
+                                        </tr> 
+                                        {% endfor %}                               
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                     {% block after_tables %}{% endblock %}

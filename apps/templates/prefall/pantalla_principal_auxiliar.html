@@ -25,10 +25,10 @@
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
-                                            <th class="center">ID</th>
-                                            <th class="center">Nombre</th>
-                                            <th class="center">Centro</th>
-                                            <th class="text-right"></th>
+                                            <th class="center equal-width-4">ID</th>
+                                            <th class="center equal-width-4">Nombre</th>
+                                            <th class="center equal-width-4">Centro</th>
+                                            <th class="text-right equal-width-4"></th>
                                         </tr>
                                         <tr>
                                             <form role="form" method="post" action="">
@@ -36,23 +36,23 @@
                                                 {{ render_table_field(formPacientes.id, "ID") }}
                                                 {{ render_table_field(formPacientes.nombre, "Nombre") }}
                                                 {{ render_table_field(formPacientes.centro, "Centro") }}
-                                                <th class="center">{{formPacientes.submitFilterUser(value="Filtrar", class="label theme-bg text-white f-12")}}</th>
+                                                <th class="center equal-width-4">{{formPacientes.submitFilterUser(value="Filtrar", class="label theme-bg text-white f-12 center")}}</th>
                                             </form>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for paciente in pacientes %}
                                         <tr class="unread">
-                                            <td>
+                                            <td class="equal-width-4">
                                                 <h6 class="text-muted center remove-margins">{{paciente["id"]}}</h6>
                                             </td>
-                                            <td>
+                                            <td class="equal-width-4">
                                                 <h6 class="text-muted center remove-margins">{{paciente["nombre"]}}</h6>
                                             </td>
-                                            <td>
+                                            <td class="equal-width-4">
                                                 <h6 class="text-muted center remove-margins">{{paciente.centro.nombreFiscal}}</h6>
                                             </td>
-                                            <td><a href="{{url_for('prefall_blueprint.detalles_personales', id=paciente['id'])}}" class="label theme-bg text-white f-12 center">Ver detalles</a></td>
+                                            <td class="equal-width-4 center"><a href="{{url_for('prefall_blueprint.detalles_personales', id=paciente['id'])}}" class="label theme-bg text-white f-12 center">Ver detalles</a></td>
                                         </tr> 
                                         {% endfor %}                               
                                     </tbody>

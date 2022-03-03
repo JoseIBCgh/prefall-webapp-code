@@ -1,5 +1,5 @@
 {% extends "layouts/base.html" %}
-{% from "includes/_form_helpers.html" import render_field_with_label %}
+{% from "includes/_form_helpers.html" import render_field_with_label, render_field %}
 
 {% block title %} Detalles test {% endblock %} 
 
@@ -15,55 +15,56 @@
             <!-- [ breadcrumb ] end -->
             <div class="main-body">
                 <div class="page-wrapper">
-                    <div class="card-header">
-                        <h5>Detalles test</h5>
-                    </div>
-                    <div class="card-block px-0 py-3">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Nombre</th>
-                                        <th class="text-right"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">Número de test</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{test["num_test"]}}</h6>
-                                        </td>
-                                    </tr> 
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">Fecha</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{test["date"]}}</h6>
-                                        </td>
-                                    </tr>
-                                    {% if test["diagnostico"] is not none %}
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">Diagnostico</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{test["diagnostico"]}}</h6>
-                                        </td>
-                                    </tr>
-                                    {% endif %}
-                                </tbody>
-                            </table>
+                    <div class="card Recent-Users">
+                        <div class="card-header">
+                            <h5>Detalles test</h5>
+                        </div>
+                        <div class="card-block px-0 py-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <tbody>
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Número de test</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{test["num_test"]}}</h6>
+                                            </td>
+                                        </tr> 
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Fecha</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{test["date"]}}</h6>
+                                            </td>
+                                        </tr>
+                                        {% if test["diagnostico"] is not none %}
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Diagnostico</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{test["diagnostico"]}}</h6>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                     {% if test["diagnostico"] is none %}
-                    <form role="form" method="post" action="">
-                        {{ form.csrf_token }}
-                        {{ render_field_with_label(form.diagnostico) }}
-                        {{form.submitDiagnosticoTest(class="label theme-bg text-white f-12")}}
-                    </form>
+                    <div class="card Recent-Users">
+                        <div class="card-header">
+                            <h5>Diagnosticar test</h5>
+                        </div>
+                        <form role="form" method="post" action="">
+                            {{ form.csrf_token }}
+                            {{ render_field(form.diagnostico) }}
+                            {{form.submitDiagnosticoTest(class="label theme-bg text-white f-12 btn-rounded")}}
+                        </form>
+                    </div>
                     {% endif %}
                 </div>
             </div>

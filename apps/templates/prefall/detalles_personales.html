@@ -15,175 +15,182 @@
             <!-- [ breadcrumb ] end -->
             <div class="main-body">
                 <div class="page-wrapper">
-                    <div class="card-header">
-                        <h5>Detalles personales</h5>
+                    <div class="card Recent-Users">
+                        <div class="card-header">
+                            <h5>Detalles personales</h5>
+                        </div>
+                        <div class="card-block px-0 py-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <tbody>
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Nombre</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{paciente["nombre"]}}</h6>
+                                            </td>
+                                        </tr> 
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Fecha de nacimiento</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{paciente["fecha_nacimiento"]}}</h6>
+                                            </td>
+                                        </tr> 
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Sexo</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{paciente["sexo"]}}</h6>
+                                            </td>
+                                        </tr> 
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Altura</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{paciente["altura"]}}</h6>
+                                            </td>
+                                        </tr> 
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Peso</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{paciente["peso"]}}</h6>
+                                            </td>
+                                        </tr> 
+                                        <tr class="unread">
+                                            <td class="text-right"></td>
+                                            <td>
+                                                <a href="{{url_for('prefall_blueprint.editar_detalles_personales', id=paciente['id'])}}" class="label theme-bg text-white f-12">Editar</a>
+                                            </td>
+                                        </tr>                           
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-block px-0 py-3">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Nombre</th>
-                                        <th class="text-right"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">Nombre</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{paciente["nombre"]}}</h6>
-                                        </td>
-                                    </tr> 
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">Fecha de nacimiento</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{paciente["fecha_nacimiento"]}}</h6>
-                                        </td>
-                                    </tr> 
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">Sexo</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{paciente["sexo"]}}</h6>
-                                        </td>
-                                    </tr> 
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">Altura</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{paciente["altura"]}}</h6>
-                                        </td>
-                                    </tr> 
-                                    <tr class="unread">
-                                        <td>
-                                            <h6 class="text-muted">Peso</h6>
-                                        </td>
-                                        <td>
-                                            <h6 class="text-muted">{{paciente["peso"]}}</h6>
-                                        </td>
-                                    </tr>                            
-                                </tbody>
-                            </table>
-                            <a href="{{url_for('prefall_blueprint.editar_detalles_personales', id=paciente['id'])}}" class="label theme-bg text-white f-12">Editar</a>
-                            <br><br>
-                            <form method=post enctype=multipart/form-data>
-                                <div class="form-group">
-                                    {{ uploadTestForm.csrf_token }}
-                                    {{uploadTestForm.test.label}}
-                                    {{uploadTestForm.test(class="form-control-file")}}
-                                    <br>
-                                    {{uploadTestForm.submitUpload(class="label theme-bg text-white f-12")}}
-                                    {% if uploadTestForm.test.errors %}
-                                        <ul class=errors>
-                                        {% for error in uploadTestForm.test.errors %}
-                                        <li>{{ error }}</li>
-                                        {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                </div>
-                            </form>
-                            <div class="card-header">
-                                <h5>Tests de la marcha</h5>
+                    <br><br>
+                    <form method=post enctype=multipart/form-data>
+                        <div class="form-group">
+                            {{ uploadTestForm.csrf_token }}
+                            {{uploadTestForm.test.label}}
+                            {{uploadTestForm.test(class="form-control-file")}}
+                            <br>
+                            {{uploadTestForm.submitUpload(class="label theme-bg text-white f-12 btn-rounded")}}
+                            {% if uploadTestForm.test.errors %}
+                                <ul class=errors>
+                                {% for error in uploadTestForm.test.errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </form>
+                    <div class="card Recent-Users">
+                        <div class="card-header">
+                            <h5>Tests de la marcha</h5>
+                        </div>
+                        <div class="card-block px-0 py-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th class="center">Numero</th>
+                                            <th class="center">Fecha</th>
+                                            <th class="text-right"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for test in tests %}
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted center">{{test["num_test"]}}</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted center">{{test["date"]}}</h6>
+                                            </td>
+                                            <td class="center"><a href="{{url_for('prefall_blueprint.get_test', paciente=paciente['id'], test=test['num_test'])}}" class="label theme-bg text-white f-12">Descargar</a></td>
+                                        </tr> 
+                                        {% endfor %}                               
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="card-block px-0 py-3">
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Numero</th>
-                                                <th>Fecha</th>
-                                                <th class="text-right"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for test in tests %}
-                                            <tr class="unread">
-                                                <td>
-                                                    <h6 class="text-muted">{{test["num_test"]}}</h6>
-                                                </td>
-                                                <td>
-                                                    <h6 class="text-muted">{{test["date"]}}</h6>
-                                                </td>
-                                                <td><a href="{{url_for('prefall_blueprint.get_test', paciente=paciente['id'], test=test['num_test'])}}" class="label theme-bg text-white f-12">Descargar</a></td>
-                                            </tr> 
-                                            {% endfor %}                               
-                                        </tbody>
-                                    </table>
-                                </div>
+                        </div>
+                    </div>
+                    <div class="card Recent-Users">
+                        <div class="card-header">
+                            <h5>Medicos asociados</h5>
+                        </div>
+                        <div class="card-block px-0 py-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th class="center equal-width-3">ID</th>
+                                            <th class="center equal-width-3">Nombre</th>
+                                            <th class="text-right equal-width-3"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for medico in medicos_asociados %}
+                                        <tr class="unread">
+                                            <td class="equal-width-3">
+                                                <h6 class="text-muted center">{{medico["id"]}}</h6>
+                                            </td>
+                                            <td class="equal-width-3">
+                                                <h6 class="text-muted center">{{medico["nombre"]}}</h6>
+                                            </td>
+                                            <td class="center equal-width-3"><a href="{{url_for('prefall_blueprint.desasociar_medico', id=paciente['id'], id_medico=medico['id'])}}" class="label theme-bg text-white f-12">Desasociar medico</a></td>
+                                        </tr> 
+                                        {% endfor %}                               
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="card-header">
-                                <h5>Medicos asociados</h5>
-                            </div>
-                            <div class="card-block px-0 py-3">
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Nombre</th>
-                                                <th class="text-right"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for medico in medicos_asociados %}
-                                            <tr class="unread">
-                                                <td>
-                                                    <h6 class="text-muted">{{medico["id"]}}</h6>
-                                                </td>
-                                                <td>
-                                                    <h6 class="text-muted">{{medico["nombre"]}}</h6>
-                                                </td>
-                                                <td><a href="{{url_for('prefall_blueprint.desasociar_medico', id=paciente['id'], id_medico=medico['id'])}}" class="label theme-bg text-white f-12">Desasociar medico</a></td>
-                                            </tr> 
-                                            {% endfor %}                               
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                            <div class="card-header">
-                                <h5>Medicos</h5>
-                            </div>
-                            <div class="card-block px-0 py-3">
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Nombre</th>
-                                                <th class="text-right"></th>
-                                            </tr>
-                                            <tr>
-                                                <form role="form" method="post" action="">
-                                                    {{ searchDoctorForm.csrf_token }}
-                                                    {{ render_table_field(searchDoctorForm.id, "ID") }}
-                                                    {{ render_table_field(searchDoctorForm.nombre, "Nombre") }}
-                                                    <th>{{searchDoctorForm.submitFilterUser(class="label theme-bg text-white f-12")}}</th>
-                                                </form>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for medico in medicos %}
-                                            <tr class="unread">
-                                                <td>
-                                                    <h6 class="text-muted">{{medico["id"]}}</h6>
-                                                </td>
-                                                <td>
-                                                    <h6 class="text-muted">{{medico["nombre"]}}</h6>
-                                                </td>
-                                                <td>
-                                                    <td><a href="{{url_for('prefall_blueprint.asociar_medico', id=paciente['id'], id_medico=medico['id'])}}" class="label theme-bg text-white f-12">Asociar medico</a></td>
-                                                </td>
-                                            </tr> 
-                                            {% endfor %}                               
-                                        </tbody>
-                                    </table>
-                                </div>
+                        </div>
+                    </div>
+                    <div class="card Recent-Users">
+                        <div class="card-header">
+                            <h5>Medicos</h5>
+                        </div>
+                        <div class="card-block px-0 py-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th class="center equal-width-3">ID</th>
+                                            <th class="center equal-width-3">Nombre</th>
+                                            <th class="text-right center equal-width-3"></th>
+                                        </tr>
+                                        <tr>
+                                            <form role="form" method="post" action="">
+                                                {{ searchDoctorForm.csrf_token }}
+                                                {{ render_table_field(searchDoctorForm.id, "ID") }}
+                                                {{ render_table_field(searchDoctorForm.nombre, "Nombre") }}
+                                                <th class="center equal-width-3">{{searchDoctorForm.submitFilterUser(class="label theme-bg text-white f-12")}}</th>
+                                            </form>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for medico in medicos %}
+                                        <tr class="unread">
+                                            <td class="equal-width-3">
+                                                <h6 class="text-muted center">{{medico["id"]}}</h6>
+                                            </td>
+                                            <td class="equal-width-3">
+                                                <h6 class="text-muted center">{{medico["nombre"]}}</h6>
+                                            </td>
+                                            <td class="center equal-width-3">
+                                                <a href="{{url_for('prefall_blueprint.asociar_medico', id=paciente['id'], id_medico=medico['id'])}}" class="label theme-bg text-white f-12">Asociar medico</a>
+                                            </td>
+                                        </tr> 
+                                        {% endfor %}                               
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>

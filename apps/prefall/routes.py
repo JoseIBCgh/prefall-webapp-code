@@ -85,10 +85,13 @@ def lista_centros():
 def detalles_centro_admin(id):
     from apps import db
     centro = Centro.query.filter_by(id=id).first()
-    users = User.query.filter_by(id_centro=id).all()
+    users = User.query.filter_by(id_centro=id).filter(Centro.id == id).\
+        filter(db.or_(Centro.id_admin == None,Centro.id_admin != User.id)).all()
+    admin = User.query.filter_by(id_centro=id).filter(Centro.id == id).\
+        filter(Centro.id_admin == User.id).first()
 
     return render_template(
-        'prefall/detalles_centro_admin.html', centro=centro, users=users)
+        'prefall/detalles_centro_admin.html', centro=centro, users=users, admin=admin)
 
 
 @blueprint.route('crear_admin_centro/<id>', methods=['GET', 'POST'])
