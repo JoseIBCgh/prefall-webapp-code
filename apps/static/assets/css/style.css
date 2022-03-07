@@ -13611,3 +13611,7 @@ div.code-toolbar > .toolbar span:hover {
 .width-10 {
   width: 10%;
 }
+
+p strong {
+  font-weight: 800;
+}
