@@ -1,4 +1,5 @@
 {% extends "layouts/base.html" %}
+{% from "includes/_form_helpers.html" import render_table_field %}
 
 {% block title %} Detalles clinicos {% endblock %} 
 
@@ -22,6 +23,14 @@
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <tbody>
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Identificador</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{paciente["identificador"]}}</h6>
+                                            </td>
+                                        </tr>
                                         <tr class="unread">
                                             <td>
                                                 <h6 class="text-muted">Nombre</h6>
@@ -81,15 +90,60 @@
                             </div>
                         </div>
                     </div>
-                    <br><br>
                     <form method=post enctype=multipart/form-data>
                         <div class="form-group">
-                            {{ form.csrf_token }}
-                            {{form.test.label}}
-                            {{form.test(class="form-control-file")}}
+                            {{ formFile.csrf_token }}
+                            {{formFile.file.label}}
+                            {{formFile.file(class="form-control-file")}}
                             <br>
-                            <input type=submit value=Upload class="label theme-bg text-white f-12 btn-rounded">
-                            {% if form.test.errors %}
+                            {{formFile.submitUploadFile(class="label theme-bg text-white f-12 btn-rounded")}}
+                            {% if formFile.file.errors %}
+                                <ul class=errors>
+                                {% for error in form.test.errors %}
+                                <li>{{ error }}</li>
+                                {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </form>
+                    {% if files|length > 0 %}
+                    <div class="card Recent-Users">
+                        <div class="card-header">
+                            <h5>Ficheros</h5>
+                        </div>
+                        <div class="card-block px-0 py-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <form role="form" method="post" action="">
+                                            {{ formFilterFile.csrf_token }}
+                                            {{ render_table_field(formFilterFile.nombreFichero, "Nombre del fichero") }}
+                                            <th class="center">{{formFilterFile.submitFilterFile(class="label theme-bg text-white f-12")}}</th>
+                                        </form>
+                                    </thead>
+                                    <tbody>
+                                        {% for file in files %}
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted center">{{file["filename"]}}</h6>
+                                            </td>
+                                            <td class="center"><a href="{{url_for('prefall_blueprint.download_file', file_id=file['id'])}}" class="label theme-bg text-white f-12">Descargar</a></td>
+                                        </tr> 
+                                        {% endfor %}                               
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <form method=post enctype=multipart/form-data>
+                        <div class="form-group">
+                            {{ formTest.csrf_token }}
+                            {{formTest.test.label}}
+                            {{formTest.test(class="form-control-file")}}
+                            <br>
+                            {{formTest.submitUploadTest(class="label theme-bg text-white f-12 btn-rounded")}}
+                            {% if formTest.test.errors %}
                                 <ul class=errors>
                                 {% for error in form.test.errors %}
                                 <li>{{ error }}</li>

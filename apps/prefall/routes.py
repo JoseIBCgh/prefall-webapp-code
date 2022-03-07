@@ -2,9 +2,11 @@ from sqlite3 import IntegrityError
 from sqlalchemy import null, desc, create_engine, exc, cast
 import sqlalchemy
 
-from apps.authentication.models import AccionesTestMedico, PacienteAsociado, Role, Test, TestUnit, User, Centro
+from io import BytesIO
+
+from apps.authentication.models import AccionesTestMedico, DocumentoPaciente, PacienteAsociado, Role, Test, TestUnit, User, Centro, File
 from apps.prefall import blueprint
-from flask import abort, jsonify, render_template, request, redirect, url_for
+from flask import abort, jsonify, render_template, request, redirect, url_for, send_file
 from jinja2 import TemplateNotFound
 
 from flask_security import (
@@ -30,8 +32,10 @@ from apps.prefall.forms import (
     EditCenterDataForm, 
     EditClinicalDataForm, 
     EditPersonalDataForm,
+    FilterFileForm,
     FilterTestForm,
     FilterUserForm,
+    UploadFileForm,
     UploadTestForm,
 )
 
@@ -201,16 +205,12 @@ def pantalla_principal_medico():
     formPacientes = FilterUserForm()
 
     if formPacientes.submitFilterUser.data and formPacientes.validate():
-        id = formPacientes.id.data
-        if id != None:
-            id = str(id)
-        else:
-            id = ""
+        identificador = formPacientes.identificador.data
         nombre = formPacientes.nombre.data
         centro = formPacientes.centro.data
         pacientes = current_user.pacientes_asociados.\
                     filter(User.nombre.like('%'+nombre+'%')).\
-                        filter( cast( User.id, db.String ).like( '%'+ id +'%' ) ).\
+                        filter(User.identificador.like('%'+identificador+'%')).\
                             filter(User.id_centro == Centro.id).\
                                 filter(Centro.nombreFiscal.like('%'+centro+'%')).all()
     else:
@@ -250,17 +250,26 @@ def pantalla_principal_medico():
                 filter(Test.id_paciente.in_(id_asociados)).\
                     filter(Test.id_paciente == User.id).\
                         filter(Test.diagnostico == None).all()'''
-    alertas = current_user.tests_de_pacientes.\
+    test_sin_diagnosticar = current_user.tests_de_pacientes.\
         join(User, AccionesTestMedico.id_paciente == User.id).\
             join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
                 AccionesTestMedico.id_paciente == Test.id_paciente)).\
                     with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
                     AccionesTestMedico.num_test, Test.date).\
                         filter(AccionesTestMedico.diagnostico == None).all()
+
+    test_sin_revisar = current_user.tests_de_pacientes.\
+        join(User, AccionesTestMedico.id_paciente == User.id).\
+            join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
+                AccionesTestMedico.id_paciente == Test.id_paciente)).\
+                    with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
+                    AccionesTestMedico.num_test, Test.date).\
+                        filter(AccionesTestMedico.visto == False).all()
     
     return render_template(
         'prefall/pantalla_principal_medico.html', pacientes=pacientes, formPacientes=formPacientes,
-        tests= tests, alertas=alertas, formTests=formTests)
+        tests= tests, test_sin_diagnosticar=test_sin_diagnosticar, test_sin_revisar=test_sin_revisar,
+        formTests=formTests)
 
 @blueprint.route('crear_paciente_medico', methods=['GET', 'POST'])
 @roles_accepted("medico")
@@ -269,7 +278,7 @@ def crear_paciente_medico():
     if 'create_patient' in request.form and create_patient_form.validate():
 
         # read form data
-        id = request.form['id']
+        identificador = request.form['identificador']
         nombre = request.form['nombre']
         fecha = request.form['fecha']
         sexo = request.form['sexo']
@@ -283,10 +292,13 @@ def crear_paciente_medico():
 
         from apps import user_datastore, db
         user_datastore.create_user(
-            id=id, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
+            identificador=identificador, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
             peso=peso, antecedentes_clinicos=antecedentes, id_centro = current_user.id_centro,
             password=hash_password(default_password), email=default_email, roles=["paciente"]
         )
+        user_created = User.query.filter_by(identificador=identificador).first()
+        asociacion = PacienteAsociado(id_paciente= user_created.id, id_medico=current_user.id)
+        db.session.add(asociacion)
         db.session.commit()
 
         return redirect(url_for('home_blueprint.index'))
@@ -328,10 +340,22 @@ def detalles_test(id, num):
 def detalles_clinicos(id):
     from apps import db
     paciente = User.query.filter_by(id=id).first()
-    form = UploadTestForm()
+    formFile = UploadFileForm()
+    formFilterFile = FilterFileForm()
+    formTest = UploadTestForm()
 
-    if form.validate_on_submit():
-        file = form.test.data
+    if formFile.submitUploadFile.data and formFile.validate():
+        file = formFile.file.data
+
+        upload = File(filename=file.filename, data=file.read())
+        db.session.add(upload)
+        db.session.commit()
+        documentoPaciente = DocumentoPaciente(id_paciente = id, id_medico=current_user.id, id_file=upload.id)
+        db.session.add(documentoPaciente)
+        db.session.commit()
+
+    if formTest.submitUploadTest.data and formTest.validate():
+        file = formTest.test.data
         filename = secure_filename(file.filename)
         Path(os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'])).mkdir(parents=True, exist_ok=True)
         file_path = os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'], filename)
@@ -350,8 +374,21 @@ def detalles_clinicos(id):
         os.remove(file_path)
     
     tests = db.session.query(Test.num_test, Test.date).filter_by(id_paciente=id).all()
+    filesQuery = File.query.filter(File.id == DocumentoPaciente.id_file).\
+        filter(DocumentoPaciente.id_paciente==id).filter(DocumentoPaciente.id_medico==current_user.id)
     
-    return render_template('prefall/detalles_clinicos.html', paciente=paciente, tests=tests, form=form)
+    if formFilterFile.submitFilterFile.data and formFilterFile.validate():
+        file_name = formFilterFile.nombreFichero.data
+        files = File.query.filter(File.id == DocumentoPaciente.id_file).\
+            filter(DocumentoPaciente.id_paciente==id).filter(DocumentoPaciente.id_medico==current_user.id).\
+                filter(File.filename.like('%'+file_name+'%')).all()
+    else:
+        files = File.query.filter(File.id == DocumentoPaciente.id_file).\
+            filter(DocumentoPaciente.id_paciente==id).filter(DocumentoPaciente.id_medico==current_user.id).all()
+    
+
+    return render_template('prefall/detalles_clinicos.html', paciente=paciente, tests=tests, files=files,
+    formFile=formFile, formTest=formTest, formFilterFile=formFilterFile)
 
 
 @blueprint.route('editar_detalles_clinicos/<id>', methods=['GET', 'POST'])
@@ -360,12 +397,15 @@ def editar_detalles_clinicos(id):
     paciente = User.query.filter_by(id=id).first()
     form = EditClinicalDataForm(request.form)
     if 'editar_detalles_clinicos' in request.form and form.validate():
+        identificador = request.form['identificador']
         nombre = request.form['nombre']
         fecha = request.form['fecha']
         sexo = request.form['sexo']
         altura = request.form['altura']
         peso = request.form['peso']
         antecedentes = request.form['antecedentes']
+        if identificador != "":
+            paciente.identificador = identificador
         if nombre != "":
             paciente.nombre = nombre
         if fecha != "":
@@ -386,6 +426,11 @@ def editar_detalles_clinicos(id):
         'prefall/editar_detalles_clinicos.html', 
         form=form, paciente=paciente)
 
+@blueprint.route('download_file/<file_id>')
+def download_file(file_id):
+    file = File.query.filter_by(id=file_id).first()
+    return send_file(BytesIO(file.data), attachment_filename=file.filename, as_attachment=True)
+
 ### END MEDICO ###
 ### BEGIN AUXILIAR ###
 
@@ -398,18 +443,14 @@ def pantalla_principal_auxiliar():
     center = current_user.centro
 
     if formPacientes.submitFilterUser.data and formPacientes.validate():
-        id = formPacientes.id.data
-        if id != None:
-            id = str(id)
-        else:
-            id = ""
+        identificador = formPacientes.identificador.data
         nombre = formPacientes.nombre.data
         centroFiltro = formPacientes.centro.data
         pacientes = User.query.\
             filter(User.roles.contains(userRole)).\
                 filter_by(centro = center).\
                     filter(User.nombre.like('%'+nombre+'%')).\
-                        filter( cast( User.id, db.String ).like( '%'+ id +'%' ) ).\
+                        filter(User.identificador.like('%'+identificador+'%')).\
                             filter(User.id_centro == Centro.id).\
                                 filter(Centro.nombreFiscal.like('%'+centroFiltro+'%')).all()
     else:
@@ -427,7 +468,7 @@ def crear_paciente_auxiliar():
     if 'create_patient' in request.form and create_patient_form.validate():
 
         # read form data
-        id = request.form['id']
+        identificador = request.form['identificador']
         nombre = request.form['nombre']
         fecha = request.form['fecha']
         sexo = request.form['sexo']
@@ -440,7 +481,7 @@ def crear_paciente_auxiliar():
 
         from apps import user_datastore, db
         user_datastore.create_user(
-            id=id, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
+            identificador=identificador, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
             peso=peso, id_centro = current_user.id_centro,
             password=hash_password(default_password), email=default_email, roles=["paciente"]
         )
@@ -476,16 +517,12 @@ def detalles_personales(id):
     rolMedico = Role.query.filter_by(name="medico").first()
     id_asociados = [ma.id for ma in medicos_asociados]
     if searchDoctorForm.submitFilterUser.data and searchDoctorForm.validate():
-        id = searchDoctorForm.id.data
-        if id != None:
-            id = str(id)
-        else:
-            id = ""
+        identificador = searchDoctorForm.identificador.data
         nombre = searchDoctorForm.nombre.data
         medicos = User.query.\
             filter(User.roles.contains(rolMedico)).\
                 filter(User.nombre.like('%'+nombre+'%')).\
-                    filter( cast( User.id, db.String ).like( '%'+ id +'%' ) ).\
+                    filter(User.identificador.like( '%'+ identificador +'%' ) ).\
                         filter(db.not_(User.id.in_(id_asociados))).order_by(User.nombre).all()
     else:
         medicos = User.query.\
@@ -505,11 +542,14 @@ def editar_detalles_personales(id):
     paciente = User.query.filter_by(id=id).first()
     form = EditPersonalDataForm(request.form)
     if 'editar_detalles_personales' in request.form and form.validate():
+        identificador = request.form['identificador']
         nombre = request.form['nombre']
         fecha = request.form['fecha']
         sexo = request.form['sexo']
         altura = request.form['altura']
         peso = request.form['peso']
+        if identificador != "":
+            paciente.identificador = identificador
         if nombre != "":
             paciente.nombre = nombre
         if fecha != "":
@@ -591,9 +631,9 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def read_csv(filename):
-    colnames = ["date", "time", "acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z", "mag_x", "mag_y", "mag_z"]
+    colnames = ["item","date", "time", "acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z", "mag_x", "mag_y", "mag_z"]
     df = pd.read_csv(
-        filename, delim_whitespace=True, skiprows=6, usecols=range(1,12), 
+        filename, delim_whitespace=True, skiprows=6, usecols=range(0,12), 
         names=colnames)
     return df
 
@@ -611,6 +651,10 @@ def add_columns(df, id_paciente):
         next_num = test.num_test + 1
     df["num_test"] = next_num
     
+    if not df["item"].is_unique:
+        items = range(len(df.index))
+        df["item"] = items
+
     return df
 
 def add_df_to_sql(df, id_centro):
@@ -623,6 +667,7 @@ def add_df_to_sql(df, id_centro):
 
     for index, row in df.iterrows():
         testUnit = TestUnit(
+            item = row.at["item"],
             num_test = row.at["num_test"], id_paciente= row.at["id_paciente"], time= row.at["time"],
             acc_x = row.at["acc_x"], acc_y = row.at["acc_y"], acc_z = row.at["acc_z"],
             gyr_x = row.at["gyr_x"], gyr_y = row.at["gyr_y"], gyr_z = row.at["gyr_z"],
@@ -654,3 +699,29 @@ def get_test(paciente, test):
         mimetype="text/csv",
         headers={"Content-disposition":
                  "attachment; filename=test.csv"})
+
+@blueprint.route("/test_data/<paciente>/<test>")
+def test_data(paciente, test):
+    from apps import db
+    query = db.session.query(
+        Test.num_test, Test.id_paciente, Test.date, TestUnit.item, TestUnit.time, TestUnit.acc_x,
+        TestUnit.acc_y, TestUnit.acc_z, TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
+        TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z).\
+                        filter(Test.id_paciente == TestUnit.id_paciente).\
+                            filter(Test.num_test == TestUnit.num_test).\
+                                filter(Test.id_paciente==paciente).\
+                                    filter(Test.num_test==test)
+    df = pd.read_sql(query.statement, db.session.bind)
+    data = {
+        "item": df["item"].to_list(),
+        "acc_x": df["acc_x"].to_list(),
+        "acc_y": df["acc_y"].to_list(),
+        "acc_z": df["acc_z"].to_list(),
+        "gyr_x": df["gyr_x"].to_list(),
+        "gyr_y": df["gyr_y"].to_list(),
+        "gyr_z": df["gyr_z"].to_list(),
+        "mag_x": df["mag_x"].to_list(),
+        "mag_y": df["mag_y"].to_list(),
+        "mag_z": df["mag_z"].to_list(),
+    }
+    return jsonify(data)

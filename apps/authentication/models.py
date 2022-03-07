@@ -26,6 +26,7 @@ class User(db.Model, fsqla.FsUserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
+    identificador = db.Column(db.String(10), unique=True)
     username = db.Column(db.String(20), unique=True)
     nombre = db.Column(db.String(50))
     fecha_nacimiento = db.Column(db.Date)
@@ -77,6 +78,7 @@ class TestUnit(db.Model):
     __table_args__ = (ForeignKeyConstraint([num_test, id_paciente],
                                            [Test.num_test, Test.id_paciente]),
                       {})
+    item = db.Column(db.Integer)
     time = db.Column(db.Float(precision=32), primary_key=True)
     acc_x = db.Column(db.Float)
     acc_y = db.Column(db.Float)
@@ -98,6 +100,18 @@ class AccionesTestMedico(db.Model):
     id_medico = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     visto = db.Column(db.Boolean, default = False, nullable=False)
     diagnostico = db.Column(db.String(200), nullable=True)
+
+class DocumentoPaciente(db.Model):
+    __tablename__ = "documentos_paciente"
+    id_paciente = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    id_medico = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    id_file = db.Column(db.Integer, db.ForeignKey('files.id'), primary_key=True)
+
+class File(db.Model):
+    __tablename__ = "files"
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(50))
+    data = db.Column(db.LargeBinary)
 
 import sys
 @event.listens_for(Test, 'after_insert')
@@ -168,39 +182,39 @@ def create_data():
     
     if not user_datastore.find_user(username="admin"):
         user_datastore.create_user(
-            username="admin", email="admin@kruay.com", 
+            identificador="46954321F",username="admin", email="admin@kruay.com", 
             password=hash_password("admin"), roles=["admin"]
         )
     
     if not user_datastore.find_user(username="auxiliar"):
         user_datastore.create_user(
-            username="auxiliar", email="webapptest2022@gmail.com", centro = centro1,
+            identificador="46654321R",username="auxiliar", email="webapptest2022@gmail.com", centro = centro1,
             password=hash_password("auxiliar"), nombre="auxiliar", roles=["auxiliar"]
         )
 
     if not user_datastore.find_user(username="auxiliar2"):
         user_datastore.create_user(
-            username="auxiliar2", email="auxiliar@kruay.com", centro = centro2,
+            identificador="35954651F",username="auxiliar2", email="auxiliar@kruay.com", centro = centro2,
             password=hash_password("auxiliar2"), nombre="auxiliar2", roles=["auxiliar"]
         )
     
     if not user_datastore.find_user(username="paciente11"):
         user_datastore.create_user(
-            username="paciente11", email="paciente11@kruay.com", centro = centro1,
+            identificador="54354321R",username="paciente11", email="paciente11@kruay.com", centro = centro1,
             sexo="V", altura=1.79, peso=97, antecedentes_clinicos="diabetis",
             password=hash_password("paciente11"),nombre="paciente11", roles=["paciente"]
         )
     
     if not user_datastore.find_user(username="paciente12"):
         user_datastore.create_user(
-            username="paciente12", email="paciente12@kruay.com", centro = centro1,
+            identificador="46953125F",username="paciente12", email="paciente12@kruay.com", centro = centro1,
             sexo="M", altura=1.56, peso=57, antecedentes_clinicos="cancer de mama",
             password=hash_password("paciente12"), nombre="paciente12", roles=["paciente"]
         )
     
     if not user_datastore.find_user(username="paciente21"):
         user_datastore.create_user(
-            username="paciente21", email="paciente21@kruay.com", centro = centro2,
+            identificador="75954321F",username="paciente21", email="paciente21@kruay.com", centro = centro2,
             sexo="V", altura=1.91, peso=75, antecedentes_clinicos="cancer de pulmon, cancer de prostata, problemas hepaticos",
             password=hash_password("paciente21"),nombre="paciente21", roles=["paciente"]
         )
@@ -209,19 +223,19 @@ def create_data():
     paciente21 = user_datastore.find_user(username="paciente21")
     if not user_datastore.find_user(username="medico"):
         user_datastore.create_user(
-            username="medico", email="medico@kruay.com", centro = centro1,
+            identificador="98957621F",username="medico", email="medico@kruay.com", centro = centro1,
             password=hash_password("medico"), roles=["medico"], nombre="medico",
             pacientes_asociados=[paciente11, paciente21]
         )
     if not user_datastore.find_user(username="medico1"):
         user_datastore.create_user(
-            username="medico1", email="medico1@kruay.com", centro = centro1,
+            identificador="52354321R",username="medico1", email="medico1@kruay.com", centro = centro1,
             password=hash_password("medico1"), roles=["medico"], nombre="medico1"
         )  
 
     if not user_datastore.find_user(username="medico2"):
         user_datastore.create_user(
-            username="medico2", email="medico2@kruay.com", centro = centro2,
+            identificador="89354321F",username="medico2", email="medico2@kruay.com", centro = centro2,
             password=hash_password("medico2"), roles=["medico"], nombre="medico2"
         )  
     

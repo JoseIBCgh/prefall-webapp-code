@@ -1,3 +1,4 @@
+from tokenize import String
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField, IntegerField, DecimalField, DateField, 
@@ -7,7 +8,7 @@ from wtforms.validators import DataRequired, AnyOf, Optional
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
 class CreatePatientClinicalForm(FlaskForm):
-    id = IntegerField('Identificador',id='id_create_patient', validators=[DataRequired()])
+    identificador = StringField('Identificador',id='id_create_patient', validators=[DataRequired()])
     nombre = StringField('Nombre', id='name_create_patient', validators=[DataRequired()])
     fecha = DateField('Fecha de nacimiento', id='date_create_patient', validators=[DataRequired()])
     sexo = StringField('Sexo', id='sex_create_patient', validators=[DataRequired(), AnyOf(values=["V", "M"], message="Introduce V o M")])
@@ -16,7 +17,7 @@ class CreatePatientClinicalForm(FlaskForm):
     antecedentes = TextAreaField('Antecedentes clínicos', id='antecedentes_create_patient', validators=[Optional()])
 
 class CreatePatientPersonalForm(FlaskForm):
-    id = IntegerField('Identificador',id='id_create_patient', validators=[DataRequired()])
+    identificador = StringField('Identificador',id='id_create_patient', validators=[DataRequired()])
     nombre = StringField('Nombre', id='name_create_patient', validators=[DataRequired()])
     fecha = DateField('Fecha de nacimiento', id='date_create_patient', validators=[DataRequired()])
     sexo = StringField('Sexo', id='sex_create_patient', validators=[DataRequired(), AnyOf(values=["V", "M"], message="Introduce V o M")])
@@ -29,6 +30,7 @@ class CreateCenterAdminForm(FlaskForm):
     email = EmailField("Email", id="email_admin", validators=[DataRequired()])
 
 class EditPersonalDataForm(FlaskForm):
+    identificador = StringField('Identificador',id='id_edit_personal_data', validators=[Optional()])
     nombre = StringField('Nombre', id='name_edit_personal_data', validators=[Optional()])
     fecha = DateField('Fecha de nacimiento', id='date_edit_personal_data', validators=[Optional()])
     sexo = StringField('Sexo', id='sex_edit_personal_data', validators=[Optional(), AnyOf(values=["V", "M"], message="Introduce V o M")])
@@ -36,6 +38,7 @@ class EditPersonalDataForm(FlaskForm):
     peso = DecimalField('Peso', id='weight_edit_personal_data', validators=[Optional()])
 
 class EditClinicalDataForm(FlaskForm):
+    identificador = StringField('Identificador',id='id_edit_clinical_data', validators=[Optional()])
     nombre = StringField('Nombre', id='name_edit_personal_data', validators=[Optional()])
     fecha = DateField('Fecha de nacimiento', id='date_edit_personal_data', validators=[Optional()])
     sexo = StringField('Sexo', id='sex_edit_personal_data', validators=[Optional(), AnyOf(values=["V", "M"], message="Introduce V o M")])
@@ -57,7 +60,13 @@ class UploadTestForm(FlaskForm):
         FileRequired(),
         FileAllowed(['txt', 'csv'], 'csv only')
     ])
-    submitUpload = SubmitField('Upload', id="submit_upload_test")
+    submitUploadTest = SubmitField('Upload', id="submit_upload_test")
+
+class UploadFileForm(FlaskForm):
+    file = FileField('Introducir fichero', validators=[
+        FileRequired()
+    ])
+    submitUploadFile = SubmitField('Upload', id="submit_upload_file")
 
 class CreateCenterForm(FlaskForm):
     cif = StringField('CIF', id='cif_create_health_center', validators=[DataRequired()])
@@ -69,7 +78,7 @@ class CreateCenterForm(FlaskForm):
     pais = StringField('País', id='pais_create_health_center', validators=[DataRequired()])
 
 class FilterUserForm(FlaskForm):
-    id = IntegerField('Identificador',id='id_filter_user', validators=[Optional()])
+    identificador = StringField('Identificador',id='id_filter_user', validators=[Optional()])
     nombre = StringField('Nombre', id='name_filter_user', validators=[Optional()])
     centro = StringField('Centro', id='center_filter_user', validators=[Optional()])
     submitFilterUser = SubmitField('Filtrar', id="submit_filter_user")
@@ -78,6 +87,10 @@ class FilterTestForm(FlaskForm):
     nombrePaciente = StringField('Nombre', id='name_filter_test', validators=[Optional()])
     numero = IntegerField('Número',id='id_filter_test', validators=[Optional()])
     submitFilterTest = SubmitField('Filtrar', id="submit_filter_test")
+
+class FilterFileForm(FlaskForm):
+    nombreFichero = StringField('Nombre', id='name_filter_test', validators=[Optional()])
+    submitFilterFile = SubmitField('Filtrar', id="submit_filter_test")
 
 class DiagnosticarTestForm(FlaskForm):
     diagnostico = TextAreaField('Diagnostico', id='diagnosticar_test_input', validators=[DataRequired()])

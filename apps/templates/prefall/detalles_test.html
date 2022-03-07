@@ -66,6 +66,14 @@
                         </form>
                     </div>
                     {% endif %}
+                    <div id="acc" class="img-fluid" width="100%" height="100%"></div>
+                    <div id="gyr" class="img-fluid" width="100%" height="100%"></div>
+                    <div id="mag" class="img-fluid" width="100%" height="100%"></div>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.5.0/d3.js"></script>
+                    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+                    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+                    <script src="/static/assets/js/plot.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}}></script>
                 </div>
             </div>
         </div>
