@@ -73,7 +73,7 @@ class Test(db.Model):
 
 class TestUnit(db.Model):
     __tablename__ = 'test_unit'
-    num_test = db.Column(db.Integer)
+    num_test = db.Column(db.Integer, primary_key=True)
     id_paciente = db.Column(db.Integer, primary_key=True)
     __table_args__ = (ForeignKeyConstraint([num_test, id_paciente],
                                            [Test.num_test, Test.id_paciente]),
@@ -99,7 +99,7 @@ class AccionesTestMedico(db.Model):
                       {})
     id_medico = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     visto = db.Column(db.Boolean, default = False, nullable=False)
-    diagnostico = db.Column(db.String(200), nullable=True)
+    diagnostico = db.Column(db.Text, nullable=True)
 
 class DocumentoPaciente(db.Model):
     __tablename__ = "documentos_paciente"

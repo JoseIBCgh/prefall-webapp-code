@@ -7,6 +7,8 @@ from wtforms import (
 from wtforms.validators import DataRequired, AnyOf, Optional
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
+from flask_ckeditor import CKEditorField
+
 class CreatePatientClinicalForm(FlaskForm):
     identificador = StringField('Identificador',id='id_create_patient', validators=[DataRequired()])
     nombre = StringField('Nombre', id='name_create_patient', validators=[DataRequired()])
@@ -93,5 +95,5 @@ class FilterFileForm(FlaskForm):
     submitFilterFile = SubmitField('Filtrar', id="submit_filter_test")
 
 class DiagnosticarTestForm(FlaskForm):
-    diagnostico = TextAreaField('Diagnostico', id='diagnosticar_test_input', validators=[DataRequired()])
+    diagnostico = CKEditorField('Diagnostico', validators=[DataRequired()])
     submitDiagnosticoTest = SubmitField('Enviar', id="diagnosticar_test_submit")

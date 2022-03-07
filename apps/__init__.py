@@ -24,17 +24,22 @@ from flask_security import (
 
 from flask_mail import Mail
 
+from flask_ckeditor import CKEditor
+
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
+ckeditor = CKEditor()
 
-from apps.authentication.models import DocumentoPaciente, File, Role, Test, TestUnit, User, Centro
+from apps.authentication.models import AccionesTestMedico, DocumentoPaciente, File, Role, Test, TestUnit, User, Centro
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 
 
 def register_extensions(app):
     db.init_app(app)
     login_manager.init_app(app)
+    ckeditor.init_app(app)
+    mail.init_app(app)
 
 
 def register_blueprints(app):
@@ -72,7 +77,6 @@ def create_app(config):
     admin.add_view(AdminModelView(Centro, db.session))
     admin.add_view(AdminModelView(File, db.session))
     admin.add_view(AdminModelView(DocumentoPaciente, db.session))
-
-    mail.init_app(app)
+    admin.add_view(AdminModelView(AccionesTestMedico, db.session))
     
     return app

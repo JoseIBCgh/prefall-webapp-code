@@ -49,6 +49,9 @@ class Config(object):
     
     UPLOAD_FOLDER = 'tmp'
 
+    CKEDITOR_FILE_UPLOADER = 'prefall_blueprint.upload'
+    # CKEDITOR_ENABLE_CSRF = True  # if you want to enable CSRF protect, uncomment this line
+    UPLOADED_PATH = os.path.join(basedir, 'uploads')
 
 
 class ProductionConfig(Config):

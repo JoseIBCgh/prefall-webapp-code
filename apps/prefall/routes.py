@@ -17,7 +17,7 @@ from flask_security import (
 )
 from random import randint
 
-from flask import flash, current_app, Response
+from flask import flash, current_app, Response, send_from_directory
 from werkzeug.utils import secure_filename
 import os
 from pathlib import Path
@@ -41,6 +41,8 @@ from apps.prefall.forms import (
 
 import csv
 import pandas as pd
+
+from flask_ckeditor import upload_fail, upload_success
 
 ### BEGIN ADMIN ###
 
@@ -685,7 +687,7 @@ def debug(info):
 def get_test(paciente, test):
     from apps import db
     query = db.session.query(
-        Test.num_test, Test.id_paciente, Test.date, TestUnit.time, TestUnit.acc_x,
+        TestUnit.item, Test.num_test, Test.id_paciente, Test.date, TestUnit.time, TestUnit.acc_x,
         TestUnit.acc_y, TestUnit.acc_z, TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
         TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z).\
                         filter(Test.id_paciente == TestUnit.id_paciente).\
@@ -725,3 +727,28 @@ def test_data(paciente, test):
         "mag_z": df["mag_z"].to_list(),
     }
     return jsonify(data)
+
+## END COMON ##
+
+## BEGIN FLASK CKEDITOR ##
+
+@blueprint.route('/files/<id>')
+def uploaded_files(id):
+    #path = current_app.config['UPLOADED_PATH']
+    #return send_from_directory(path, filename)
+    file = File.query.filter_by(id=id).first()
+    return send_file(BytesIO(file.data), attachment_filename=file.filename)
+
+@blueprint.route('/upload', methods=['POST'])
+def upload():
+    f = request.files.get('upload')
+    extension = f.filename.split('.')[-1].lower()
+    if extension not in ['jpg', 'gif', 'png', 'jpeg']:
+        return upload_fail(message='Image only!')
+    from apps import db
+    upload = File(filename=f.filename, data=f.read())
+    db.session.add(upload)
+    db.session.commit()
+    #f.save(os.path.join(current_app.config['UPLOADED_PATH'], f.filename))
+    url = url_for('prefall_blueprint.uploaded_files', id=upload.id)
+    return upload_success(url, filename=f.filename)

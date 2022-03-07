@@ -45,7 +45,7 @@
                                                 <h6 class="text-muted">Diagnostico</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted">{{test["diagnostico"]}}</h6>
+                                                {{test.diagnostico|safe}}
                                             </td>
                                         </tr>
                                         {% endif %}
@@ -61,11 +61,16 @@
                         </div>
                         <form role="form" method="post" action="">
                             {{ form.csrf_token }}
-                            {{ render_field(form.diagnostico) }}
+                            {{form.diagnostico()}}
                             {{form.submitDiagnosticoTest(class="label theme-bg text-white f-12 btn-rounded")}}
                         </form>
+                        {{ ckeditor.load() }}
+                        {{ ckeditor.config(name='diagnostico') }}
                     </div>
                     {% endif %}
+                    <a href="{{url_for('prefall_blueprint.get_test', paciente=test['id_paciente'], test=test['num_test'])}}" class="label theme-bg text-white f-12 btn-rounded">Descargar</a>
+                    <br>
+                    <br>
                     <div id="acc" class="img-fluid" width="100%" height="100%"></div>
                     <div id="gyr" class="img-fluid" width="100%" height="100%"></div>
                     <div id="mag" class="img-fluid" width="100%" height="100%"></div>

@@ -72,8 +72,8 @@
                                             <td class="small-column-2">
                                                 <h6 class="text-muted center">{{diagnostico["nombre"]}}</h6>
                                             </td>
-                                            <td class="big-column-2"> 
-                                                <h6 class="text-muted center">{{diagnostico["diagnostico"]}}</h6>
+                                            <td class="big-column-2 center"> 
+                                                {{diagnostico.diagnostico|safe}}
                                             </td>
                                         </tr> 
                                         {% endfor %}
