@@ -34,13 +34,13 @@ function buildChart() {
             y: acc_z,
             name: "Acelerometro Z"
         };
-        var data = [acc_x_data, acc_y_data, acc_z_data];
+        var data_acc = [acc_x_data, acc_y_data, acc_z_data];
         var layout = {
             title: "Acelerometro",
             xaxis:{title:"item"},
             yaxis:{title:"m/s^2"},
         };
-        Plotly.newPlot('acc', data, layout, {responsive: true});
+        Plotly.newPlot('acc', data_acc, layout, {responsive: true});
 
         var gyr_x_data = {
             x: item,
@@ -57,13 +57,13 @@ function buildChart() {
             y: gyr_z,
             name: "Giroscopio Z"
         };
-        var data = [gyr_x_data, gyr_y_data, gyr_z_data];
+        var data_gyr = [gyr_x_data, gyr_y_data, gyr_z_data];
         var layout = {
             title: "Giroscopio",
             xaxis:{title:"item"},
             yaxis:{title:"deg/s"},
         };
-        Plotly.newPlot('gyr', data, layout, {responsive: true});
+        Plotly.newPlot('gyr', data_gyr, layout, {responsive: true});
 
         var mag_x_data = {
             x: item,
@@ -80,13 +80,48 @@ function buildChart() {
             y: mag_z,
             name: "Magnetometro Z"
         };
-        var data = [mag_x_data, mag_y_data, mag_z_data];
+        var data_mag = [mag_x_data, mag_y_data, mag_z_data];
         var layout = {
             title: "Magnetometro",
             xaxis:{title:"item"},
             yaxis:{title:"Tesla"},
         };
-        Plotly.newPlot('mag', data, layout, {responsive: true});
+        Plotly.newPlot('mag', data_mag, layout, {responsive: true});
+
+        Plotly.newPlot('acc_stream', [{
+            y: [acc_x[0]],
+            mode: 'lines',
+            line: {color: '#42adf5'},
+            name: "Acelerometro X"
+        }, {
+            y: [acc_y[0]],
+            mode: 'lines',
+            line: {color: '#f58742'},
+            name: "Acelerometro Y"
+        }, {
+            y: [acc_z[0]],
+            mode: 'lines',
+            line: {color: '#42f56c'},
+            name: "Acelerometro Z"
+        }]);
+
+        const STREAM_WIDTH = 10;
+        var count_acc = 1;
+
+        var interval_acc = setInterval(function(){
+            Plotly.extendTraces('acc_stream', {
+                y: [[acc_x[count_acc]], [acc_y[count_acc]], [acc_z[count_acc]]]
+            }, [0, 1, 2])
+
+            if(count_acc > STREAM_WIDTH){
+                Plotly.relayout('acc_stream', {
+                    xaxis : {
+                        range: [count_acc - STREAM_WIDTH, count_acc]
+                    }
+                })
+            }
+            if(++count_acc >= acc_x.length) clearInterval(interval_acc);
+        }, 200)
     });
 }
 buildChart()
