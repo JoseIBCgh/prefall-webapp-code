@@ -13615,3 +13615,15 @@ div.code-toolbar > .toolbar span:hover {
 p strong {
   font-weight: 800;
 }
+
+.control-stream {
+  text-align: center;
+}
+
+.control-stream button {
+  padding: 0;
+}
+
+.control-stream button svg {
+  padding: 0;
+}
