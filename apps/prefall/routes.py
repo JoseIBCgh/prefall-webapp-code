@@ -752,3 +752,15 @@ def upload():
     #f.save(os.path.join(current_app.config['UPLOADED_PATH'], f.filename))
     url = url_for('prefall_blueprint.uploaded_files', id=upload.id)
     return upload_success(url, filename=f.filename)
+
+import urllib.request, json
+
+@blueprint.route('/api')
+def api():
+    url = "https://flask-fast-api.herokuapp.com/greet?fname=Carlos"
+
+    response = urllib.request.urlopen(url)
+    data = response.read()
+    dict = json.loads(data)
+
+    return dict
