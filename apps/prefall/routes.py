@@ -308,9 +308,10 @@ def crear_paciente_medico():
 
     return render_template('prefall/create_patient_clinical.html', form=create_patient_form)
 
-@blueprint.route('detalles_test/<id>/<num>', methods=['GET', 'POST'])
+@blueprint.route('detalles_test/<id>/<num>', defaults={"editing": False}, methods=['GET', 'POST'])
+@blueprint.route('detalles_test/<id>/<num>/<editing>', methods=['GET', 'POST'])
 @clinical_data_access()
-def detalles_test(id, num):
+def detalles_test(id, num, editing):
     from apps import db
     test = db.session.query(Test, AccionesTestMedico).\
         join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
@@ -332,8 +333,11 @@ def detalles_test(id, num):
         db.session.commit()
         test = {"visto": True, "diagnostico": form.diagnostico.data, "num_test": test.num_test,
         "date": test.date, "id_paciente": test.id_paciente, "id_centro": test.id_centro}
+        editing = False
+    elif editing:
+        form.diagnostico.data = test.diagnostico
     return render_template(
-        'prefall/detalles_test.html', form = form, test = test
+        'prefall/detalles_test.html', form = form, test = test, editing = editing
     )
 
 
