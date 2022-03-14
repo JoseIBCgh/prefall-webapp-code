@@ -158,7 +158,7 @@ function buildChart() {
         pause_mag.onclick = function(){
             clearInterval(interval_mag)
         }
-
+/*
         let data_3d = [{
             type: 'scatter3d',
             mode: 'lines',
@@ -204,6 +204,115 @@ function buildChart() {
             count_3d++;
             if(count_3d >= acc_x.length) clearInterval(interval3d);
         }, 400)
+        */
+        var intensity = [0, 0.14285714285714285, 0.2857142857142857, 0.42857142857142855, 0.5714285714285714, 0.7142857142857143, 0.8571428571428571, 1];
+
+
+        var data = [{
+        
+            type: "mesh3d",
+        
+            x: [0, 0, 1, 1, 0, 0, 1, 1],
+        
+            y: [0, 1, 1, 0, 0, 1, 1, 0],
+        
+            z: [0, 0, 0, 0, 1, 1, 1, 1],
+        
+            i: [7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2],
+        
+            j: [3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3],
+        
+            k: [0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6],
+        
+            intensity: intensity,
+        
+            colorscale: [
+        
+              [0, 'rgb(255, 0, 255)'],
+        
+              [0.5, 'rgb(0, 255, 0)'],
+        
+              [1, 'rgb(0, 0, 255)']
+        
+            ]
+        
+          },
+          {
+        
+            type: "mesh3d",
+        
+            x: [0, 0, 1, 1, 0, 0, 1, 1],
+        
+            y: [0, 1, 1, 0, 0, 1, 1, 0],
+        
+            z: [0, 0, 0, 0, 1, 1, 1, 1],
+        
+            i: [7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2],
+        
+            j: [3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3],
+        
+            k: [0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6],
+        
+            intensity: intensity,
+        
+            colorscale: [
+        
+              [0, 'rgb(255, 0, 255)'],
+        
+              [0.5, 'rgb(0, 255, 0)'],
+        
+              [1, 'rgb(0, 0, 255)']
+        
+            ]
+        
+          },
+          {
+        
+            type: "mesh3d",
+        
+            x: [0, 0, 1, 1, 0, 0, 1, 1],
+        
+            y: [0, 1, 1, 0, 0, 1, 1, 0],
+        
+            z: [0, 0, 0, 0, 1, 1, 1, 1],
+        
+            i: [7, 0, 0, 0, 4, 4, 6, 6, 4, 0, 3, 2],
+        
+            j: [3, 4, 1, 2, 5, 6, 5, 2, 0, 1, 6, 3],
+        
+            k: [0, 7, 2, 3, 6, 7, 1, 1, 5, 5, 7, 6],
+        
+            intensity: intensity,
+        
+            colorscale: [
+        
+              [0, 'rgb(255, 0, 255)'],
+        
+              [0.5, 'rgb(0, 255, 0)'],
+        
+              [1, 'rgb(0, 0, 255)']
+        
+            ]
+        
+          }
+        
+        ];
+        
+        
+        Plotly.newPlot('3d_plot', data, {});
+
+        var interval3d = setInterval(function(){
+            data[0].x = data[0].x.map(function(x){
+                return x + 0.01
+            })
+            data[1].y = data[1].y.map(function(x){
+                return x + 0.01
+            })
+            data[2].z = data[2].z.map(function(x){
+                return x + 0.01
+            })
+            Plotly.react('3d_plot', data, {});
+        }, 100)
     });
 }
 function get_initial_data(item, x, y, z, name){
