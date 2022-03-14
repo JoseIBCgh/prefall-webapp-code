@@ -40,7 +40,7 @@
                                                 <h6 class="text-muted">{{test["date"]}}</h6>
                                             </td>
                                         </tr>
-                                        {% if test["diagnostico"] is not none %}
+                                        {% if test["diagnostico"] is not none and not editing %}
                                         <tr class="unread">
                                             <td>
                                                 <h6 class="text-muted">Diagnostico</h6>
@@ -68,6 +68,22 @@
                         {{ ckeditor.load() }}
                         {{ ckeditor.config(name='diagnostico') }}
                     </div>
+                    {% elif editing %}
+                    <div class="card Recent-Users">
+                        <div class="card-header">
+                            <h5>Editar diagnostico</h5>
+                        </div>
+                        <form role="form" method="post" action="">
+                            {{ form.csrf_token }}
+                            {{form.diagnostico()}}
+                            {{form.submitDiagnosticoTest(class="label theme-bg text-white f-12 btn-rounded")}}
+                        </form>
+                        {{ ckeditor.load() }}
+                        {{ ckeditor.config(name='diagnostico') }}
+                    </div>
+                    <a href="{{url_for('prefall_blueprint.detalles_test', id=test['id_paciente'], num=test['num_test'], editing=False)}}" class="label theme-bg text-white f-12 btn-rounded">Cancelar</a>
+                    {% else %}
+                    <a href="{{url_for('prefall_blueprint.detalles_test', id=test['id_paciente'], num=test['num_test'], editing=True)}}" class="label theme-bg text-white f-12 btn-rounded">Editar</a>
                     {% endif %}
                     <a href="{{url_for('prefall_blueprint.get_test', paciente=test['id_paciente'], test=test['num_test'])}}" class="label theme-bg text-white f-12 btn-rounded">Descargar</a>
                     <br>
