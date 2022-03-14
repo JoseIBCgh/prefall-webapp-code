@@ -2,6 +2,7 @@ const STREAM_WIDTH = 10;
 var count_acc = 1;
 var count_gyr = 1;
 var count_mag = 1;
+var count_3d = 1;
 function buildChart() {
 
     console.log("buildChart")
@@ -157,6 +158,52 @@ function buildChart() {
         pause_mag.onclick = function(){
             clearInterval(interval_mag)
         }
+
+        let data_3d = [{
+            type: 'scatter3d',
+            mode: 'lines',
+            x: [acc_x[0]],
+            y: [acc_y[0]],
+            z: [acc_z[0]],
+            opacity: 1,
+            line: {
+              width: 6,
+              color: '#42adf5',
+              reversescale: false
+            }
+        }]
+
+        var layout_3d = {
+            scene:{
+               aspectmode: "manual",
+             aspectratio: {
+               x: 1, y: 1, z: 1,
+              },
+            xaxis: {
+                  range: [Math.min(acc_x), Math.max(acc_x)],
+                  fixedrange: true,
+                },
+            yaxis: {
+                range: [Math.min(acc_y), Math.max(acc_y)],
+                fixedrange: true,
+            },
+            zaxis: {
+                range: [Math.min(acc_z), Math.max(acc_z)],
+                fixedrange: true,
+            }},
+          };
+
+        Plotly.newPlot('3d_plot', data_3d, layout_3d);
+        var interval3d = setInterval(function(){
+            Plotly.extendTraces('3d_plot', {
+                x: [[acc_x[count_3d]]],
+                y: [[acc_y[count_3d]]],
+                z: [[acc_z[count_3d]]]
+            }, [0], 3)
+    
+            count_3d++;
+            if(count_3d >= acc_x.length) clearInterval(interval3d);
+        }, 400)
     });
 }
 function get_initial_data(item, x, y, z, name){
