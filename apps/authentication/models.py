@@ -70,6 +70,7 @@ class Test(db.Model):
     id_paciente = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     id_centro = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
     date = db.Column(db.Date)
+    probabilidad_caida = db.Column(db.Float, nullable=True)
 
 class TestUnit(db.Model):
     __tablename__ = 'test_unit'

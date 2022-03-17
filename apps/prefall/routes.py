@@ -317,7 +317,7 @@ def detalles_test(id, num, editing):
         join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
         AccionesTestMedico.id_paciente == Test.id_paciente)).\
             with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, Test.num_test, 
-                    Test.date, Test.id_paciente, Test.id_centro).\
+                    Test.date, Test.id_paciente, Test.id_centro, Test.probabilidad_caida).\
                         filter(AccionesTestMedico.id_medico == current_user.id).\
                             filter(Test.id_paciente == id).\
                                 filter(Test.num_test == num).first()
@@ -437,6 +437,19 @@ def download_file(file_id):
     file = File.query.filter_by(id=file_id).first()
     return send_file(BytesIO(file.data), attachment_filename=file.filename, as_attachment=True)
 
+@blueprint.route('guardar_analisis/<num_test>/<id_paciente>', methods=['POST'])
+def guardar_analisis(num_test, id_paciente):
+    from apps import db
+    data = request.json
+    import sys
+    print(data, file=sys.stdout)
+    result = data['result']
+    probabilidad_caida = result['fall_probability']
+    db.session.query(Test).filter_by(num_test=num_test).\
+    filter_by(id_paciente=id_paciente).update({"probabilidad_caida": probabilidad_caida})
+    db.session.commit()
+    return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
+    
 ### END MEDICO ###
 ### BEGIN AUXILIAR ###
 
@@ -768,3 +781,4 @@ def api():
     dict = json.loads(data)
 
     return dict
+
