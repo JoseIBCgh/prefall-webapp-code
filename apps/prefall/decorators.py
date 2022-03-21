@@ -46,7 +46,10 @@ def clinical_data_access():
         def wrapper(*args, **kwargs):
             if not current_user.has_role('medico'):
                 abort(403)
-            id = request.view_args["id"]
+            if 'id' in request.view_args:
+                id = request.view_args["id"]
+            else:
+                id = request.view_args["id_paciente"]
             paciente = User.query.filter_by(id=id).first()
             if paciente is None:
                 abort(404)

@@ -1,5 +1,6 @@
 num_test = document.currentScript.getAttribute('num_test');
 id_paciente = document.currentScript.getAttribute('paciente');
+console.log(num_test)
 function start_prediction() {
     console.log("start_prediction")
     // send ajax POST request to start background job

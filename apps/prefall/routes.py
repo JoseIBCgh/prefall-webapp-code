@@ -4,7 +4,7 @@ import sqlalchemy
 
 from io import BytesIO
 
-from apps.authentication.models import AccionesTestMedico, DocumentoPaciente, PacienteAsociado, Role, Test, TestUnit, User, Centro, File
+from apps.authentication.models import AccionesTestMedico, DocumentoPaciente, PacienteAsociado, Role, Test, TestUnit, User, Centro, File, PlotData
 from apps.prefall import blueprint
 from flask import abort, jsonify, render_template, request, redirect, url_for, send_file
 from jinja2 import TemplateNotFound
@@ -438,6 +438,7 @@ def download_file(file_id):
     return send_file(BytesIO(file.data), attachment_filename=file.filename, as_attachment=True)
 
 @blueprint.route('guardar_analisis/<num_test>/<id_paciente>', methods=['POST'])
+@clinical_data_access()
 def guardar_analisis(num_test, id_paciente):
     from apps import db
     data = request.json
@@ -447,9 +448,45 @@ def guardar_analisis(num_test, id_paciente):
     probabilidad_caida = result['fall_probability']
     db.session.query(Test).filter_by(num_test=num_test).\
     filter_by(id_paciente=id_paciente).update({"probabilidad_caida": probabilidad_caida})
+    
+    intercept = result['intercept']
+    coef = result['coef']
+    for i in range(len(intercept)):
+        plot_data = PlotData(num_test=num_test, id_paciente=id_paciente, index=i,
+        intercept=intercept[i], coef0=coef[i][0], coef1=coef[i][1], coef2=coef[i][2])
+        db.session.add(plot_data)
+
     db.session.commit()
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
-    
+
+@blueprint.route('plot_data/<num_test>/<id_paciente>', methods=['GET'])
+def plot_data(num_test, id_paciente):
+    from apps import db
+    query = db.session.query(
+        PlotData.intercept, PlotData.coef0, PlotData.coef1,PlotData.coef2).\
+        filter(PlotData.num_test == num_test).\
+        filter(PlotData.id_paciente == id_paciente)
+    df = pd.read_sql(query.statement, db.session.bind)
+    query2 = db.session.query(
+        Test.num_test, Test.id_paciente, Test.date, TestUnit.item, TestUnit.time, TestUnit.acc_x,
+        TestUnit.acc_y, TestUnit.acc_z, TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
+        TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z).\
+                        filter(Test.id_paciente == TestUnit.id_paciente).\
+                            filter(Test.num_test == TestUnit.num_test).\
+                                filter(Test.id_paciente==id_paciente).\
+                                    filter(Test.num_test==num_test)
+    df2 = pd.read_sql(query2.statement, db.session.bind)
+    data = {
+        "intercept": df["intercept"].to_list(),
+        "coef0": df["coef0"].to_list(),
+        "coef1": df["coef1"].to_list(),
+        "coef2": df["coef2"].to_list(),
+        "acc_x": df2["acc_x"].to_list(),
+        "acc_y": df2["acc_y"].to_list(),
+        "acc_z": df2["acc_z"].to_list(),
+    }
+    return jsonify(data)
+
 ### END MEDICO ###
 ### BEGIN AUXILIAR ###
 

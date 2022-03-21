@@ -72,6 +72,19 @@ class Test(db.Model):
     date = db.Column(db.Date)
     probabilidad_caida = db.Column(db.Float, nullable=True)
 
+class PlotData(db.Model):
+    __tablename__ = 'plot_data'
+    num_test = db.Column(db.Integer, primary_key = True)
+    id_paciente = db.Column(db.Integer, primary_key=True)
+    __table_args__ = (ForeignKeyConstraint([num_test, id_paciente],
+                                           [Test.num_test, Test.id_paciente]),
+                      {})
+    index = db.Column(db.Integer, primary_key = True)
+    intercept = db.Column(db.Float)
+    coef0 = db.Column(db.Float)
+    coef1 = db.Column(db.Float)
+    coef2 = db.Column(db.Float)
+
 class TestUnit(db.Model):
     __tablename__ = 'test_unit'
     num_test = db.Column(db.Integer, primary_key=True)
@@ -117,7 +130,6 @@ class File(db.Model):
 import sys
 @event.listens_for(Test, 'after_insert')
 def after_insert_test(mapper, connection, target):
-    print('after insert test', file=sys.stderr)
     paciente = User.query.filter(User.id == target.id_paciente).first()
     medicos_asociados = paciente.medicos_asociados
     new_table = AccionesTestMedico.__table__
