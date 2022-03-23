@@ -317,7 +317,7 @@ def detalles_test(id, num, editing):
         join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
         AccionesTestMedico.id_paciente == Test.id_paciente)).\
             with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, Test.num_test, 
-                    Test.date, Test.id_paciente, Test.id_centro, Test.fall_to_left, Test.fall_to_right, Test.falling_backward, Test.falling_forward).\
+                    Test.date, Test.id_paciente, Test.id_centro, Test.probabilidad_caida).\
                         filter(AccionesTestMedico.id_medico == current_user.id).\
                             filter(Test.id_paciente == id).\
                                 filter(Test.num_test == num).first()
@@ -445,23 +445,18 @@ def guardar_analisis(num_test, id_paciente):
     import sys
     print(data, file=sys.stdout)
     result = data['result']
-    prediction = result['prediction']
-    bow = [item for item in prediction if item[0] == 'Bow'][0][1]
-    fall_to_left = [item for item in prediction if item[0] == 'Fall-to-left'][0][1]
-    fall_to_right = [item for item in prediction if item[0] == 'Fall-to-right'][0][1]
-    falling_backward = [item for item in prediction if item[0] == 'Falling-backward'][0][1]
-    falling_forward = [item for item in prediction if item[0] == 'Falling-forward'][0][1]
-    idle = [item for item in prediction if item[0] == 'Idle'][0][1]
-    sitting = [item for item in prediction if item[0] == 'Sitting'][0][1]
-    sleep = [item for item in prediction if item[0] == 'Sleep'][0][1]
-    standing = [item for item in prediction if item[0] == 'Standing'][0][1]
-
+    probabilidad_caida = result['fall_probability']
     db.session.query(Test).filter_by(num_test=num_test).\
-    filter_by(id_paciente=id_paciente).update({"bow": bow, "fall_to_left": fall_to_left, "fall_to_right": fall_to_right,
-    "falling_backward": falling_backward, "falling_forward": falling_forward, "idle":idle, "sitting":sitting,
-    "standing":standing})
-    db.session.commit()
+    filter_by(id_paciente=id_paciente).update({"probabilidad_caida": probabilidad_caida})
+    
+    intercept = result['intercept']
+    coef = result['coef']
+    for i in range(len(intercept)):
+        plot_data = PlotData(num_test=num_test, id_paciente=id_paciente, index=i,
+        intercept=intercept[i], coef0=coef[i][0], coef1=coef[i][1], coef2=coef[i][2])
+        db.session.add(plot_data)
 
+    db.session.commit()
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
 
 @blueprint.route('plot_data/<num_test>/<id_paciente>', methods=['GET'])

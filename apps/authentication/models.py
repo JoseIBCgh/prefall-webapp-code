@@ -70,16 +70,20 @@ class Test(db.Model):
     id_paciente = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     id_centro = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
     date = db.Column(db.Date)
-    bow = db.Column(db.Float, nullable=True)
-    fall_to_left = db.Column(db.Float, nullable=True)
-    fall_to_right = db.Column(db.Float, nullable=True)
-    falling_backward = db.Column(db.Float, nullable=True)
-    falling_forward = db.Column(db.Float, nullable=True)
-    idle = db.Column(db.Float, nullable=True)
-    sitting = db.Column(db.Float, nullable=True)
-    sleep = db.Column(db.Float, nullable=True)
-    standing = db.Column(db.Float, nullable=True)
-    plot = db.Column(db.JSON, nullable=True)
+    probabilidad_caida = db.Column(db.Float, nullable=True)
+
+class PlotData(db.Model):
+    __tablename__ = 'plot_data'
+    num_test = db.Column(db.Integer, primary_key = True)
+    id_paciente = db.Column(db.Integer, primary_key=True)
+    __table_args__ = (ForeignKeyConstraint([num_test, id_paciente],
+                                           [Test.num_test, Test.id_paciente]),
+                      {})
+    index = db.Column(db.Integer, primary_key = True)
+    intercept = db.Column(db.Float)
+    coef0 = db.Column(db.Float)
+    coef1 = db.Column(db.Float)
+    coef2 = db.Column(db.Float)
 
 class TestUnit(db.Model):
     __tablename__ = 'test_unit'
