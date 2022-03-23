@@ -1,14 +1,17 @@
 num_test = document.currentScript.getAttribute('num_test');
 id_paciente = document.currentScript.getAttribute('paciente');
 console.log(num_test)
+function ms2Tog(x){
+    return x * 0.10197162129779
+}
 function start_prediction() {
     console.log("start_prediction")
     // send ajax POST request to start background job
     var url = `/test_data/`+id_paciente+`/`+num_test;
     d3.json(url).then(function(response) {
-        const acc_x = response.acc_x;
-        const acc_y = response.acc_y;
-        const acc_z = response.acc_z;
+        const acc_x = response.acc_x.map(ms2Tog);
+        const acc_y = response.acc_y.map(ms2Tog);
+        const acc_z = response.acc_z.map(ms2Tog);
         $.ajax({
             type: 'POST',
             url: 'http://0.0.0.0:8000/predict',

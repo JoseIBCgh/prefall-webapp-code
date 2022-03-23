@@ -1,7 +1,10 @@
 var counter = 0;
-function buildChart() {
+function ms2Tog(x){
+    return x * 0.10197162129779
+}
+function buildChartSVM() {
 
-    console.log("buildChart")
+    console.log("buildChartSVM")
     var colorlist = ['#FF3333','#4CFF33', '#3371FF']
     // Fetch the sample data for the plots
     paciente = document.currentScript.getAttribute('paciente'); 
@@ -12,9 +15,9 @@ function buildChart() {
         const coef0 = response.coef0;
         const coef1 = response.coef1;
         const coef2 = response.coef2;
-        const acc_x = response.acc_x;
-        const acc_y = response.acc_y;
-        const acc_z = response.acc_z;
+        const acc_x = response.acc_x.map(ms2Tog);
+        const acc_y = response.acc_y.map(ms2Tog);
+        const acc_z = response.acc_z.map(ms2Tog);
         console.log(intercept)
         console.log(coef0)
         console.log(coef1)
@@ -29,9 +32,21 @@ function buildChart() {
                 y.push(tmp[j])
             }
         }
-        var z = []
-        for(let i = 0; i < x.length; i++){
-            z.push(calcZ(x[i], y[i],intercept, coef0, coef1, coef2))
+        data_boundaries = []
+        for(let j = 0; j < intercept.length; ++j){
+            var z = []
+            for(let i = 0; i < x.length; i++){
+                z.push(calcZ(x[i], y[i],intercept[j], coef0[j], coef1[j], coef2[j]))
+            }
+            data_boundary = {
+                color:'rgb(100,100,100)',
+                type: 'mesh3d',
+                opacity: 0.3,
+                x: x,
+                y: y,
+                z: z,
+            }
+            data_boundaries.push(data_boundary);
         }
         /*
         var data_boundary=
@@ -60,7 +75,7 @@ function buildChart() {
             };
         Plotly.newPlot('svm', [data_boundary, data_points]);
         */
-        Plotly.newPlot('svm', get_initial_data_svm(x, y, z, acc_x, acc_y, acc_z))
+        Plotly.newPlot('svm', get_initial_data_svm(data_boundaries, acc_x, acc_y, acc_z))
         var interval = create_interval_svm(acc_x, acc_y, acc_z, "counter", "svm");
 
         const play = document.getElementById("play_svm");
@@ -71,7 +86,7 @@ function buildChart() {
         stop.onclick = function(){
             clearInterval_svm(interval)
             counter = 1
-            Plotly.react('svm', get_initial_data_svm(x, y, z, acc_x, acc_y, acc_z))
+            Plotly.react('svm', get_initial_data_svm(data_boundaries, acc_x, acc_y, acc_z))
         }
 
         const pause = document.getElementById("pause_svm");
@@ -80,15 +95,7 @@ function buildChart() {
         }
     });
 }
-function get_initial_data_svm(boundary_x, boundary_y, boundary_z, acc_x, acc_y, acc_z){
-    var data_boundary=
-        {   
-            color:'rgb(100,100,100)',
-            type: 'mesh3d',
-            x: boundary_x,
-            y: boundary_y,
-            z: boundary_z,
-        };
+function get_initial_data_svm(data_boundaries, acc_x, acc_y, acc_z){
     var data_points =
         {
             type: 'scatter3d',
@@ -103,7 +110,7 @@ function get_initial_data_svm(boundary_x, boundary_y, boundary_z, acc_x, acc_y, 
             y: [acc_y[0]],
             z: [acc_z[0]],
         };
-    var data = [data_boundary, data_points]
+    var data = data_boundaries.concat(data_points)
     return data        
 }
 function create_interval_svm(x, y, z, count_name, div){
@@ -127,7 +134,7 @@ function range(size, startAt = 0, separation) {
     return [...Array(size).keys()].map(i => (i * separation) + startAt);
 }
 
-analizado = document.currentScript.getAttribute('analizado');
-if(analizado){
-    buildChart()
+probabilidad_caida = document.currentScript.getAttribute('probabilidad_caida');
+if(probabilidad_caida > 0){
+    buildChartSVM()
 }

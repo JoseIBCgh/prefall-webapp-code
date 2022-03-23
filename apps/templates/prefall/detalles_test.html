@@ -9,6 +9,8 @@
 
 {% if test["fall_to_left"] is not none %}
 {% set probabilidad_caida = test["fall_to_left"] + test["fall_to_right"] + test["falling_backward"] + test["falling_forward"] %}
+{% else %}
+{% set probabilidad_caida = -1 %}
 {% endif %}
 
 {% block content %}
@@ -54,7 +56,7 @@
                                             </td>
                                         </tr>
                                         {% endif %}
-                                        {% if probabilidad_caida is not none %}
+                                        {% if probabilidad_caida > 0 %}
                                         <tr class="unread">
                                             <td>
                                                 <h6 class="text-muted">Probabilidad de caida</h6>
@@ -100,11 +102,10 @@
                     <a href="{{url_for('prefall_blueprint.detalles_test', id=test['id_paciente'], num=test['num_test'], editing=True)}}" class="label theme-bg text-white f-12 btn-rounded">Editar</a>
                     {% endif %}
                     <a href="{{url_for('prefall_blueprint.get_test', paciente=test['id_paciente'], test=test['num_test'])}}" class="label theme-bg text-white f-12 btn-rounded">Descargar</a>
-                    {% if test["probabilidad_caida"] is none %}
                     <button id="analize-btn" class="label theme-bg text-white f-12 btn-rounded" onclick="start_prediction();">Analizar</button>
-                    {% endif %}
                     <br>
                     <br>
+                    {% if probabilidad_caida > 0 %}
                     <div id="svm" class="img-fluid" width="100%" height="100%"></div>
                     <div class="control-stream">
                         <button id="play_svm">
@@ -123,6 +124,7 @@
                             </svg>
                         </button>
                     </div>
+                    {% endif %}
                     <div id="acc" class="img-fluid" width="100%" height="100%"></div>
                     <div id="gyr" class="img-fluid" width="100%" height="100%"></div>
                     <div id="mag" class="img-fluid" width="100%" height="100%"></div>
@@ -187,7 +189,7 @@
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
                     <script src="/static/assets/js/plot.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}}></script>
                     <script src="/static/assets/js/predict.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}}></script>
-                    <script src="/static/assets/js/plot-svm.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}} analizado={{probabilidad_caida is not none}}></script>
+                    <script src="/static/assets/js/plot-svm.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}} probabilidad_caida={{probabilidad_caida}}></script>
                 </div>
             </div>
         </div>
