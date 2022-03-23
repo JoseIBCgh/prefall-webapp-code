@@ -7,6 +7,10 @@
 {% block stylesheets %}
 {% endblock stylesheets %}
 
+{% if test["fall_to_left"] is not none %}
+{% set probabilidad_caida = test["fall_to_left"] + test["fall_to_right"] + test["falling_backward"] + test["falling_forward"] %}
+{% endif %}
+
 {% block content %}
 
     <div class="pcoded-content">
@@ -50,13 +54,13 @@
                                             </td>
                                         </tr>
                                         {% endif %}
-                                        {% if test["probabilidad_caida"] is not none %}
+                                        {% if probabilidad_caida is not none %}
                                         <tr class="unread">
                                             <td>
                                                 <h6 class="text-muted">Probabilidad de caida</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted">{{test["probabilidad_caida"]}}</h6>
+                                                <h6 class="text-muted">{{probabilidad_caida}}</h6>
                                             </td>
                                         </tr>
                                         {% endif %}
@@ -183,7 +187,7 @@
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
                     <script src="/static/assets/js/plot.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}}></script>
                     <script src="/static/assets/js/predict.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}}></script>
-                    <script src="/static/assets/js/plot-svm.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}} analizado={{test[["probabilidad_caida"]] is not none}}></script>
+                    <script src="/static/assets/js/plot-svm.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}} analizado={{probabilidad_caida is not none}}></script>
                 </div>
             </div>
         </div>
