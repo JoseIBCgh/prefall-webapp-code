@@ -1,4 +1,18 @@
 var counter = 0;
+const bow = document.currentScript.getAttribute('bow');
+const fall_to_left = document.currentScript.getAttribute('fall_to_left');
+const fall_to_right = document.currentScript.getAttribute('fall_to_right');
+const falling_backward = document.currentScript.getAttribute('falling_backward');
+const falling_forward = document.currentScript.getAttribute('falling_forward');
+const idle = document.currentScript.getAttribute('idle');
+const sitting = document.currentScript.getAttribute('sitting');
+const sleep = document.currentScript.getAttribute('sleep');
+const standing = document.currentScript.getAttribute('standing');
+
+var probabilidades = [["Bow", parseFloat(bow)], ["Fall to left", parseFloat(fall_to_left)], ["Fall to right", parseFloat(fall_to_right)], 
+["Falling backward", parseFloat(falling_backward)], ["Falling forward", parseFloat(falling_forward)], ["Idle", parseFloat(idle)], 
+["Sitting", parseFloat(sitting)], ["Sleep", parseFloat(sleep)], ["Standing", parseFloat(standing)]]
+
 function ms2Tog(x){
     return x * 0.10197162129779
 }
@@ -23,7 +37,7 @@ function buildChartSVM() {
         console.log(coef1)
         console.log(coef2)
         const N = 20;
-        tmp = range(N, -1, 0.1)
+        tmp = range(N, -4, 0.4)
         var x = []
         var y = []
         for(let i = 0; i< N; i++){
@@ -34,11 +48,11 @@ function buildChartSVM() {
         }
         data_boundaries = []
         for(let j = 0; j < intercept.length; ++j){
-            var z = []
+            let z = []
             for(let i = 0; i < x.length; i++){
                 z.push(calcZ(x[i], y[i],intercept[j], coef0[j], coef1[j], coef2[j]))
             }
-            data_boundary = {
+            let data_boundary = {
                 color:'rgb(100,100,100)',
                 type: 'mesh3d',
                 opacity: 0.3,
@@ -48,33 +62,6 @@ function buildChartSVM() {
             }
             data_boundaries.push(data_boundary);
         }
-        /*
-        var data_boundary=
-
-            {   
-              color:'rgb(100,100,100)',
-              type: 'mesh3d',
-              x: x,
-              y: y,
-              z: z,
-            };
-
-        var data_points =
-            {
-                type: 'scatter3d',
-                mode: 'markers',
-                marker: {
-                    color: 'rgb(0, 200, 0)',
-                    size: 2,
-            
-                    opacity: 0.8
-                },
-                x: acc_x,
-                y: acc_y,
-                z: acc_z,
-            };
-        Plotly.newPlot('svm', [data_boundary, data_points]);
-        */
         Plotly.newPlot('svm', get_initial_data_svm(data_boundaries, acc_x, acc_y, acc_z))
         var interval = create_interval_svm(acc_x, acc_y, acc_z, "counter", "svm");
 
@@ -93,6 +80,81 @@ function buildChartSVM() {
         pause.onclick = function(){
             clearInterval_svm(interval)
         }
+
+        probabilidades_ordenadas = JSON.parse(JSON.stringify(probabilidades)).sort((a,b) => a[1] < b[1]? 1:-1)
+        
+        for(let i  = 0; i < probabilidades_ordenadas.length; i++){
+            index = probabilidades.findIndex((y) => y[0] === probabilidades_ordenadas[i][0])
+            probabilidades_ordenadas[i].push(index)
+        }
+        console.log(probabilidades)
+        console.log(probabilidades_ordenadas)
+        var data_subplots = []
+        for(let j = 0; j < probabilidades_ordenadas.length; j++){
+            let index = probabilidades_ordenadas[j][2]
+            let z = []
+            for(let i = 0; i < x.length; i++){
+                z.push(calcZ(x[i], y[i],intercept[index], coef0[index], coef1[index], coef2[index]))
+            }
+            let data_boundary = {
+                color:'rgb(100,100,100)',
+                type: 'mesh3d',
+                opacity: 0.3,
+                x: x,
+                y: y,
+                z: z,
+                //scene: "scene" + (j > 0?(j + 1).toString():"")
+                scene: "scene" + (j + 1).toString()
+            }
+            data_subplots.push(data_boundary)
+            let data_points = {
+                type: 'scatter3d',
+                mode: 'markers',
+                marker: {
+                    color: 'rgb(0, 200, 0)',
+                    size: 2,
+            
+                    opacity: 0.8
+                },
+                x: acc_x,
+                y: acc_y,
+                z: acc_z,
+                //scene: "scene" + (j > 0?(j + 1).toString():"")
+                scene: "scene" + (j + 1).toString()
+            }
+            data_subplots.push(data_points)
+        }
+        var layout = {}
+        for(let i = 0; i < probabilidades_ordenadas.length; ++i){
+            let subLayout = {
+                domain:{
+                    x:[1/3*(i%3),1/3*(i%3) + 1/3],
+                    y:[1-Math.floor(i/3) / 3 - 1/3,1-Math.floor(i/3) / 3]
+                }
+            }
+            //layout["scene" + (i > 0?(i + 1).toString():"")] = subLayout
+            layout["scene" + (i + 1).toString()] = subLayout
+        }
+        var annotations = []
+        for(let i = 0; i < probabilidades_ordenadas.length; ++i){
+            let annotation = {
+                text: probabilidades_ordenadas[i][0],
+                    font: {
+                    size: 16,
+                    color: 'black',
+                },
+                showarrow: false,
+                align: 'center',
+                x:1/3*(i%3) + 1/6 - probabilidades_ordenadas[i][0].length / 400,
+                y:1-Math.floor(i/3) / 3,
+            }
+            annotations.push(annotation)
+        }
+        layout["annotations"] = annotations
+        layout["showlegend"] = false
+        var subplots_div = document.querySelector("#svm-subplots");
+        subplots_div.style.height = getComputedStyle(subplots_div).width;
+        Plotly.newPlot('svm-subplots', data_subplots, layout)
     });
 }
 function get_initial_data_svm(data_boundaries, acc_x, acc_y, acc_z){

@@ -317,7 +317,8 @@ def detalles_test(id, num, editing):
         join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
         AccionesTestMedico.id_paciente == Test.id_paciente)).\
             with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, Test.num_test, 
-                    Test.date, Test.id_paciente, Test.id_centro, Test.fall_to_left, Test.fall_to_right, Test.falling_backward, Test.falling_forward).\
+            Test.date, Test.id_paciente, Test.id_centro, Test.bow, Test.fall_to_left, Test.fall_to_right, 
+                    Test.falling_backward, Test.falling_forward, Test.idle, Test.sitting, Test.sleep, Test.standing).\
                         filter(AccionesTestMedico.id_medico == current_user.id).\
                             filter(Test.id_paciente == id).\
                                 filter(Test.num_test == num).first()
@@ -458,7 +459,7 @@ def guardar_analisis(num_test, id_paciente):
 
     db.session.query(Test).filter_by(num_test=num_test).\
     filter_by(id_paciente=id_paciente).update({"bow": bow, "fall_to_left": fall_to_left, "fall_to_right": fall_to_right,
-    "falling_backward": falling_backward, "falling_forward": falling_forward, "idle":idle, "sitting":sitting,
+    "falling_backward": falling_backward, "falling_forward": falling_forward, "idle":idle, "sitting":sitting, "sleep": sleep,
     "standing":standing})
 
     db.session.query(PlotData).filter_by(num_test=num_test).filter_by(id_paciente=id_paciente).delete()    
