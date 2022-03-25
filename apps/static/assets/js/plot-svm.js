@@ -29,13 +29,18 @@ function buildChartSVM() {
         const coef0 = response.coef0;
         const coef1 = response.coef1;
         const coef2 = response.coef2;
-        const acc_x = response.acc_x_test.map(ms2Tog);
-        const acc_y = response.acc_y_test.map(ms2Tog);
-        const acc_z = response.acc_z_test.map(ms2Tog);
+        const acc_x_test = response.acc_x_test.map(ms2Tog);
+        const acc_y_test = response.acc_y_test.map(ms2Tog);
+        const acc_z_test = response.acc_z_test.map(ms2Tog);
+        const acc_x_train = response.acc_x_train;
+        const acc_y_train = response.acc_y_train;
+        const acc_z_train = response.acc_z_train;
+        const class_train = response.class_train;
         console.log(intercept)
         console.log(coef0)
         console.log(coef1)
         console.log(coef2)
+        console.log(class_train)
         const N = 20;
         tmp = range(N, -1, 0.1)
         var x = []
@@ -62,18 +67,18 @@ function buildChartSVM() {
             }
             data_boundaries.push(data_boundary);
         }
-        Plotly.newPlot('svm', get_initial_data_svm(data_boundaries, acc_x, acc_y, acc_z))
-        var interval = create_interval_svm(acc_x, acc_y, acc_z, "counter", "svm");
+        Plotly.newPlot('svm', get_initial_data_svm(data_boundaries, acc_x_test, acc_y_test, acc_z_test))
+        var interval = create_interval_svm(acc_x_test, acc_y_test, acc_z_test, "counter", "svm");
 
         const play = document.getElementById("play_svm");
         play.onclick = function(){
-            interval = create_interval_svm(acc_x, acc_y, acc_z, "counter", "svm");
+            interval = create_interval_svm(acc_x_test, acc_y_test, acc_z_test, "counter", "svm");
         }
         const stop = document.getElementById("stop_svm");
         stop.onclick = function(){
             clearInterval_svm(interval)
             counter = 1
-            Plotly.react('svm', get_initial_data_svm(data_boundaries, acc_x, acc_y, acc_z))
+            Plotly.react('svm', get_initial_data_svm(data_boundaries, acc_x_test, acc_y_test, acc_z_test))
         }
 
         const pause = document.getElementById("pause_svm");
@@ -115,12 +120,52 @@ function buildChartSVM() {
             
                     opacity: 0.8
                 },
-                x: acc_x,
-                y: acc_y,
-                z: acc_z,
+                x: acc_x_test,
+                y: acc_y_test,
+                z: acc_z_test,
                 scene: "scene" + (j + 1).toString()
             }
             data_subplots.push(data_points)
+            let clase = probabilidades_ordenadas[j][0]
+            let indices_class = indices(class_train, clase)
+            let indices_other = indicesNot(class_train, clase)
+            let acc_x_class = returnIndices(acc_x_train, indices_class)
+            let acc_y_class = returnIndices(acc_y_train, indices_class)
+            let acc_z_class = returnIndices(acc_z_train, indices_class)
+            let acc_x_other = returnIndices(acc_x_train, indices_other)
+            let acc_y_other = returnIndices(acc_y_train, indices_other)
+            let acc_z_other = returnIndices(acc_z_train, indices_other)
+            console.log(clase)
+            let class_points = {
+                type: 'scatter3d',
+                mode: 'markers',
+                marker: {
+                    color: 'rgb(0, 0, 200)',
+                    size: 2,
+            
+                    opacity: 0.8
+                },
+                x: acc_x_class,
+                y: acc_y_class,
+                z: acc_z_class,
+                scene: "scene" + (j + 1).toString()
+            }
+            data_subplots.push(class_points)
+            let other_points = {
+                type: 'scatter3d',
+                mode: 'markers',
+                marker: {
+                    color: 'rgb(200, 0, 0)',
+                    size: 2,
+            
+                    opacity: 0.8
+                },
+                x: acc_x_other,
+                y: acc_y_other,
+                z: acc_z_other,
+                scene: "scene" + (j + 1).toString()
+            }
+            data_subplots.push(other_points)
         }
         var layout = {}
         for(let i = 0; i < probabilidades_ordenadas.length; ++i){
@@ -191,6 +236,25 @@ function calcZ(x, y, intercept, coef0, coef1, coef2){
 }
 function range(size, startAt = 0, separation) {
     return [...Array(size).keys()].map(i => (i * separation) + startAt);
+}
+function indices(data, value){
+    return data.reduce(function(arr, e, i) {
+        if (e === value) arr.push(i);
+        return arr;
+      }, [])
+}
+function indicesNot(data, value){
+    return data.reduce(function(arr, e, i) {
+        if (e !== value) arr.push(i);
+        return arr;
+      }, [])
+}
+function returnIndices(data, indices){
+    let result = []
+    for(let i = 0; i< indices.length; i++){
+        result.push(data[indices[i]])
+    }
+    return result
 }
 
 probabilidad_caida = document.currentScript.getAttribute('probabilidad_caida');

@@ -458,12 +458,19 @@ def guardar_analisis(num_test, id_paciente):
     sleep = [item for item in prediction if item[0] == 'Sleep'][0][1]
     standing = [item for item in prediction if item[0] == 'Standing'][0][1]
 
+    if db.session.query(Model.id).filter_by(id=model_id).first() is None: 
+        model = Model(id = model_id)
+        db.session.add(model)
+        newModel = True
+    else:
+        newModel = False
+
     db.session.query(Test).filter_by(num_test=num_test).\
     filter_by(id_paciente=id_paciente).update({"bow": bow, "fall_to_left": fall_to_left, "fall_to_right": fall_to_right,
     "falling_backward": falling_backward, "falling_forward": falling_forward, "idle":idle, "sitting":sitting, "sleep": sleep,
-    "standing":standing})
+    "standing":standing, "model":model_id})
 
-    if db.session.query(Model.id).filter_by(id=model_id).first() is None:  
+    if newModel:  
         intercept = result['intercept']
         coef = result['coef']
         for i in range(len(intercept)):
@@ -471,11 +478,13 @@ def guardar_analisis(num_test, id_paciente):
             intercept=intercept[i], coef0=coef[i][0], coef1=coef[i][1], coef2=coef[i][2])
             db.session.add(boundary)
         training_data = result['training_data']
-        for key, value in training_data.items:
+        print(training_data, file=sys.stdout)
+        for key, value in training_data.items():
+            import pandas
             df = pandas.read_json(value)
             for index, row in df.iterrows():
-                training_point = TrainingPoint(model_id = model_id, index = index, clase = key, acc_x=row["acc_x"],
-                acc_y=row["acc_y"], acc_z=row[acc_z])
+                training_point = TrainingPoint(model_id = model_id, index = index, clase = key, acc_x=row["Ax"],
+                acc_y=row["Ay"], acc_z=row["Az"])
                 db.session.add(training_point)
 
     db.session.commit()

@@ -80,5 +80,8 @@ def create_app(config):
     admin.add_view(AdminModelView(File, db.session))
     admin.add_view(AdminModelView(DocumentoPaciente, db.session))
     admin.add_view(AdminModelView(AccionesTestMedico, db.session))
+    admin.add_view(AdminModelView(Model, db.session))
+    admin.add_view(AdminModelView(Boundary, db.session))
+    admin.add_view(AdminModelView(TrainingPoint, db.session))
     
     return app

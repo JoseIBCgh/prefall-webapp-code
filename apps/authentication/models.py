@@ -79,7 +79,7 @@ class Test(db.Model):
     sitting = db.Column(db.Float, nullable=True)
     sleep = db.Column(db.Float, nullable=True)
     standing = db.Column(db.Float, nullable=True)
-    model = db.Column(db.Integer, db.ForeignKey('model.id'))
+    model = db.Column(db.Integer, db.ForeignKey('model.id'), nullable=True)
 
 class Model(db.Model):
     __tablename__ = 'model'
@@ -298,3 +298,9 @@ def create_test_data():
             username="auxiliar2", email="auxiliar@kruay.com",
             password=hash_password("auxiliar2"), nombre="auxiliar2", roles=["auxiliar"]
         )
+
+def drop_all():
+    from sqlalchemy import create_engine
+    from sqlalchemy.ext.declarative import declarative_base
+    Base = declarative_base(bind=db.engine)
+    Base.metadata.drop_all(bind=db.engine)
