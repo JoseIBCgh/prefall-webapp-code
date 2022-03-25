@@ -4,7 +4,7 @@ import sqlalchemy
 
 from io import BytesIO
 
-from apps.authentication.models import AccionesTestMedico, DocumentoPaciente, PacienteAsociado, Role, Test, TestUnit, User, Centro, File, PlotData
+from apps.authentication.models import AccionesTestMedico, DocumentoPaciente, PacienteAsociado, Role, Test, TestUnit, User, Centro, File, Model, Boundary, TrainingPoint
 from apps.prefall import blueprint
 from flask import abort, jsonify, render_template, request, redirect, url_for, send_file
 from jinja2 import TemplateNotFound
@@ -447,6 +447,7 @@ def guardar_analisis(num_test, id_paciente):
     print(data, file=sys.stdout)
     result = data['result']
     prediction = result['prediction']
+    model_id = result['model_id']
     bow = [item for item in prediction if item[0] == 'Bow'][0][1]
     fall_to_left = [item for item in prediction if item[0] == 'Fall-to-left'][0][1]
     fall_to_right = [item for item in prediction if item[0] == 'Fall-to-right'][0][1]
@@ -462,13 +463,20 @@ def guardar_analisis(num_test, id_paciente):
     "falling_backward": falling_backward, "falling_forward": falling_forward, "idle":idle, "sitting":sitting, "sleep": sleep,
     "standing":standing})
 
-    db.session.query(PlotData).filter_by(num_test=num_test).filter_by(id_paciente=id_paciente).delete()    
-    intercept = result['intercept']
-    coef = result['coef']
-    for i in range(len(intercept)):
-        plot_data = PlotData(num_test=num_test, id_paciente=id_paciente, index=i,
-        intercept=intercept[i], coef0=coef[i][0], coef1=coef[i][1], coef2=coef[i][2])
-        db.session.add(plot_data)
+    if db.session.query(Model.id).filter_by(id=model_id).first() is None:  
+        intercept = result['intercept']
+        coef = result['coef']
+        for i in range(len(intercept)):
+            boundary = Boundary(model_id = model_id, index=i,
+            intercept=intercept[i], coef0=coef[i][0], coef1=coef[i][1], coef2=coef[i][2])
+            db.session.add(boundary)
+        training_data = result['training_data']
+        for key, value in training_data.items:
+            df = pandas.read_json(value)
+            for index, row in df.iterrows():
+                training_point = TrainingPoint(model_id = model_id, index = index, clase = key, acc_x=row["acc_x"],
+                acc_y=row["acc_y"], acc_z=row[acc_z])
+                db.session.add(training_point)
 
     db.session.commit()
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
@@ -476,12 +484,19 @@ def guardar_analisis(num_test, id_paciente):
 @blueprint.route('plot_data/<num_test>/<id_paciente>', methods=['GET'])
 def plot_data(num_test, id_paciente):
     from apps import db
-    query = db.session.query(
-        PlotData.intercept, PlotData.coef0, PlotData.coef1,PlotData.coef2).\
-        filter(PlotData.num_test == num_test).\
-        filter(PlotData.id_paciente == id_paciente)
-    df = pd.read_sql(query.statement, db.session.bind)
-    query2 = db.session.query(
+    query_boundary = db.session.query(
+        Boundary.intercept, Boundary.coef0, Boundary.coef1,Boundary.coef2).\
+        filter(Test.num_test == num_test).\
+        filter(Test.id_paciente == id_paciente).\
+        filter(Test.model == Boundary.model)
+    df_boundary = pd.read_sql(query_boundary.statement, db.session.bind)
+    query_train = db.session.query(
+        TrainingPoint.clase, TrainingPoint.acc_x, TrainingPoint.acc_y,TrainingPoint.acc_z).\
+        filter(Test.num_test == num_test).\
+        filter(Test.id_paciente == id_paciente).\
+        filter(Test.model == TrainingPoint.model)
+    df_train = pd.read_sql(query_train.statement, db.session.bind)
+    query_test = db.session.query(
         Test.num_test, Test.id_paciente, Test.date, TestUnit.item, TestUnit.time, TestUnit.acc_x,
         TestUnit.acc_y, TestUnit.acc_z, TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
         TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z).\
@@ -489,15 +504,19 @@ def plot_data(num_test, id_paciente):
                             filter(Test.num_test == TestUnit.num_test).\
                                 filter(Test.id_paciente==id_paciente).\
                                     filter(Test.num_test==num_test)
-    df2 = pd.read_sql(query2.statement, db.session.bind)
+    df_test = pd.read_sql(query_test.statement, db.session.bind)
     data = {
-        "intercept": df["intercept"].to_list(),
-        "coef0": df["coef0"].to_list(),
-        "coef1": df["coef1"].to_list(),
-        "coef2": df["coef2"].to_list(),
-        "acc_x": df2["acc_x"].to_list(),
-        "acc_y": df2["acc_y"].to_list(),
-        "acc_z": df2["acc_z"].to_list(),
+        "intercept": df_boundary["intercept"].to_list(),
+        "coef0": df_boundary["coef0"].to_list(),
+        "coef1": df_boundary["coef1"].to_list(),
+        "coef2": df_boundary["coef2"].to_list(),
+        "acc_x_test": df_test["acc_x"].to_list(),
+        "acc_y_test": df_test["acc_y"].to_list(),
+        "acc_z_test": df_test["acc_z"].to_list(),
+        "class_train": df_train["clase"].to_list(),
+        "acc_x_train": df_train["acc_x"].to_list(),
+        "acc_y_train": df_train["acc_y"].to_list(),
+        "acc_z_train": df_train["acc_z"].to_list(),
     }
     return jsonify(data)
 

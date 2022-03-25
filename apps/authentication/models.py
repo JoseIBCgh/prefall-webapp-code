@@ -79,19 +79,31 @@ class Test(db.Model):
     sitting = db.Column(db.Float, nullable=True)
     sleep = db.Column(db.Float, nullable=True)
     standing = db.Column(db.Float, nullable=True)
+    model = db.Column(db.Integer, db.ForeignKey('model.id'))
 
-class PlotData(db.Model):
-    __tablename__ = 'plot_data'
-    num_test = db.Column(db.Integer, primary_key = True)
-    id_paciente = db.Column(db.Integer, primary_key=True)
-    __table_args__ = (ForeignKeyConstraint([num_test, id_paciente],
-                                           [Test.num_test, Test.id_paciente]),
-                      {})
+class Model(db.Model):
+    __tablename__ = 'model'
+    id = db.Column(db.Integer, primary_key=True)
+    boundaries = db.relationship("Boundary", backref="model", lazy="dynamic", cascade='all, delete-orphan')
+    training_points = db.relationship("TrainingPoint", backref="model", lazy="dynamic", cascade='all, delete-orphan')
+
+class Boundary(db.Model):
+    __tablename__ = 'boundary'
+    model_id = db.Column(db.Integer, db.ForeignKey('model.id'), primary_key=True)
     index = db.Column(db.Integer, primary_key = True)
     intercept = db.Column(db.Float)
     coef0 = db.Column(db.Float)
     coef1 = db.Column(db.Float)
     coef2 = db.Column(db.Float)
+
+class TrainingPoint(db.Model):
+    __tablename__ = 'training_point'
+    model_id = db.Column(db.Integer, db.ForeignKey('model.id'), primary_key=True)
+    index = db.Column(db.Integer, primary_key = True)
+    clase = db.Column(db.String(20))
+    acc_x = db.Column(db.Float)
+    acc_y = db.Column(db.Float)
+    acc_z = db.Column(db.Float)
 
 class TestUnit(db.Model):
     __tablename__ = 'test_unit'

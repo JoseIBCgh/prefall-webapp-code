@@ -32,7 +32,7 @@ login_manager = LoginManager()
 mail = Mail()
 ckeditor = CKEditor()
 
-from apps.authentication.models import AccionesTestMedico, DocumentoPaciente, File, Role, Test, TestUnit, User, Centro, PlotData
+from apps.authentication.models import AccionesTestMedico, DocumentoPaciente, File, Role, Test, TestUnit, User, Centro, Model, Boundary, TrainingPoint
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 
 
@@ -75,7 +75,6 @@ def create_app(config):
     admin.add_view(AdminModelView(User, db.session))
     admin.add_view(AdminModelView(Role, db.session))
     admin.add_view(AdminModelView(Test, db.session))
-    admin.add_view(AdminModelView(PlotData, db.session))
     admin.add_view(AdminModelView(TestUnit, db.session))
     admin.add_view(AdminModelView(Centro, db.session))
     admin.add_view(AdminModelView(File, db.session))

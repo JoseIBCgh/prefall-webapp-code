@@ -29,15 +29,15 @@ function buildChartSVM() {
         const coef0 = response.coef0;
         const coef1 = response.coef1;
         const coef2 = response.coef2;
-        const acc_x = response.acc_x.map(ms2Tog);
-        const acc_y = response.acc_y.map(ms2Tog);
-        const acc_z = response.acc_z.map(ms2Tog);
+        const acc_x = response.acc_x_test.map(ms2Tog);
+        const acc_y = response.acc_y_test.map(ms2Tog);
+        const acc_z = response.acc_z_test.map(ms2Tog);
         console.log(intercept)
         console.log(coef0)
         console.log(coef1)
         console.log(coef2)
         const N = 20;
-        tmp = range(N, -4, 0.4)
+        tmp = range(N, -1, 0.1)
         var x = []
         var y = []
         for(let i = 0; i< N; i++){
@@ -103,7 +103,6 @@ function buildChartSVM() {
                 x: x,
                 y: y,
                 z: z,
-                //scene: "scene" + (j > 0?(j + 1).toString():"")
                 scene: "scene" + (j + 1).toString()
             }
             data_subplots.push(data_boundary)
@@ -119,7 +118,6 @@ function buildChartSVM() {
                 x: acc_x,
                 y: acc_y,
                 z: acc_z,
-                //scene: "scene" + (j > 0?(j + 1).toString():"")
                 scene: "scene" + (j + 1).toString()
             }
             data_subplots.push(data_points)
@@ -132,20 +130,19 @@ function buildChartSVM() {
                     y:[1-Math.floor(i/3) / 3 - 1/3,1-Math.floor(i/3) / 3]
                 }
             }
-            //layout["scene" + (i > 0?(i + 1).toString():"")] = subLayout
             layout["scene" + (i + 1).toString()] = subLayout
         }
         var annotations = []
         for(let i = 0; i < probabilidades_ordenadas.length; ++i){
             let annotation = {
-                text: probabilidades_ordenadas[i][0],
+                text: probabilidades_ordenadas[i][0] + " " + (probabilidades_ordenadas[i][1] * 100).toFixed(2),
                     font: {
                     size: 16,
                     color: 'black',
                 },
                 showarrow: false,
                 align: 'center',
-                x:1/3*(i%3) + 1/6 - probabilidades_ordenadas[i][0].length / 400,
+                x:1/3*(i%3),
                 y:1-Math.floor(i/3) / 3,
             }
             annotations.push(annotation)
