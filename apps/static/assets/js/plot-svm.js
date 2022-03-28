@@ -9,8 +9,8 @@ const sitting = document.currentScript.getAttribute('sitting');
 const sleep = document.currentScript.getAttribute('sleep');
 const standing = document.currentScript.getAttribute('standing');
 
-var probabilidades = [["Bow", parseFloat(bow)], ["Fall to left", parseFloat(fall_to_left)], ["Fall to right", parseFloat(fall_to_right)], 
-["Falling backward", parseFloat(falling_backward)], ["Falling forward", parseFloat(falling_forward)], ["Idle", parseFloat(idle)], 
+var probabilidades = [["Bow", parseFloat(bow)], ["Fall-to-left", parseFloat(fall_to_left)], ["Fall-to-right", parseFloat(fall_to_right)], 
+["Falling-backward", parseFloat(falling_backward)], ["Falling-forward", parseFloat(falling_forward)], ["Idle", parseFloat(idle)], 
 ["Sitting", parseFloat(sitting)], ["Sleep", parseFloat(sleep)], ["Standing", parseFloat(standing)]]
 
 function ms2Tog(x){
@@ -115,7 +115,7 @@ function buildChartSVM() {
                 type: 'scatter3d',
                 mode: 'markers',
                 marker: {
-                    color: 'rgb(0, 200, 0)',
+                    color: 'rgb(200, 200, 0)',
                     size: 2,
             
                     opacity: 0.8
@@ -123,7 +123,9 @@ function buildChartSVM() {
                 x: acc_x_test,
                 y: acc_y_test,
                 z: acc_z_test,
-                scene: "scene" + (j + 1).toString()
+                scene: "scene" + (j + 1).toString(),
+                name: "New points",
+                showlegend: j == 0
             }
             data_subplots.push(data_points)
             let clase = probabilidades_ordenadas[j][0]
@@ -140,7 +142,7 @@ function buildChartSVM() {
                 type: 'scatter3d',
                 mode: 'markers',
                 marker: {
-                    color: 'rgb(0, 0, 200)',
+                    color: 'rgb(0, 200, 0)',
                     size: 2,
             
                     opacity: 0.8
@@ -148,7 +150,9 @@ function buildChartSVM() {
                 x: acc_x_class,
                 y: acc_y_class,
                 z: acc_z_class,
-                scene: "scene" + (j + 1).toString()
+                scene: "scene" + (j + 1).toString(),
+                name: "Class points",
+                showlegend: j == 0
             }
             data_subplots.push(class_points)
             let other_points = {
@@ -163,7 +167,9 @@ function buildChartSVM() {
                 x: acc_x_other,
                 y: acc_y_other,
                 z: acc_z_other,
-                scene: "scene" + (j + 1).toString()
+                scene: "scene" + (j + 1).toString(),
+                name: "Other classes points",
+                showlegend: j == 0
             }
             data_subplots.push(other_points)
         }
@@ -180,7 +186,7 @@ function buildChartSVM() {
         var annotations = []
         for(let i = 0; i < probabilidades_ordenadas.length; ++i){
             let annotation = {
-                text: probabilidades_ordenadas[i][0] + " " + (probabilidades_ordenadas[i][1] * 100).toFixed(2),
+                text: probabilidades_ordenadas[i][0] + " " + (probabilidades_ordenadas[i][1] * 100).toFixed(2) + "%",
                     font: {
                     size: 16,
                     color: 'black',
@@ -193,7 +199,7 @@ function buildChartSVM() {
             annotations.push(annotation)
         }
         layout["annotations"] = annotations
-        layout["showlegend"] = false
+        //layout["showlegend"] = false
         var subplots_div = document.querySelector("#svm-subplots");
         subplots_div.style.height = getComputedStyle(subplots_div).width;
         Plotly.newPlot('svm-subplots', data_subplots, layout)
