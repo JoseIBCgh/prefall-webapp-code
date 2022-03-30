@@ -88,7 +88,8 @@ class DebugConfig(Config):
         os.getenv('DB_NAME')
     )
 
-    SQLALCHEMY_DATABASE_URI = 'mysql://zAKPC936JP:UloEGPhfyS@remotemysql.com/zAKPC936JP'
+    #SQLALCHEMY_DATABASE_URI = 'mysql://zAKPC936JP:UloEGPhfyS@remotemysql.com/zAKPC936JP'
+    SQLALCHEMY_DATABASE_URI = 'mysql://root:1234@localhost/webapp'
 
 # Load all possible configurations
 config_dict = {

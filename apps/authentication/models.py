@@ -147,15 +147,18 @@ class File(db.Model):
     filename = db.Column(db.String(50))
     data = db.Column(db.LargeBinary)
 
+'''
 import sys
 @event.listens_for(Test, 'after_insert')
 def after_insert_test(mapper, connection, target):
+    print("after_insert_test", file=sys.stdout)
     paciente = User.query.filter(User.id == target.id_paciente).first()
     medicos_asociados = paciente.medicos_asociados
     new_table = AccionesTestMedico.__table__
     for medico in medicos_asociados:
         data = {"num_test": target.num_test, "id_paciente": target.id_paciente, "id_medico": medico.id}
         connection.execute(new_table.insert(), data)
+'''
 '''
 @event.listens_for(PacienteAsociado, 'after_insert')
 def after_asociate_patient(mapper, connection, target):
@@ -179,6 +182,31 @@ def request_loader(request):
     user = User.query.filter_by(username=username).first()
     return user if user else None
 '''
+
+from sqlalchemy.schema import DDL
+
+trigger = DDL('''\
+CREATE TRIGGER after_test_insert
+AFTER INSERT
+ON test FOR EACH ROW
+BEGIN
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE id_medico_ INT;
+    DECLARE cur CURSOR FOR SELECT id_medico FROM pacientes_asociados WHERE id_paciente = NEW.id_paciente;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    
+    OPEN cur;
+        medicos_loop: LOOP
+            FETCH cur INTO id_medico_;
+            IF done THEN
+                LEAVE medicos_loop;
+            END IF;
+            INSERT INTO acciones_test_medico(num_test, id_paciente, id_medico, visto) values (NEW.num_test, NEW.id_paciente, id_medico_, FALSE);
+        END LOOP;
+    CLOSE cur;
+END''')
+event.listen(Test.__table__, 'after_create', trigger)
+
 
 def create_data():
     from apps import user_datastore

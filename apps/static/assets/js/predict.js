@@ -5,6 +5,7 @@ function ms2Tog(x){
     return x * 0.10197162129779
 }
 function start_prediction() {
+    localStorage.setItem("startTimeAnalize", Date.now());
     console.log("start_prediction")
     // send ajax POST request to start background job
     var url = `/test_data/`+id_paciente+`/`+num_test;

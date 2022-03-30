@@ -1,4 +1,6 @@
 var counter = 0;
+var startTimeAnalize;
+var startTimePlot;
 const bow = document.currentScript.getAttribute('bow');
 const fall_to_left = document.currentScript.getAttribute('fall_to_left');
 const fall_to_right = document.currentScript.getAttribute('fall_to_right');
@@ -9,9 +11,10 @@ const sitting = document.currentScript.getAttribute('sitting');
 const sleep = document.currentScript.getAttribute('sleep');
 const standing = document.currentScript.getAttribute('standing');
 
-var probabilidades = [["Bow", parseFloat(bow)], ["Fall-to-left", parseFloat(fall_to_left)], ["Fall-to-right", parseFloat(fall_to_right)], 
-["Falling-backward", parseFloat(falling_backward)], ["Falling-forward", parseFloat(falling_forward)], ["Idle", parseFloat(idle)], 
-["Sitting", parseFloat(sitting)], ["Sleep", parseFloat(sleep)], ["Standing", parseFloat(standing)]]
+var probabilidades = [["Bow", parseFloat(bow), "Bow"], ["Fall-to-left", parseFloat(fall_to_left), "Fall to left"], 
+["Fall-to-right", parseFloat(fall_to_right), "Fall to right"], ["Falling-backward", parseFloat(falling_backward), "Falling backward"], 
+["Falling-forward", parseFloat(falling_forward), "Falling forward"], ["Idle", parseFloat(idle), "Idle"], 
+["Sitting", parseFloat(sitting), "Sitting"], ["Sleep", parseFloat(sleep), "Sleep"], ["Standing", parseFloat(standing), "Standing"]]
 
 function ms2Tog(x){
     return x * 0.10197162129779
@@ -51,6 +54,8 @@ function buildChartSVM() {
                 y.push(tmp[j])
             }
         }
+        boundary_colors = ['rgb(236, 219, 83)','rgb(227, 65, 50)', 'rgb(108, 160, 220)', 'rgb(219, 178, 209)', 'rgb(235, 150, 135)',
+    'rgb(0, 166, 140)', 'rgb(100, 83, 148)', 'rgb(108, 79, 60)', 'rgb(191, 216, 51)']
         data_boundaries = []
         for(let j = 0; j < intercept.length; ++j){
             let z = []
@@ -58,15 +63,38 @@ function buildChartSVM() {
                 z.push(calcZ(x[i], y[i],intercept[j], coef0[j], coef1[j], coef2[j]))
             }
             let data_boundary = {
-                color:'rgb(100,100,100)',
+                color:boundary_colors[j],
                 type: 'mesh3d',
-                opacity: 0.3,
+                opacity: 1,
                 x: x,
                 y: y,
                 z: z,
+                name: probabilidades[j][2] + "<br>" + (probabilidades[j][1] * 100).toFixed(2) + "%",
+                showlegend: true,
             }
             data_boundaries.push(data_boundary);
         }
+        var data_points =
+        {
+            type: 'scatter3d',
+            mode: 'markers',
+            marker: {
+                color: 'rgb(0, 200, 0)',
+                size: 2,
+        
+                opacity: 1
+            },
+            x: acc_x_test,
+            y: acc_y_test,
+            z: acc_z_test,
+            name: "Test points",
+            showlegend: true,
+        };
+        var data = data_boundaries.concat(data_points)
+        var plot_div = document.querySelector("#svm");
+        plot_div.style.height = getComputedStyle(plot_div).width;
+        Plotly.newPlot('svm', data);
+        /*
         Plotly.newPlot('svm', get_initial_data_svm(data_boundaries, acc_x_test, acc_y_test, acc_z_test))
         var interval = create_interval_svm(acc_x_test, acc_y_test, acc_z_test, "counter", "svm");
 
@@ -85,6 +113,7 @@ function buildChartSVM() {
         pause.onclick = function(){
             clearInterval_svm(interval)
         }
+        */
 
         probabilidades_ordenadas = JSON.parse(JSON.stringify(probabilidades)).sort((a,b) => a[1] < b[1]? 1:-1)
         
@@ -96,7 +125,7 @@ function buildChartSVM() {
         console.log(probabilidades_ordenadas)
         var data_subplots = []
         for(let j = 0; j < probabilidades_ordenadas.length; j++){
-            let index = probabilidades_ordenadas[j][2]
+            let index = probabilidades_ordenadas[j][3]
             let z = []
             for(let i = 0; i < x.length; i++){
                 z.push(calcZ(x[i], y[i],intercept[index], coef0[index], coef1[index], coef2[index]))
@@ -104,7 +133,7 @@ function buildChartSVM() {
             let data_boundary = {
                 color:'rgb(100,100,100)',
                 type: 'mesh3d',
-                opacity: 0.3,
+                opacity: 1,
                 x: x,
                 y: y,
                 z: z,
@@ -118,13 +147,13 @@ function buildChartSVM() {
                     color: 'rgb(200, 200, 0)',
                     size: 2,
             
-                    opacity: 0.8
+                    opacity: 1
                 },
                 x: acc_x_test,
                 y: acc_y_test,
                 z: acc_z_test,
                 scene: "scene" + (j + 1).toString(),
-                name: "New points",
+                name: "Test points",
                 showlegend: j == 0
             }
             data_subplots.push(data_points)
@@ -151,7 +180,7 @@ function buildChartSVM() {
                 y: acc_y_class,
                 z: acc_z_class,
                 scene: "scene" + (j + 1).toString(),
-                name: "Class points",
+                name: "Train points from class",
                 showlegend: j == 0
             }
             data_subplots.push(class_points)
@@ -168,7 +197,7 @@ function buildChartSVM() {
                 y: acc_y_other,
                 z: acc_z_other,
                 scene: "scene" + (j + 1).toString(),
-                name: "Other classes points",
+                name: "Train points from other classes",
                 showlegend: j == 0
             }
             data_subplots.push(other_points)
@@ -186,7 +215,7 @@ function buildChartSVM() {
         var annotations = []
         for(let i = 0; i < probabilidades_ordenadas.length; ++i){
             let annotation = {
-                text: probabilidades_ordenadas[i][0] + " " + (probabilidades_ordenadas[i][1] * 100).toFixed(2) + "%",
+                text: probabilidades_ordenadas[i][2] + " " + (probabilidades_ordenadas[i][1] * 100).toFixed(2) + "%",
                     font: {
                     size: 16,
                     color: 'black',
@@ -203,6 +232,10 @@ function buildChartSVM() {
         var subplots_div = document.querySelector("#svm-subplots");
         subplots_div.style.height = getComputedStyle(subplots_div).width;
         Plotly.newPlot('svm-subplots', data_subplots, layout)
+
+        var endTime = Date.now()
+        console.log("Time analize = " + (endTime - localStorage.getItem("startTimeAnalize")))
+        console.log("Time plot = " + (endTime - startTimePlot))
     });
 }
 function get_initial_data_svm(data_boundaries, acc_x, acc_y, acc_z){
@@ -265,5 +298,16 @@ function returnIndices(data, indices){
 
 probabilidad_caida = document.currentScript.getAttribute('probabilidad_caida');
 if(probabilidad_caida > 0){
+    startTimePlot = Date.now()
     buildChartSVM()
 }
+/*
+let analize_btn = document.querySelector("#analize-btn")
+console.log(analize_btn)
+analize_btn.onclick = function(){
+    console.log("startTimeAnalize")
+    startTimeAnalize = performance.now()
+    start_prediction();
+};
+console.log(analize_btn)
+*/
