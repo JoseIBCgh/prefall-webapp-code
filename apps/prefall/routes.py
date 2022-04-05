@@ -41,8 +41,10 @@ from apps.prefall.forms import (
 
 import csv
 import pandas as pd
+import json
 
 from flask_ckeditor import upload_fail, upload_success
+
 
 ### BEGIN ADMIN ###
 
@@ -332,15 +334,212 @@ def detalles_test(id, num, editing):
         db.session.query(AccionesTestMedico).filter_by(num_test=num).filter_by(id_paciente=id).\
             filter_by(id_medico=current_user.id).update({"diagnostico": form.diagnostico.data})
         db.session.commit()
-        test = {"visto": True, "diagnostico": form.diagnostico.data, "num_test": test.num_test,
-        "date": test.date, "id_paciente": test.id_paciente, "id_centro": test.id_centro}
+        test = db.session.query(Test, AccionesTestMedico).\
+            join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
+            AccionesTestMedico.id_paciente == Test.id_paciente)).\
+                with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, Test.num_test, 
+                Test.date, Test.id_paciente, Test.id_centro, Test.bow, Test.fall_to_left, Test.fall_to_right, 
+                        Test.falling_backward, Test.falling_forward, Test.idle, Test.sitting, Test.sleep, Test.standing).\
+                            filter(AccionesTestMedico.id_medico == current_user.id).\
+                                filter(Test.id_paciente == id).\
+                                    filter(Test.num_test == num).first()
         editing = False
     elif editing:
         form.diagnostico.data = test.diagnostico
-    return render_template(
-        'prefall/detalles_test.html', form = form, test = test, editing = editing
-    )
+    if test.bow is not None:
+        from apps.authentication.models import GraphJson
+        import time
+        startTime = time.time()
+        SERIALIZE_GRAPH = False
+        if SERIALIZE_GRAPH:
+            graphJSON = db.session.query(GraphJson.graph).filter_by(num_test=num).filter_by(id_paciente=id).first()[0]
+            if graphJSON is None:
+                graphJSON = generatePlot(id, num)
+                graphDB = GraphJson(id_paciente=id, num_test=num, graph=graphJSON)
+                db.session.add(graphDB)
+                db.session.commit()
+        else:
+            graphJSON = generatePlot(id, num)
+        import sys
+        print(time.time() - startTime, file=sys.stderr)
+        return render_template(
+            'prefall/detalles_test.html', form = form, test = test, editing = editing, graphJSON=graphJSON
+        )
+    else:
+        return render_template(
+            'prefall/detalles_test.html', form = form, test = test, editing = editing
+        )
 
+def Average(lst):
+    return sum(lst) / len(lst)
+
+def generatePlot(id_paciente, num_test):
+    from apps import db
+    query_boundary = db.session.query(
+        Boundary.intercept, Boundary.coef0, Boundary.coef1,Boundary.coef2).\
+        filter(Test.num_test == num_test).\
+        filter(Test.id_paciente == id_paciente).\
+        filter(Test.model == Boundary.model)
+    df_boundary = pd.read_sql(query_boundary.statement, db.session.bind)
+    query_train = db.session.query(
+        TrainingPoint.clase, TrainingPoint.acc_x, TrainingPoint.acc_y,TrainingPoint.acc_z).\
+        filter(Test.num_test == num_test).\
+        filter(Test.id_paciente == id_paciente).\
+        filter(Test.model == TrainingPoint.model)
+    df_train = pd.read_sql(query_train.statement, db.session.bind)
+    query_test = db.session.query(
+        Test.num_test, Test.id_paciente, Test.date, TestUnit.item, TestUnit.time, TestUnit.acc_x,
+        TestUnit.acc_y, TestUnit.acc_z, TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
+        TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z).\
+                        filter(Test.id_paciente == TestUnit.id_paciente).\
+                            filter(Test.num_test == TestUnit.num_test).\
+                                filter(Test.id_paciente==id_paciente).\
+                                    filter(Test.num_test==num_test)
+    df_test = pd.read_sql(query_test.statement, db.session.bind)
+    import plotly
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    
+    test = Test.query.filter_by(num_test=num_test).filter_by(id_paciente=id_paciente).first()
+    probabilidades = [["Bow", test.bow, "Bow"], ["Fall-to-left", test.fall_to_left, "Fall to left"], 
+    ["Fall-to-right", test.fall_to_right, "Fall to right"], ["Falling-backward", test.falling_backward, "Falling backward"], 
+    ["Falling-forward", test.falling_forward, "Falling forward"], ["Idle", test.idle, "Idle"], 
+    ["Sitting", test.sitting, "Sitting"], ["Sleep", test.sleep, "Sleep"], ["Standing", test.standing, "Standing"]]
+    probabilidades_ordenadas = probabilidades.copy()
+    probabilidades_ordenadas.sort(key = lambda x: x[1], reverse=True)
+    for index, po in enumerate(probabilidades_ordenadas):
+        index2 = [i for i, p in enumerate(probabilidades) if po[0] == p[0]][0]
+        probabilidades_ordenadas[index].append(index2)
+    
+    fig = make_subplots(
+        rows=3, cols=3,
+        subplot_titles=[prob_ord[2] + " " + str(round(prob_ord[1] * 100, 2)) + "%" for prob_ord in probabilidades_ordenadas],
+        specs=[[{'type': 'surface'}, {'type': 'surface'}, {'type': 'surface'}],
+            [{'type': 'surface'}, {'type': 'surface'}, {'type': 'surface'}],
+            [{'type': 'surface'}, {'type': 'surface'}, {'type': 'surface'}]])
+
+    greyscale=[
+        [0, "rgb(0, 0, 0)"],
+        [0.1, "rgb(0, 0, 0)"],
+
+        [0.1, "rgb(20, 20, 20)"],
+        [0.2, "rgb(20, 20, 20)"],
+
+        [0.2, "rgb(40, 40, 40)"],
+        [0.3, "rgb(40, 40, 40)"],
+
+        [0.3, "rgb(60, 60, 60)"],
+        [0.4, "rgb(60, 60, 60)"],
+
+        [0.4, "rgb(80, 80, 80)"],
+        [0.5, "rgb(80, 80, 80)"],
+
+        [0.5, "rgb(100, 100, 100)"],
+        [0.6, "rgb(100, 100, 100)"],
+
+        [0.6, "rgb(120, 120, 120)"],
+        [0.7, "rgb(120, 120, 120)"],
+
+        [0.7, "rgb(140, 140, 140)"],
+        [0.8, "rgb(140, 140, 140)"],
+
+        [0.8, "rgb(160, 160, 160)"],
+        [0.9, "rgb(160, 160, 160)"],
+
+        [0.9, "rgb(180, 180, 180)"],
+        [1.0, "rgb(180, 180, 180)"]
+    ]
+    import numpy
+    x = numpy.linspace(-1, 1, 10)
+    y = numpy.linspace(-1, 1, 10)
+    xGrid, yGrid = numpy.meshgrid(x, y)
+    for i, po in enumerate(probabilidades_ordenadas):
+        index = po[3]
+        z = (-df_boundary["intercept"].iloc[index] - df_boundary["coef0"].iloc[index] * xGrid - df_boundary["coef1"].iloc[index] * yGrid) / df_boundary["coef2"].iloc[index]
+        fig.add_trace(go.Surface(name="Boundary" , x=x, y=y, z=z, colorscale=greyscale, showscale=False),row=i // 3 + 1, col=i % 3 + 1)
+
+        x_test = df_test["acc_x"] * 0.10197162129779
+        y_test = df_test["acc_y"] * 0.10197162129779
+        z_test = df_test["acc_z"] * 0.10197162129779
+
+        fig.add_trace(go.Scatter3d(name="Test points", showlegend=i==0,x=x_test, y=y_test, z=z_test, mode ='markers', 
+                                   marker = dict(
+                                     size = 2,
+                                     color ='rgb(230, 230, 0)',
+                                     opacity = 0.8
+                                   )), row=i // 3 + 1, col=i % 3 + 1)
+
+        df_train_class = df_train[df_train["clase"] == po[0]]
+        df_train_other_class = df_train[df_train["clase"] != po[0]]
+
+        x_train_class = df_train_class["acc_x"]
+        y_train_class = df_train_class["acc_y"]
+        z_train_class = df_train_class["acc_z"]
+
+        fig.add_trace(go.Scatter3d(name="Train points from class", showlegend=i==0, x=x_train_class, y=y_train_class, z=z_train_class, mode ='markers', 
+                                   marker = dict(
+                                     size = 2,
+                                     color ='rgb(0, 230, 0)',
+                                     opacity = 0.8
+                                   )), row=i // 3 + 1, col=i % 3 + 1)
+
+        x_train_other_class = df_train_other_class["acc_x"]
+        y_train_other_class = df_train_other_class["acc_y"]
+        z_train_other_class = df_train_other_class["acc_z"]
+
+        fig.add_trace(go.Scatter3d(name="Train points from other classes" ,  showlegend=i==0, x=x_train_other_class, y=y_train_other_class, z=z_train_other_class, mode ='markers', 
+                                   marker = dict(
+                                     size = 2,
+                                     color ='rgb(230, 0, 0)',
+                                     opacity = 0.8
+                                   )), row=i // 3 + 1, col=i % 3 + 1)
+
+        if i == 0:
+            scene_num = "scene"
+        else:
+            scene_num = "scene" + str(i + 1)
+        fig.layout[scene_num]["annotations"] = [
+            dict(
+                x = Average(x_test),
+                y = Average(y_test),
+                z = Average(z_test),
+                text = "Test data",
+                font=dict(
+                    color="black",
+                    size=8
+                ),
+            ),
+            dict(
+                x = Average(x_train_class),
+                y = Average(y_train_class),
+                z = Average(z_train_class),
+                text = "Train data from class",
+                font=dict(
+                    color="black",
+                    size=8
+                ),
+            ),
+            dict(
+                x = Average(x_train_other_class),
+                y = Average(y_train_other_class),
+                z = Average(z_train_other_class),
+                text = "Train data from other classes",
+                font=dict(
+                    color="black",
+                    size=8
+                ),
+            )
+        ]
+    fig.update_layout(
+        height=1600,
+        width=1600
+    )
+    print(fig.layout)
+
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    return graphJSON
+
+    
 
 @blueprint.route('detalles_clinicos/<id>', methods=['GET', 'POST'])
 @clinical_data_access()
@@ -381,8 +580,6 @@ def detalles_clinicos(id):
         os.remove(file_path)
     
     tests = db.session.query(Test.num_test, Test.date).filter_by(id_paciente=id).all()
-    filesQuery = File.query.filter(File.id == DocumentoPaciente.id_file).\
-        filter(DocumentoPaciente.id_paciente==id).filter(DocumentoPaciente.id_medico==current_user.id)
     
     if formFilterFile.submitFilterFile.data and formFilterFile.validate():
         file_name = formFilterFile.nombreFichero.data
@@ -478,7 +675,6 @@ def guardar_analisis(num_test, id_paciente):
             intercept=intercept[i], coef0=coef[i][0], coef1=coef[i][1], coef2=coef[i][2])
             db.session.add(boundary)
         training_data = result['training_data']
-        print(training_data, file=sys.stdout)
         for key, value in training_data.items():
             import pandas
             df = pandas.read_json(value)
@@ -600,7 +796,7 @@ def detalles_personales(id):
     uploadTestForm = UploadTestForm()
     searchDoctorForm = FilterUserForm()
 
-    if uploadTestForm.submitUpload.data and uploadTestForm.validate():
+    if uploadTestForm.submitUploadTest.data and uploadTestForm.validate():
         file = uploadTestForm.test.data
         filename = secure_filename(file.filename)
         Path(os.path.join(current_app.instance_path,current_app.config['UPLOAD_FOLDER'])).mkdir(parents=True, exist_ok=True)
@@ -848,16 +1044,3 @@ def upload():
     #f.save(os.path.join(current_app.config['UPLOADED_PATH'], f.filename))
     url = url_for('prefall_blueprint.uploaded_files', id=upload.id)
     return upload_success(url, filename=f.filename)
-
-import urllib.request, json
-
-@blueprint.route('/api')
-def api():
-    url = "https://flask-fast-api.herokuapp.com/greet?fname=Carlos"
-
-    response = urllib.request.urlopen(url)
-    data = response.read()
-    dict = json.loads(data)
-
-    return dict
-

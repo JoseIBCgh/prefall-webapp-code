@@ -93,7 +93,9 @@ function buildChartSVM() {
         var data = data_boundaries.concat(data_points)
         var plot_div = document.querySelector("#svm");
         plot_div.style.height = getComputedStyle(plot_div).width;
+        let startTime = Date.now();
         Plotly.newPlot('svm', data);
+        console.log("one plot time = " + (Date.now() - startTime));
         /*
         Plotly.newPlot('svm', get_initial_data_svm(data_boundaries, acc_x_test, acc_y_test, acc_z_test))
         var interval = create_interval_svm(acc_x_test, acc_y_test, acc_z_test, "counter", "svm");
@@ -227,11 +229,20 @@ function buildChartSVM() {
             }
             annotations.push(annotation)
         }
+        for(let i = 0; i < probabilidades_ordenadas.length; ++i){
+            let annotation = {
+                xref: 'scene'+(i+1)+'.x',
+                yref: 'scene'+(i+1)+'.y',
+                zref: 'scene'+(i+1)+'.z',
+            }
+        }
         layout["annotations"] = annotations
         //layout["showlegend"] = false
         var subplots_div = document.querySelector("#svm-subplots");
         subplots_div.style.height = getComputedStyle(subplots_div).width;
+        let startTime2 = Date.now()
         Plotly.newPlot('svm-subplots', data_subplots, layout)
+        console.log("subplots time = " + (Date.now() - startTime2))
 
         var endTime = Date.now()
         console.log("Time analize = " + (endTime - localStorage.getItem("startTimeAnalize")))

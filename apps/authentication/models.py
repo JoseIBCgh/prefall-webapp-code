@@ -81,6 +81,15 @@ class Test(db.Model):
     standing = db.Column(db.Float, nullable=True)
     model = db.Column(db.Integer, db.ForeignKey('model.id'), nullable=True)
 
+class GraphJson(db.Model):
+    __tablename__ = 'graph_json'
+    num_test = db.Column(db.Integer, primary_key = True)
+    id_paciente = db.Column(db.Integer, primary_key=True)
+    __table_args__ = (ForeignKeyConstraint([num_test, id_paciente],
+                                           [Test.num_test, Test.id_paciente]),
+                      {})
+    graph = db.Column(db.JSON)
+
 class Model(db.Model):
     __tablename__ = 'model'
     id = db.Column(db.Integer, primary_key=True)

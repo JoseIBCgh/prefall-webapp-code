@@ -106,8 +106,11 @@
                     <br>
                     <br>
                     {% if probabilidad_caida > 0 %}
+                    <div id="svm-py" class="chart"></div>
+                    {#
                     <div id="svm-subplots" class="img-fluid" width="100%" height="100%"></div>
                     <div id="svm" class="img-fluid" width="100%" height="100%"></div>
+                    #}
                     {#
                     <div class="control-stream">
                         <button id="play_svm">
@@ -192,9 +195,19 @@
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
                     <script src="/static/assets/js/plot.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}}></script>
                     <script src="/static/assets/js/predict.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}}></script>
+                    {#
                     <script src="/static/assets/js/plot-svm.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}} probabilidad_caida={{probabilidad_caida}} bow={{test["bow"]}}
                     fall_to_left={{test["fall_to_left"]}} fall_to_right={{test["fall_to_right"]}} falling_backward={{test["falling_backward"]}} falling_forward={{test["falling_forward"]}}
                     idle={{test["idle"]}} sitting={{test["sitting"]}} sleep={{test["sleep"]}} standing={{test["standing"]}}></script>
+                    #}
+                    {% if graphJSON is defined %}
+                    <script type='text/javascript'>
+                        var start_time = Date.now()
+                        var graphs = {{graphJSON | safe}};
+                        Plotly.plot('svm-py',graphs,{});
+                        console.log("Time plot= " + (Date.now() - start_time))
+                    </script>
+                    {% endif %}
                 </div>
             </div>
         </div>
