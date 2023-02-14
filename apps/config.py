@@ -89,8 +89,8 @@ class DebugConfig(Config):
     )
 
     #SQLALCHEMY_DATABASE_URI = 'mysql://zAKPC936JP:UloEGPhfyS@remotemysql.com/zAKPC936JP'
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:1234@localhost/webapp'
-
+    #SQLALCHEMY_DATABASE_URI = 'mysql://root:1234@localhost/webapp'
+    SQLALCHEMY_DATABASE_URI = 'mysql://webapp:webapp@localhost/prefall'
 # Load all possible configurations
 config_dict = {
     'Production': ProductionConfig,
