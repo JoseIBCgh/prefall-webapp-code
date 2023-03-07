@@ -8,6 +8,7 @@ RUN apt-get install -y default-libmysqlclient-dev
 ENV PYTHONBUFFERED 1
 ENV FLASK_APP run.py
 ENV PIP_ROOT_USER_ACTION=ignore
+EXPOSE 5000/tcp
 
 WORKDIR /python-docker
 
