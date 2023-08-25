@@ -7,23 +7,30 @@ function ms2Tog(x){
 function start_prediction() {
     localStorage.setItem("startTimeAnalize", Date.now());
     console.log("start_prediction")
-    // send ajax POST request to start background job
-    var url = `/test_data/`+id_paciente+`/`+num_test;
-    d3.json(url).then(function(response) {
-        const acc_x = response.acc_x.map(ms2Tog);
-        const acc_y = response.acc_y.map(ms2Tog);
-        const acc_z = response.acc_z.map(ms2Tog);
+    // Send AJAX GET request to get the CSV data
+    var url = `/get_test/${id_paciente}/${num_test}`;
+    $.get(url, function(csvData) {
+        // Create a new Blob with the CSV content
+        var blob = new Blob([csvData], { type: "text/csv" });
+
+        // Create a FormData object and append the Blob as a file
+        var formData = new FormData();
+        formData.append("csv_file", blob, "test.csv");
+
+        // Send the AJAX POST request
         $.ajax({
             type: 'POST',
             url: 'http://0.0.0.0:8000/predict',
-            data: JSON.stringify({"acc_x": acc_x, "acc_y":acc_y, "acc_z":acc_z}),
+            data: formData,
+            contentType: false, // Set to false to prevent jQuery from adding a content-type header
+            processData: false, // Set to false to prevent jQuery from processing the data
             success: function(data, status, request) {
-                task_id = data.task_id
-                console.log(task_id)
-                poll(task_id)
+                task_id = data.task_id;
+                console.log(task_id);
+                poll(task_id);
             },
             error: function() {
-                console.log("error")
+                console.log("error");
                 alert('Unexpected error');
             }
         });

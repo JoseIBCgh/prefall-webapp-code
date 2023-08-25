@@ -21,6 +21,7 @@ from flask import flash, current_app, Response, send_from_directory
 from werkzeug.utils import secure_filename
 import os
 from pathlib import Path
+import datetime
 
 from apps.prefall.decorators import admin_centro_access, clinical_data_access, patient_data_access, personal_data_access
 from apps.prefall.forms import (
@@ -925,9 +926,11 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def read_csv(filename):
-    colnames = ["item","date", "time", "acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z", "mag_x", "mag_y", "mag_z"]
+    #colnames = ["item","date", "time", "acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z", "mag_x", "mag_y", "mag_z"]
+    colnames = ["item","time", "frame", "acc_x", "acc_y", "acc_z", "gyr_x", "gyr_y", "gyr_z", "mag_x", "mag_y", "mag_z",
+    "lacc_x", "lacc_y", "lacc_z", "quat_x", "quat_y", "quat_z", "quat_w"]
     df = pd.read_csv(
-        filename, delim_whitespace=True, skiprows=6, usecols=range(0,12), 
+        filename, delim_whitespace=True, skiprows=5, usecols=range(0,19), 
         names=colnames)
     return df
 
@@ -956,7 +959,7 @@ def add_df_to_sql(df, id_centro):
 
     test = Test(
         num_test = df.at[0,"num_test"], id_paciente= df.at[0,"id_paciente"],
-        date = df.at[0,"date"], id_centro=id_centro)
+        date = datetime.datetime.now(), id_centro=id_centro)
     db.session.add(test)
 
     for index, row in df.iterrows():
@@ -965,7 +968,10 @@ def add_df_to_sql(df, id_centro):
             num_test = row.at["num_test"], id_paciente= row.at["id_paciente"], time= row.at["time"],
             acc_x = row.at["acc_x"], acc_y = row.at["acc_y"], acc_z = row.at["acc_z"],
             gyr_x = row.at["gyr_x"], gyr_y = row.at["gyr_y"], gyr_z = row.at["gyr_z"],
-            mag_x = row.at["mag_x"], mag_y = row.at["mag_y"], mag_z = row.at["mag_z"]
+            mag_x = row.at["mag_x"], mag_y = row.at["mag_y"], mag_z = row.at["mag_z"],
+            lacc_x = row.at["lacc_x"], lacc_y = row.at["lacc_y"], lacc_z = row.at["lacc_z"],
+            quat_x = row.at["quat_x"], quat_y = row.at["quat_y"], quat_z = row.at["quat_z"],
+            quat_w = row.at["quat_w"],
         )
         db.session.add(testUnit)
     
@@ -981,7 +987,9 @@ def get_test(paciente, test):
     query = db.session.query(
         TestUnit.item, Test.num_test, Test.id_paciente, Test.date, TestUnit.time, TestUnit.acc_x,
         TestUnit.acc_y, TestUnit.acc_z, TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
-        TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z).\
+        TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z,
+        TestUnit.lacc_x, TestUnit.lacc_y, TestUnit.lacc_z,
+        TestUnit.quat_x, TestUnit.quat_y, TestUnit.quat_z, TestUnit.quat_w).\
                         filter(Test.id_paciente == TestUnit.id_paciente).\
                             filter(Test.num_test == TestUnit.num_test).\
                                 filter(Test.id_paciente==paciente).\
@@ -1000,7 +1008,9 @@ def test_data(paciente, test):
     query = db.session.query(
         Test.num_test, Test.id_paciente, Test.date, TestUnit.item, TestUnit.time, TestUnit.acc_x,
         TestUnit.acc_y, TestUnit.acc_z, TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
-        TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z).\
+        TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z, 
+        TestUnit.lacc_x, TestUnit.lacc_y, TestUnit.lacc_z,
+        TestUnit.quat_x, TestUnit.quat_y, TestUnit.quat_z, TestUnit.quat_w).\
                         filter(Test.id_paciente == TestUnit.id_paciente).\
                             filter(Test.num_test == TestUnit.num_test).\
                                 filter(Test.id_paciente==paciente).\
@@ -1017,6 +1027,13 @@ def test_data(paciente, test):
         "mag_x": df["mag_x"].to_list(),
         "mag_y": df["mag_y"].to_list(),
         "mag_z": df["mag_z"].to_list(),
+        "lacc_x": df["lacc_x"].to_list(),
+        "lacc_y": df["lacc_y"].to_list(),
+        "lacc_z": df["lacc_z"].to_list(),
+        "quat_x": df["quat_x"].to_list(),
+        "quat_y": df["quat_y"].to_list(),
+        "quat_z": df["quat_z"].to_list(),
+        "quat_w": df["quat_w"].to_list(),
     }
     return jsonify(data)
 

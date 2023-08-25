@@ -132,6 +132,13 @@ class TestUnit(db.Model):
     mag_x = db.Column(db.Float)
     mag_y = db.Column(db.Float)
     mag_z = db.Column(db.Float)
+    lacc_x = db.Column(db.Float)
+    lacc_y = db.Column(db.Float)
+    lacc_z = db.Column(db.Float)
+    quat_x = db.Column(db.Float)
+    quat_y = db.Column(db.Float)
+    quat_z = db.Column(db.Float)
+    quat_w = db.Column(db.Float)
 
 class AccionesTestMedico(db.Model):
     __tablename__ = "acciones_test_medico"
@@ -216,6 +223,28 @@ BEGIN
 END''')
 event.listen(Test.__table__, 'after_create', trigger)
 
+def create_trigger():
+    trigger = DDL('''\
+    CREATE TRIGGER after_test_insert
+    AFTER INSERT
+    ON test FOR EACH ROW
+    BEGIN
+        DECLARE done INT DEFAULT FALSE;
+        DECLARE id_medico_ INT;
+        DECLARE cur CURSOR FOR SELECT id_medico FROM pacientes_asociados WHERE id_paciente = NEW.id_paciente;
+        DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+        
+        OPEN cur;
+            medicos_loop: LOOP
+                FETCH cur INTO id_medico_;
+                IF done THEN
+                    LEAVE medicos_loop;
+                END IF;
+                INSERT INTO acciones_test_medico(num_test, id_paciente, id_medico, visto) values (NEW.num_test, NEW.id_paciente, id_medico_, FALSE);
+            END LOOP;
+        CLOSE cur;
+    END''')
+    event.listen(Test.__table__, 'after_create', trigger)
 
 def create_data():
     from apps import user_datastore
