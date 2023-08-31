@@ -7,12 +7,6 @@
 {% block stylesheets %}
 {% endblock stylesheets %}
 
-{% if test["fall_to_left"] is not none %}
-{% set probabilidad_caida = test["fall_to_left"] + test["fall_to_right"] + test["falling_backward"] + test["falling_forward"] %}
-{% else %}
-{% set probabilidad_caida = -1 %}
-{% endif %}
-
 {% block content %}
 
     <div class="pcoded-content">
@@ -56,13 +50,13 @@
                                             </td>
                                         </tr>
                                         {% endif %}
-                                        {% if probabilidad_caida > 0 %}
+                                        {% if test["probabilidad_caida"] is not none %}
                                         <tr class="unread">
                                             <td>
                                                 <h6 class="text-muted">Probabilidad de caida</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted">{{probabilidad_caida}}</h6>
+                                                <h6 class="text-muted">{{test["probabilidad_caida"]}}</h6>
                                             </td>
                                         </tr>
                                         {% endif %}
@@ -105,7 +99,7 @@
                     <button id="analize-btn" class="label theme-bg text-white f-12 btn-rounded" onclick="start_prediction();">Analizar</button>
                     <br>
                     <br>
-                    {% if probabilidad_caida > 0 %}
+                    {% if test["probabilidad_caida"] is not none %}
                     <div id="svm-py" class="chart"></div>
                     {#
                     <div id="svm-subplots" class="img-fluid" width="100%" height="100%"></div>

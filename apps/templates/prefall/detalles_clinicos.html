@@ -183,6 +183,14 @@
                             </div>
                         </div>
                     </div>
+                    <div id="charts" class="chart"></div>
+                    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+                    <script type='text/javascript'>
+                        var start_time = Date.now()
+                        var graphs = {{graphJSON | safe}};
+                        Plotly.plot('charts',graphs,{});
+                        console.log("Time plot= " + (Date.now() - start_time))
+                    </script>
                 </div>
             </div>
         </div>

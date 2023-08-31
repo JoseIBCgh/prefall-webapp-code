@@ -70,15 +70,7 @@ class Test(db.Model):
     id_paciente = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     id_centro = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
     date = db.Column(db.Date)
-    bow = db.Column(db.Float, nullable=True)
-    fall_to_left = db.Column(db.Float, nullable=True)
-    fall_to_right = db.Column(db.Float, nullable=True)
-    falling_backward = db.Column(db.Float, nullable=True)
-    falling_forward = db.Column(db.Float, nullable=True)
-    idle = db.Column(db.Float, nullable=True)
-    sitting = db.Column(db.Float, nullable=True)
-    sleep = db.Column(db.Float, nullable=True)
-    standing = db.Column(db.Float, nullable=True)
+    probabilidad_caida = db.Column(db.Float, nullable=True)
     model = db.Column(db.Integer, db.ForeignKey('model.id'), nullable=True)
 
 class GraphJson(db.Model):

@@ -320,8 +320,7 @@ def detalles_test(id, num, editing):
         join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
         AccionesTestMedico.id_paciente == Test.id_paciente)).\
             with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, Test.num_test, 
-            Test.date, Test.id_paciente, Test.id_centro, Test.bow, Test.fall_to_left, Test.fall_to_right, 
-                    Test.falling_backward, Test.falling_forward, Test.idle, Test.sitting, Test.sleep, Test.standing).\
+            Test.date, Test.id_paciente, Test.id_centro, Test.probabilidad_caida).\
                         filter(AccionesTestMedico.id_medico == current_user.id).\
                             filter(Test.id_paciente == id).\
                                 filter(Test.num_test == num).first()
@@ -339,14 +338,14 @@ def detalles_test(id, num, editing):
             join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
             AccionesTestMedico.id_paciente == Test.id_paciente)).\
                 with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, Test.num_test, 
-                Test.date, Test.id_paciente, Test.id_centro, Test.bow, Test.fall_to_left, Test.fall_to_right, 
-                        Test.falling_backward, Test.falling_forward, Test.idle, Test.sitting, Test.sleep, Test.standing).\
+                Test.date, Test.id_paciente, Test.id_centro, Test.probabilidad_caida).\
                             filter(AccionesTestMedico.id_medico == current_user.id).\
                                 filter(Test.id_paciente == id).\
                                     filter(Test.num_test == num).first()
         editing = False
     elif editing:
         form.diagnostico.data = test.diagnostico
+    '''
     if test.bow is not None:
         from apps.authentication.models import GraphJson
         import time
@@ -370,9 +369,39 @@ def detalles_test(id, num, editing):
         return render_template(
             'prefall/detalles_test.html', form = form, test = test, editing = editing
         )
+    '''
+    return render_template(
+        'prefall/detalles_test.html', form = form, test = test, editing = editing
+    )
 
 def Average(lst):
     return sum(lst) / len(lst)
+
+
+def generatePlotPaciente(id_paciente):
+    from apps import db
+    import plotly
+    import plotly.graph_objects as go
+    tests = db.session.query(
+        Test.num_test, Test.date, Test.probabilidad_caida)\
+        .filter_by(id_paciente=id_paciente)\
+        .filter(Test.probabilidad_caida.isnot(None)).all()
+    
+    x = [test.date for test in tests]
+    y = [test.probabilidad_caida for test in tests]
+    
+    fig = go.Figure(data=go.Scatter(x=x, y=y, mode='lines+markers'))
+    fig.update_layout(title='Probability of Fall Over Time',
+                      xaxis_title='Date',
+                      yaxis_title='Probability of Falling')
+
+    fig.update_yaxes(range=[0, 1])
+
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+    return graphJSON
+
+
 
 def generatePlot(id_paciente, num_test):
     from apps import db
@@ -592,8 +621,10 @@ def detalles_clinicos(id):
             filter(DocumentoPaciente.id_paciente==id).filter(DocumentoPaciente.id_medico==current_user.id).all()
     
 
+    graphJSON = generatePlotPaciente(id)
+
     return render_template('prefall/detalles_clinicos.html', paciente=paciente, tests=tests, files=files,
-    formFile=formFile, formTest=formTest, formFilterFile=formFilterFile)
+    formFile=formFile, formTest=formTest, formFilterFile=formFilterFile, graphJSON=graphJSON)
 
 
 @blueprint.route('editar_detalles_clinicos/<id>', methods=['GET', 'POST'])
@@ -644,17 +675,8 @@ def guardar_analisis(num_test, id_paciente):
     import sys
     print(data, file=sys.stdout)
     result = data['result']
-    prediction = result['prediction']
+    probability = result['probability']
     model_id = result['model_id']
-    bow = [item for item in prediction if item[0] == 'Bow'][0][1]
-    fall_to_left = [item for item in prediction if item[0] == 'Fall-to-left'][0][1]
-    fall_to_right = [item for item in prediction if item[0] == 'Fall-to-right'][0][1]
-    falling_backward = [item for item in prediction if item[0] == 'Falling-backward'][0][1]
-    falling_forward = [item for item in prediction if item[0] == 'Falling-forward'][0][1]
-    idle = [item for item in prediction if item[0] == 'Idle'][0][1]
-    sitting = [item for item in prediction if item[0] == 'Sitting'][0][1]
-    sleep = [item for item in prediction if item[0] == 'Sleep'][0][1]
-    standing = [item for item in prediction if item[0] == 'Standing'][0][1]
 
     if db.session.query(Model.id).filter_by(id=model_id).first() is None: 
         model = Model(id = model_id)
@@ -664,10 +686,9 @@ def guardar_analisis(num_test, id_paciente):
         newModel = False
 
     db.session.query(Test).filter_by(num_test=num_test).\
-    filter_by(id_paciente=id_paciente).update({"bow": bow, "fall_to_left": fall_to_left, "fall_to_right": fall_to_right,
-    "falling_backward": falling_backward, "falling_forward": falling_forward, "idle":idle, "sitting":sitting, "sleep": sleep,
-    "standing":standing, "model":model_id})
+    filter_by(id_paciente=id_paciente).update({"probabilidad_caida": probability, "model":model_id})
 
+    '''
     if newModel:  
         intercept = result['intercept']
         coef = result['coef']
@@ -683,6 +704,7 @@ def guardar_analisis(num_test, id_paciente):
                 training_point = TrainingPoint(model_id = model_id, index = index, clase = key, acc_x=row["Ax"],
                 acc_y=row["Ay"], acc_z=row["Az"])
                 db.session.add(training_point)
+    '''
 
     db.session.commit()
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
