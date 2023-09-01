@@ -382,20 +382,107 @@ def generatePlotPaciente(id_paciente):
     from apps import db
     import plotly
     import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    import pickle
+    import math
+    import numpy as np
     tests = db.session.query(
-        Test.num_test, Test.date, Test.probabilidad_caida)\
+        Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
         .filter_by(id_paciente=id_paciente)\
         .filter(Test.probabilidad_caida.isnot(None)).all()
+
+    dataframes = []
+
+    for test in tests:
+        blob_data = test.data  
+        if blob_data:
+            df = pickle.loads(blob_data)
+            dataframes.append(df)
     
     x = [test.date for test in tests]
     y = [test.probabilidad_caida for test in tests]
     
-    fig = go.Figure(data=go.Scatter(x=x, y=y, mode='lines+markers'))
-    fig.update_layout(title='Probability of Fall Over Time',
-                      xaxis_title='Date',
-                      yaxis_title='Probability of Falling')
+    fig = make_subplots(
+        rows=2, cols=1,
+        specs=[[{'type': 'scatter'}], [{'type': 'scatter3d'}]],
+        subplot_titles=('Probability of Fall Over Time', 'Probability of Fall depending on lacc'),
+        row_heights=[600, 1000],
+    )
+    
+    trace = go.Scatter(x=x, y=y, mode='lines+markers')
 
-    fig.update_yaxes(range=[0, 1])
+    fig.add_trace(trace, row=1, col=1)
+
+    fig.update_xaxes(title_text='Date', row=1, col=1)
+    fig.update_yaxes(title_text='Probability of Falling', range=[0, 1], row=1, col=1)
+
+
+    x = []
+    for df in dataframes:
+        mean = (df['lax_mean_f1'] * df['duracion_f1']\
+        + df['lax_mean_f2'] * df['duracion_f2']\
+        + df['lax_mean_f3'] * df['duracion_f3']\
+        + df['lax_mean_f4'] * df['duracion_f4'])\
+        / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
+        x.append(mean.values[0])
+
+    y = []
+    for df in dataframes:
+        mean = (df['lay_mean_f1'] * df['duracion_f1']\
+        + df['lay_mean_f2'] * df['duracion_f2']\
+        + df['lay_mean_f3'] * df['duracion_f3']\
+        + df['lay_mean_f4'] * df['duracion_f4'])\
+        / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
+        y.append(mean.values[0])
+
+    z = []
+    for df in dataframes:
+        mean = (df['laz_mean_f1'] * df['duracion_f1']\
+        + df['laz_mean_f2'] * df['duracion_f2']\
+        + df['laz_mean_f3'] * df['duracion_f3']\
+        + df['laz_mean_f4'] * df['duracion_f4'])\
+        / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
+        z.append(mean.values[0])
+
+    c = [test.probabilidad_caida for test in tests]
+
+    trace = go.Scatter3d(
+        x=x,
+        y=y,
+        z=z,
+        mode='markers',
+        marker=dict(
+            size=5, 
+            color=c, 
+            colorscale='Viridis', 
+            colorbar=dict(len=0.3, y=0.1, yanchor='bottom'),  
+            opacity=1, 
+        )
+    )
+
+    fig.add_trace(trace, row=2, col=1)
+
+    fig.update_scenes(xaxis_title='Linear Acc X', yaxis_title='Linear Acc Y', zaxis_title='Linear Acc Z', row=2, col=1)
+    
+    x_floor = math.floor(min(x))
+    x_ceil = math.ceil(max(x))
+
+    y_floor = math.floor(min(y))
+    y_ceil = math.ceil(max(y))
+
+    z_floor = math.floor(min(z))
+    z_ceil = math.ceil(max(z))
+
+    fig.update_layout(scene=dict(
+        xaxis=dict(range=[x_floor, x_ceil]),
+        yaxis=dict(range=[y_floor, y_ceil]),
+        zaxis=dict(range=[z_floor, z_ceil]),
+    ))
+    fig.update_layout(
+        autosize=False,
+        height=1600,  # Adjust the height as needed
+        margin=dict(l=50, r=50, b=50, t=50),
+    )
 
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
