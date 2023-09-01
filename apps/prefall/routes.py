@@ -673,10 +673,13 @@ def guardar_analisis(num_test, id_paciente):
     from apps import db
     data = request.json
     import sys
+    import pickle
     print(data, file=sys.stdout)
     result = data['result']
     probability = result['probability']
     model_id = result['model_id']
+    df = pd.DataFrame(result['datos'])
+    df_bytes = pickle.dumps(df)
 
     if db.session.query(Model.id).filter_by(id=model_id).first() is None: 
         model = Model(id = model_id)
@@ -686,7 +689,8 @@ def guardar_analisis(num_test, id_paciente):
         newModel = False
 
     db.session.query(Test).filter_by(num_test=num_test).\
-    filter_by(id_paciente=id_paciente).update({"probabilidad_caida": probability, "model":model_id})
+    filter_by(id_paciente=id_paciente).update({"probabilidad_caida": probability, 
+    "model":model_id, "data":df_bytes})
 
     '''
     if newModel:  

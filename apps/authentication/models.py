@@ -72,6 +72,7 @@ class Test(db.Model):
     date = db.Column(db.Date)
     probabilidad_caida = db.Column(db.Float, nullable=True)
     model = db.Column(db.Integer, db.ForeignKey('model.id'), nullable=True)
+    data = db.Column(db.LargeBinary, nullable=True)
 
 class GraphJson(db.Model):
     __tablename__ = 'graph_json'
