@@ -38,6 +38,8 @@ from apps.prefall.forms import (
     FilterUserForm,
     UploadFileForm,
     UploadTestForm,
+    ElementForm,
+    DoubleElementForm,
 )
 
 import csv
@@ -1189,3 +1191,143 @@ def upload():
     #f.save(os.path.join(current_app.config['UPLOADED_PATH'], f.filename))
     url = url_for('prefall_blueprint.uploaded_files', id=upload.id)
     return upload_success(url, filename=f.filename)
+
+## END FLASK CKEDITOR ##
+
+## BEGIN PLOTS ##
+
+@blueprint.route('/plots',  methods=['GET','POST'])
+def plots():
+    graphEvolucionProbCaida = null
+    pacientes = current_user.pacientes_asociados
+    formEvolucionProbCaida = ElementForm()
+    formEvolucionProbCaida.selected_element.choices = [(element.id, element.username) for element in pacientes]
+    if formEvolucionProbCaida.validate_on_submit():
+        import plotly
+        import plotly.graph_objs as go
+        from apps import db
+        selected_element_id = formEvolucionProbCaida.selected_element.data
+        tests = db.session.query(
+            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+            .filter_by(id_paciente=selected_element_id)\
+            .filter(Test.probabilidad_caida.isnot(None)).all()
+        
+        x = [test.date for test in tests]
+        y = [test.probabilidad_caida for test in tests]
+        
+        fig = go.Figure()
+        
+        trace = go.Scatter(x=x, y=y, mode='lines+markers')
+
+        fig.add_trace(trace)
+
+        fig.update_xaxes(title_text='Date')
+        fig.update_yaxes(title_text='Probability of Falling', range=[0, 1])
+
+        graphEvolucionProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+    graph3DProbCaida = null    
+    form3DProbCaida = DoubleElementForm()
+    form3DProbCaida.selected_element.choices = [(element.id, element.username) for element in pacientes]
+    form3DProbCaida.second_selected_element.choices = [("la","Linear Acceleration"), ("m","Magnetometer"), ("g","Gyroscope")]
+    if form3DProbCaida.validate_on_submit():
+        import plotly
+        import plotly.graph_objs as go
+        from apps import db
+        import pickle
+        import math
+        selected_element_id = form3DProbCaida.selected_element.data
+        metric_prefix = form3DProbCaida.second_selected_element.data
+        choices = form3DProbCaida.second_selected_element.choices
+
+        full_name = null
+
+        for choice_value, choice_label in choices:
+            if choice_value == metric_prefix:
+                full_name = choice_label
+                break
+
+        tests = db.session.query(
+            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+            .filter_by(id_paciente=selected_element_id)\
+            .filter(Test.probabilidad_caida.isnot(None)).all()
+
+        dataframes = []
+
+        for test in tests:
+            blob_data = test.data  
+            if blob_data:
+                df = pickle.loads(blob_data)
+                dataframes.append(df)
+
+        x = []
+        for df in dataframes:
+            mean = (df[metric_prefix + 'x_mean_f1'] * df['duracion_f1']\
+            + df[metric_prefix + 'x_mean_f2'] * df['duracion_f2']\
+            + df[metric_prefix + 'x_mean_f3'] * df['duracion_f3']\
+            + df[metric_prefix + 'x_mean_f4'] * df['duracion_f4'])\
+            / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
+            x.append(mean.values[0])
+
+        y = []
+        for df in dataframes:
+            mean = (df[metric_prefix + 'y_mean_f1'] * df['duracion_f1']\
+            + df[metric_prefix + 'y_mean_f2'] * df['duracion_f2']\
+            + df[metric_prefix + 'y_mean_f3'] * df['duracion_f3']\
+            + df[metric_prefix + 'y_mean_f4'] * df['duracion_f4'])\
+            / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
+            y.append(mean.values[0])
+
+        z = []
+        for df in dataframes:
+            mean = (df[metric_prefix + 'z_mean_f1'] * df['duracion_f1']\
+            + df[metric_prefix + 'z_mean_f2'] * df['duracion_f2']\
+            + df[metric_prefix + 'z_mean_f3'] * df['duracion_f3']\
+            + df[metric_prefix + 'z_mean_f4'] * df['duracion_f4'])\
+            / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
+            z.append(mean.values[0])
+
+        c = [test.probabilidad_caida for test in tests]
+
+        fig = go.Figure()
+
+        trace = go.Scatter3d(
+            x=x,
+            y=y,
+            z=z,
+            mode='markers',
+            marker=dict(
+                size=5, 
+                color=c, 
+                colorscale='Viridis', 
+                colorbar=dict(len=1, y=0, yanchor='bottom'),  
+                opacity=1, 
+            )
+        )
+
+        fig.add_trace(trace)
+
+        fig.update_scenes(xaxis_title=full_name + ' X', yaxis_title=full_name + ' Y', zaxis_title=full_name + ' Z')
+        
+        x_floor = math.floor(min(x))
+        x_ceil = math.ceil(max(x))
+
+        y_floor = math.floor(min(y))
+        y_ceil = math.ceil(max(y))
+
+        z_floor = math.floor(min(z))
+        z_ceil = math.ceil(max(z))
+
+        fig.update_layout(scene=dict(
+            xaxis=dict(range=[x_floor, x_ceil]),
+            yaxis=dict(range=[y_floor, y_ceil]),
+            zaxis=dict(range=[z_floor, z_ceil]),
+        ))
+
+        graph3DProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+
+    return render_template(
+        'prefall/plots.html', 
+        formEvolucionProbCaida=formEvolucionProbCaida, graphEvolucionProbCaida=graphEvolucionProbCaida,
+        form3DProbCaida=form3DProbCaida, graph3DProbCaida=graph3DProbCaida)

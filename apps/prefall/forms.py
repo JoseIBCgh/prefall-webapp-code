@@ -2,7 +2,7 @@ from tokenize import String
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField, IntegerField, DecimalField, DateField, 
-    TextAreaField, SubmitField, PasswordField, EmailField
+    TextAreaField, SubmitField, PasswordField, EmailField, SelectField
 )
 from wtforms.validators import DataRequired, AnyOf, Optional
 from flask_wtf.file import FileField, FileAllowed, FileRequired
@@ -97,3 +97,12 @@ class FilterFileForm(FlaskForm):
 class DiagnosticarTestForm(FlaskForm):
     diagnostico = CKEditorField('Diagnostico', validators=[DataRequired()])
     submitDiagnosticoTest = SubmitField('Enviar', id="diagnosticar_test_submit")
+
+class ElementForm(FlaskForm):
+    selected_element = SelectField('Select an Element', coerce=int)
+    submit = SubmitField('Submit')
+
+class DoubleElementForm(FlaskForm):
+    selected_element = SelectField('Select an Element', coerce=int)
+    second_selected_element = SelectField('Select Another Element', coerce=str)
+    submit = SubmitField('Submit')
