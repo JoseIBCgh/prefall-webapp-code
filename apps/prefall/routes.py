@@ -403,10 +403,10 @@ def generatePlotPaciente(id_paciente):
     y = [test.probabilidad_caida for test in tests]
     
     fig = make_subplots(
-        rows=2, cols=1,
-        specs=[[{'type': 'scatter'}], [{'type': 'scatter3d'}]],
-        subplot_titles=('Probability of Fall Over Time', 'Probability of Fall depending on lacc'),
-        row_heights=[600, 1000],
+        rows=3, cols=1,
+        specs=[[{'type': 'scatter'}], [{'type': 'scatter3d'}], [{'type': 'bar'}]],
+        subplot_titles=('Probability of Fall Over Time', 'Probability of Fall depending on lacc', 'Comparasion lacc'),
+        row_heights=[600, 1000, 600],
     )
     
     trace = go.Scatter(x=x, y=y, mode='lines+markers')
@@ -455,7 +455,7 @@ def generatePlotPaciente(id_paciente):
             size=5, 
             color=c, 
             colorscale='Viridis', 
-            colorbar=dict(len=0.3, y=0.1, yanchor='bottom'),  
+            colorbar=dict(len=0.3, y=0.35, yanchor='bottom'),  
             opacity=1, 
         )
     )
@@ -478,11 +478,26 @@ def generatePlotPaciente(id_paciente):
         yaxis=dict(range=[y_floor, y_ceil]),
         zaxis=dict(range=[z_floor, z_ceil]),
     ))
+
+    if len(x) >= 2:
+        labels = ["Linear Acc X", "Linear Acc Y", "Linear Acc Z"]
+        bars1 = [x[0], y[0], z[0]]
+        bars2 = [x[1], y[1], z[1]]
+        trace_group1 = go.Bar(x=labels, y=bars1, name='Paciente 1', text=bars1, textposition='outside')
+        trace_group2 = go.Bar(x=labels, y=bars2, name='Paciente 2', text=bars2, textposition='outside')
+
+        fig.add_trace(trace_group1, row=3, col=1)
+        fig.add_trace(trace_group2, row=3, col=1)
+
+        fig.update_traces(texttemplate='%{text:.2f}', textposition='outside', selector=dict(type='bar'))
+
+
     fig.update_layout(
         autosize=False,
-        height=1600,  # Adjust the height as needed
+        height=2400,  # Adjust the height as needed
         margin=dict(l=50, r=50, b=50, t=50),
     )
+
 
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
