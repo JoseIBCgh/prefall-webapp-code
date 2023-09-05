@@ -40,7 +40,8 @@ from apps.prefall.forms import (
     UploadTestForm,
     ElementForm,
     DoubleElementForm,
-    CompareTestsForm
+    CompareTestsForm,
+    CompareFasesForm
 )
 
 import csv
@@ -1432,15 +1433,96 @@ def plots():
         fig.update_traces(texttemplate='%{text:.2f}', textposition='outside', selector=dict(type='bar'))
 
         graphCompareTests = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-    else:
-        print(formCompareTests.errors)
+    
+    graphCompareFases = null
+    formCompareFases = CompareFasesForm()
+    formCompareFases.paciente1.choices = [(element.id, element.username) for element in pacientes]
+    formCompareFases.paciente2.choices = [(element.id, element.username) for element in pacientes]
+    formCompareFases.test1.choices = []
+    formCompareFases.test2.choices = []
+    if formCompareFases.validate_on_submit():
+        print("formCompareTests validated")
+        import plotly
+        import plotly.graph_objs as go
+        from apps import db
+        import pickle
+        import math
+        selected_paciente_id1 = formCompareFases.paciente1.data
+        selected_paciente_id2 = formCompareFases.paciente2.data
+
+        full_name_paciente1 = null
+
+        for choice_value, choice_label in formCompareFases.paciente1.choices:
+            if choice_value == selected_paciente_id1:
+                full_name_paciente1 = choice_label
+                break
+
+        full_name_paciente2 = null
+
+        for choice_value, choice_label in formCompareFases.paciente2.choices:
+            if choice_value == selected_paciente_id2:
+                full_name_paciente2 = choice_label
+                break
+
+        test1 = db.session.query(
+            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+            .filter_by(id_paciente=selected_paciente_id1)\
+            .filter(Test.num_test==formCompareTests.test1.data).first()
+
+        test2 = db.session.query(
+            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+            .filter_by(id_paciente=selected_paciente_id2)\
+            .filter(Test.num_test==formCompareTests.test2.data).first()
+
+        dataframes = []
+        blob_data1 = test1.data  
+        if blob_data1:
+            df1 = pickle.loads(blob_data1)
+            dataframes.append(df1)
+
+        blob_data2 = test2.data  
+        if blob_data2:
+            df2 = pickle.loads(blob_data2)
+            dataframes.append(df2)
+
+        fase1 = []
+        for df in dataframes:
+            fase1.append(df['duracion_f1'].values[0])
+        
+        fase2 = []
+        for df in dataframes:
+            fase2.append(df['duracion_f2'].values[0])
+
+        fase3 = []
+        for df in dataframes:
+            fase3.append(df['duracion_f3'].values[0])
+
+        fase4 = []
+        for df in dataframes:
+            fase4.append(df['duracion_f4'].values[0])
+
+        fig = go.Figure()
+
+        labels = ["Fase 1", "Fase 2", "Fase 3", "Fase 4"]
+        bars1 = [fase1[0], fase2[0], fase3[0], fase4[0]]
+        bars2 = [fase1[1], fase2[1], fase3[1], fase4[1]]
+        trace_group1 = go.Bar(x=labels, y=bars1, name=full_name_paciente1 + " " + test1.date.strftime("%Y-%m-%d"), text=bars1, textposition='outside')
+        trace_group2 = go.Bar(x=labels, y=bars2, name=full_name_paciente2 + " " + test2.date.strftime("%Y-%m-%d"), text=bars2, textposition='outside')
+
+        fig.add_trace(trace_group1)
+        fig.add_trace(trace_group2)
+
+        fig.update_traces(texttemplate='%{text:.2f}', textposition='outside', selector=dict(type='bar'))
+
+        graphCompareFases = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
     return render_template(
         'prefall/plots.html', 
         formEvolucionProbCaida=formEvolucionProbCaida, graphEvolucionProbCaida=graphEvolucionProbCaida,
         form3DProbCaida=form3DProbCaida, graph3DProbCaida=graph3DProbCaida,
-        formCompareTests=formCompareTests, graphCompareTests=graphCompareTests)
+        formCompareTests=formCompareTests, graphCompareTests=graphCompareTests,
+        formCompareFases=formCompareFases, graphCompareFases=graphCompareFases)
 
 
 @blueprint.route('/get_paciente_tests', methods=['POST'])

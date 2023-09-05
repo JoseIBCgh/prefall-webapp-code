@@ -43,6 +43,20 @@
                         {{ formCompareTests.submit }}
                     </form>
                     <div id="graphCompareTests" class="chart"></div>
+                    <form method="POST">
+                        {{ formCompareFases.hidden_tag() }}
+                        {{ formCompareFases.paciente1.label }}
+                        {{ formCompareFases.paciente1(id='compareFasesPaciente1') }}
+                        {{ formCompareFases.test1.label }}
+                        {{ formCompareFases.test1(id='compareFasesTest1') }}
+                        {{ formCompareFases.paciente2.label }}
+                        {{ formCompareFases.paciente2(id='compareFasesPaciente2') }}
+                        {{ formCompareFases.test2.label }}
+                        {{ formCompareFases.test2(id='compareFasesTest2') }}
+                        <br>
+                        {{ formCompareFases.submit }}
+                    </form>
+                    <div id="graphCompareFases" class="chart"></div>
                 </div>
             </div>
             <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -97,9 +111,19 @@
                         updateSelectors($('#compareTestsPaciente2'), $('#compareTestsTest2'))
                     });
 
+                    $('#compareFasesPaciente1').change(function() {
+                        updateSelectors($('#compareFasesPaciente1'), $('#compareFasesTest1'))
+                    });
+                    $('#compareFasesPaciente2').change(function() {
+                        updateSelectors($('#compareFasesPaciente2'), $('#compareFasesTest2'))
+                    });
+
 
                     updateSelectors($('#compareTestsPaciente1'), $('#compareTestsTest1'))
                     updateSelectors($('#compareTestsPaciente2'), $('#compareTestsTest2'))
+
+                    updateSelectors($('#compareFasesPaciente1'), $('#compareFasesTest1'))
+                    updateSelectors($('#compareFasesPaciente2'), $('#compareFasesTest2'))
                 });
             </script>
             {% if graphCompareTests %}
@@ -107,6 +131,14 @@
                 var start_time = Date.now()
                 var graphs = {{graphCompareTests | safe}};
                 Plotly.plot('graphCompareTests',graphs,{});
+                console.log("Time plot= " + (Date.now() - start_time))
+            </script>
+            {% endif %}
+            {% if graphCompareFases %}
+            <script type='text/javascript'>
+                var start_time = Date.now()
+                var graphs = {{graphCompareFases | safe}};
+                Plotly.plot('graphCompareFases',graphs,{});
                 console.log("Time plot= " + (Date.now() - start_time))
             </script>
             {% endif %}
