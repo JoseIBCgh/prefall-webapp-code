@@ -29,10 +29,12 @@
                     <div id="chart3DProbCaida" class="chart"></div>
                     <form method="POST">
                         {{ formCompareTests.hidden_tag() }}
-                        {{ formCompareTests.paciente.label }}
-                        {{ formCompareTests.paciente(id='compareTestsPaciente') }}
+                        {{ formCompareTests.paciente1.label }}
+                        {{ formCompareTests.paciente1(id='compareTestsPaciente1') }}
                         {{ formCompareTests.test1.label }}
                         {{ formCompareTests.test1(id='compareTestsTest1') }}
+                        {{ formCompareTests.paciente2.label }}
+                        {{ formCompareTests.paciente2(id='compareTestsPaciente2') }}
                         {{ formCompareTests.test2.label }}
                         {{ formCompareTests.test2(id='compareTestsTest2') }}
                         {{ formCompareTests.metric.label }}
@@ -63,13 +65,10 @@
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script>
                 $(document).ready(function() {
-                    function updateSelectors()
+                    function updateSelectors(selector, dependentSelector)
                     {
-                        var selectedValue = $('#compareTestsPaciente').val();
-                        var dependentSelector1 = $('#compareTestsTest1');
-                        dependentSelector1.empty();
-                        var dependentSelector2 = $('#compareTestsTest2');
-                        dependentSelector2.empty();
+                        var selectedValue = selector.val();
+                        dependentSelector.empty();
 
                         
                         $.ajax({
@@ -81,10 +80,8 @@
                                 console.log(response)
                                 var testsData = response.tests;
                                 
-                                // Populate the second selector with the fetched options
                                 $.each(testsData, function(index, value) {
-                                    dependentSelector1.append($('<option>').text(value.date).attr('value', value.num_test));
-                                    dependentSelector2.append($('<option>').text(value.date).attr('value', value.num_test));
+                                    dependentSelector.append($('<option>').text(value.date).attr('value', value.num_test));
                                 });
                             },
                             error: function(error) {
@@ -93,11 +90,16 @@
                         });
                     }
                     
-                    $('#compareTestsPaciente').change(function() {
-                        updateSelectors()
+                    $('#compareTestsPaciente1').change(function() {
+                        updateSelectors($('#compareTestsPaciente1'), $('#compareTestsTest1'))
+                    });
+                    $('#compareTestsPaciente2').change(function() {
+                        updateSelectors($('#compareTestsPaciente2'), $('#compareTestsTest2'))
                     });
 
-                    updateSelectors()
+
+                    updateSelectors($('#compareTestsPaciente1'), $('#compareTestsTest1'))
+                    updateSelectors($('#compareTestsPaciente2'), $('#compareTestsTest2'))
                 });
             </script>
             {% if graphCompareTests %}

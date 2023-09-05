@@ -726,7 +726,8 @@ def detalles_clinicos(id):
             filter(DocumentoPaciente.id_paciente==id).filter(DocumentoPaciente.id_medico==current_user.id).all()
     
 
-    graphJSON = generatePlotPaciente(id)
+    #graphJSON = generatePlotPaciente(id)
+    graphJSON = null
 
     return render_template('prefall/detalles_clinicos.html', paciente=paciente, tests=tests, files=files,
     formFile=formFile, formTest=formTest, formFilterFile=formFilterFile, graphJSON=graphJSON)
@@ -1329,7 +1330,8 @@ def plots():
 
     graphCompareTests = null
     formCompareTests = CompareTestsForm()
-    formCompareTests.paciente.choices = [(element.id, element.username) for element in pacientes]
+    formCompareTests.paciente1.choices = [(element.id, element.username) for element in pacientes]
+    formCompareTests.paciente2.choices = [(element.id, element.username) for element in pacientes]
     formCompareTests.metric.choices = [("la","Linear Acceleration"), ("m","Magnetometer"), ("g","Gyroscope")]
     formCompareTests.test1.choices = []
     formCompareTests.test2.choices = []
@@ -1340,11 +1342,26 @@ def plots():
         from apps import db
         import pickle
         import math
-        selected_paciente_id = formCompareTests.paciente.data
+        selected_paciente_id1 = formCompareTests.paciente1.data
+        selected_paciente_id2 = formCompareTests.paciente2.data
 
         metric_prefix = formCompareTests.metric.data
 
         choices = formCompareTests.metric.choices
+
+        full_name_paciente1 = null
+
+        for choice_value, choice_label in formCompareTests.paciente1.choices:
+            if choice_value == selected_paciente_id1:
+                full_name_paciente1 = choice_label
+                break
+
+        full_name_paciente2 = null
+
+        for choice_value, choice_label in formCompareTests.paciente2.choices:
+            if choice_value == selected_paciente_id2:
+                full_name_paciente2 = choice_label
+                break
 
         full_name = null
 
@@ -1355,12 +1372,12 @@ def plots():
 
         test1 = db.session.query(
             Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
-            .filter_by(id_paciente=selected_paciente_id)\
+            .filter_by(id_paciente=selected_paciente_id1)\
             .filter(Test.num_test==formCompareTests.test1.data).first()
 
         test2 = db.session.query(
             Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
-            .filter_by(id_paciente=selected_paciente_id)\
+            .filter_by(id_paciente=selected_paciente_id2)\
             .filter(Test.num_test==formCompareTests.test2.data).first()
 
         dataframes = []
@@ -1406,8 +1423,8 @@ def plots():
         labels = [full_name + " X", full_name + " Y", full_name + " Z"]
         bars1 = [x[0], y[0], z[0]]
         bars2 = [x[1], y[1], z[1]]
-        trace_group1 = go.Bar(x=labels, y=bars1, name=test1.date.strftime("%Y-%m-%d"), text=bars1, textposition='outside')
-        trace_group2 = go.Bar(x=labels, y=bars2, name=test2.date.strftime("%Y-%m-%d"), text=bars2, textposition='outside')
+        trace_group1 = go.Bar(x=labels, y=bars1, name=full_name_paciente1 + " " + test1.date.strftime("%Y-%m-%d"), text=bars1, textposition='outside')
+        trace_group2 = go.Bar(x=labels, y=bars2, name=full_name_paciente2 + " " + test2.date.strftime("%Y-%m-%d"), text=bars2, textposition='outside')
 
         fig.add_trace(trace_group1)
         fig.add_trace(trace_group2)
