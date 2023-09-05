@@ -27,6 +27,20 @@
                         {{ form3DProbCaida.submit }}
                     </form>
                     <div id="chart3DProbCaida" class="chart"></div>
+                    <form method="POST">
+                        {{ formCompareTests.hidden_tag() }}
+                        {{ formCompareTests.paciente.label }}
+                        {{ formCompareTests.paciente(id='compareTestsPaciente') }}
+                        {{ formCompareTests.test1.label }}
+                        {{ formCompareTests.test1(id='compareTestsTest1') }}
+                        {{ formCompareTests.test2.label }}
+                        {{ formCompareTests.test2(id='compareTestsTest2') }}
+                        {{ formCompareTests.metric.label }}
+                        {{ formCompareTests.metric }}
+                        <br>
+                        {{ formCompareTests.submit }}
+                    </form>
+                    <div id="graphCompareTests" class="chart"></div>
                 </div>
             </div>
             <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -43,6 +57,54 @@
                 var start_time = Date.now()
                 var graphs = {{graph3DProbCaida | safe}};
                 Plotly.plot('chart3DProbCaida',graphs,{});
+                console.log("Time plot= " + (Date.now() - start_time))
+            </script>
+            {% endif %}
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script>
+                $(document).ready(function() {
+                    function updateSelectors()
+                    {
+                        var selectedValue = $('#compareTestsPaciente').val();
+                        var dependentSelector1 = $('#compareTestsTest1');
+                        dependentSelector1.empty();
+                        var dependentSelector2 = $('#compareTestsTest2');
+                        dependentSelector2.empty();
+
+                        
+                        $.ajax({
+                            type: 'POST',
+                            url: '/get_paciente_tests',
+                            data: { id_paciente: selectedValue },
+                            success: function(response) {
+                                console.log("ajax response")
+                                console.log(response)
+                                var testsData = response.tests;
+                                
+                                // Populate the second selector with the fetched options
+                                $.each(testsData, function(index, value) {
+                                    dependentSelector1.append($('<option>').text(value.date).attr('value', value.num_test));
+                                    dependentSelector2.append($('<option>').text(value.date).attr('value', value.num_test));
+                                });
+                            },
+                            error: function(error) {
+                                console.log('Error:', error);
+                            }
+                        });
+                    }
+                    
+                    $('#compareTestsPaciente').change(function() {
+                        updateSelectors()
+                    });
+
+                    updateSelectors()
+                });
+            </script>
+            {% if graphCompareTests %}
+            <script type='text/javascript'>
+                var start_time = Date.now()
+                var graphs = {{graphCompareTests | safe}};
+                Plotly.plot('graphCompareTests',graphs,{});
                 console.log("Time plot= " + (Date.now() - start_time))
             </script>
             {% endif %}

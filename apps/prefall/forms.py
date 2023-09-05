@@ -106,3 +106,10 @@ class DoubleElementForm(FlaskForm):
     selected_element = SelectField('Select an Element', coerce=int)
     second_selected_element = SelectField('Select Another Element', coerce=str)
     submit = SubmitField('Submit')
+
+class CompareTestsForm(FlaskForm):
+    paciente = SelectField('Selecciona un paciente', coerce=int)
+    test1 = SelectField('Selecciona un test', coerce=int, validate_choice=False)
+    test2 = SelectField('Selecciona otro test', coerce=int, validate_choice=False)
+    metric = SelectField('Selecciona la metrica', coerce=str)
+    submit = SubmitField('Submit')

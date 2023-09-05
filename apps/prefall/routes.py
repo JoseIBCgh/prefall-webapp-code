@@ -40,6 +40,7 @@ from apps.prefall.forms import (
     UploadTestForm,
     ElementForm,
     DoubleElementForm,
+    CompareTestsForm
 )
 
 import csv
@@ -1326,8 +1327,122 @@ def plots():
 
         graph3DProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
+    graphCompareTests = null
+    formCompareTests = CompareTestsForm()
+    formCompareTests.paciente.choices = [(element.id, element.username) for element in pacientes]
+    formCompareTests.metric.choices = [("la","Linear Acceleration"), ("m","Magnetometer"), ("g","Gyroscope")]
+    formCompareTests.test1.choices = []
+    formCompareTests.test2.choices = []
+    if formCompareTests.validate_on_submit():
+        print("formCompareTests validated")
+        import plotly
+        import plotly.graph_objs as go
+        from apps import db
+        import pickle
+        import math
+        selected_paciente_id = formCompareTests.paciente.data
+
+        metric_prefix = formCompareTests.metric.data
+
+        choices = formCompareTests.metric.choices
+
+        full_name = null
+
+        for choice_value, choice_label in choices:
+            if choice_value == metric_prefix:
+                full_name = choice_label
+                break
+
+        test1 = db.session.query(
+            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+            .filter_by(id_paciente=selected_paciente_id)\
+            .filter(Test.num_test==formCompareTests.test1.data).first()
+
+        test2 = db.session.query(
+            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+            .filter_by(id_paciente=selected_paciente_id)\
+            .filter(Test.num_test==formCompareTests.test2.data).first()
+
+        dataframes = []
+        blob_data1 = test1.data  
+        if blob_data1:
+            df1 = pickle.loads(blob_data1)
+            dataframes.append(df1)
+
+        blob_data2 = test2.data  
+        if blob_data2:
+            df2 = pickle.loads(blob_data2)
+            dataframes.append(df2)
+
+        x = []
+        for df in dataframes:
+            mean = (df[metric_prefix + 'x_mean_f1'] * df['duracion_f1']\
+            + df[metric_prefix + 'x_mean_f2'] * df['duracion_f2']\
+            + df[metric_prefix + 'x_mean_f3'] * df['duracion_f3']\
+            + df[metric_prefix + 'x_mean_f4'] * df['duracion_f4'])\
+            / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
+            x.append(mean.values[0])
+
+        y = []
+        for df in dataframes:
+            mean = (df[metric_prefix + 'y_mean_f1'] * df['duracion_f1']\
+            + df[metric_prefix + 'y_mean_f2'] * df['duracion_f2']\
+            + df[metric_prefix + 'y_mean_f3'] * df['duracion_f3']\
+            + df[metric_prefix + 'y_mean_f4'] * df['duracion_f4'])\
+            / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
+            y.append(mean.values[0])
+
+        z = []
+        for df in dataframes:
+            mean = (df[metric_prefix + 'z_mean_f1'] * df['duracion_f1']\
+            + df[metric_prefix + 'z_mean_f2'] * df['duracion_f2']\
+            + df[metric_prefix + 'z_mean_f3'] * df['duracion_f3']\
+            + df[metric_prefix + 'z_mean_f4'] * df['duracion_f4'])\
+            / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
+            z.append(mean.values[0])
+        
+        fig = go.Figure()
+
+        labels = [full_name + " X", full_name + " Y", full_name + " Z"]
+        bars1 = [x[0], y[0], z[0]]
+        bars2 = [x[1], y[1], z[1]]
+        trace_group1 = go.Bar(x=labels, y=bars1, name=test1.date.strftime("%Y-%m-%d"), text=bars1, textposition='outside')
+        trace_group2 = go.Bar(x=labels, y=bars2, name=test2.date.strftime("%Y-%m-%d"), text=bars2, textposition='outside')
+
+        fig.add_trace(trace_group1)
+        fig.add_trace(trace_group2)
+
+        fig.update_traces(texttemplate='%{text:.2f}', textposition='outside', selector=dict(type='bar'))
+
+        graphCompareTests = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    else:
+        print(formCompareTests.errors)
+
 
     return render_template(
         'prefall/plots.html', 
         formEvolucionProbCaida=formEvolucionProbCaida, graphEvolucionProbCaida=graphEvolucionProbCaida,
-        form3DProbCaida=form3DProbCaida, graph3DProbCaida=graph3DProbCaida)
+        form3DProbCaida=form3DProbCaida, graph3DProbCaida=graph3DProbCaida,
+        formCompareTests=formCompareTests, graphCompareTests=graphCompareTests)
+
+
+@blueprint.route('/get_paciente_tests', methods=['POST'])
+def get_paciente_tests():
+    from apps import db
+    id_paciente = request.form.get('id_paciente') 
+    
+    tests = db.session.query(Test.num_test, Test.date).\
+    filter_by(id_paciente=id_paciente).\
+    filter(Test.probabilidad_caida.isnot(None)).all()
+    
+    tests_data = []
+    for test in tests:
+        test_dict = {
+            'num_test': test.num_test,
+            'date': test.date,
+        }
+        tests_data.append(test_dict)
+
+    response_data = {'tests': tests_data}
+
+    return jsonify(response_data)
