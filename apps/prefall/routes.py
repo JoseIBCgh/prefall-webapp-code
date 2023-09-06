@@ -705,7 +705,7 @@ def detalles_clinicos(id):
         df = read_csv(file_path)
         df = add_columns(df, id)
         df = df.drop_duplicates(subset=["time"])
-        add_df_to_sql(df, paciente.id_centro)
+        add_df_to_sql(df, paciente.id_centro, filename)
         '''
         try:
             add_df_to_sql(df)
@@ -939,7 +939,7 @@ def detalles_personales(id):
         df = read_csv(file_path)
         df = add_columns(df, id)
         df = df.drop_duplicates(subset=["time"])
-        add_df_to_sql(df, paciente.id_centro)
+        add_df_to_sql(df, paciente.id_centro, filename)
         os.remove(file_path)
 
     rolMedico = Role.query.filter_by(name="medico").first()
@@ -1087,12 +1087,22 @@ def add_columns(df, id_paciente):
 
     return df
 
-def add_df_to_sql(df, id_centro):
+def add_df_to_sql(df, id_centro, filename):
     from apps import db
+    from datetime import datetime, timedelta
+
+    filename_without_extension = os.path.splitext(filename)[0]
+
+    date_part, time_part = filename_without_extension.split('-', 1)
+
+    date_obj = datetime.strptime(f"{date_part}-{time_part}", "%Y%m%d-%H-%M-%S-%f")
+
+    formatted_date = date_obj.strftime("%Y-%m-%d %H:%M:%S.%f")
+    print(formatted_date)
 
     test = Test(
         num_test = df.at[0,"num_test"], id_paciente= df.at[0,"id_paciente"],
-        date = datetime.datetime.now(), id_centro=id_centro)
+        date = date_obj, id_centro=id_centro)
     db.session.add(test)
 
     for index, row in df.iterrows():
