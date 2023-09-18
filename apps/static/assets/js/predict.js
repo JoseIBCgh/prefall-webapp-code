@@ -20,7 +20,8 @@ function start_prediction() {
         // Send the AJAX POST request
         $.ajax({
             type: 'POST',
-            url: 'http://srv.ibc.bio:32796/predict',
+            url: 'http://srv.ibc.bio:32840/predict',
+            //url: 'http://localhost:8000/predict',
             data: formData,
             contentType: false, // Set to false to prevent jQuery from adding a content-type header
             processData: false, // Set to false to prevent jQuery from processing the data
@@ -38,7 +39,7 @@ function start_prediction() {
 }
 function poll(task_id){
     console.log("poll")
-    $.getJSON('http://srv.ibc.bio:32796/tasks/<task_id>?task_id=' + task_id, function(data) {
+    $.getJSON('http://srv.ibc.bio:32840/tasks/<task_id>?task_id=' + task_id, function(data) {
         if(data['task_status'] == 'SUCCESS'){
             console.log("SUCCESS")
             $.ajax({
