@@ -120,6 +120,7 @@
                                             <td>
                                                 <h6 class="text-muted">{{user["nombre"]}}</h6>
                                             </td>
+                                            <td><a href="{{url_for('prefall_blueprint.editar_detalles_usuario', id=user['id'])}}" class="label theme-bg text-white f-12">Editar</a></td>
                                             <td><a href="{{url_for('prefall_blueprint.borrar_usuario', id_centro=centro['id'], id_user=user['id'])}}" class="label theme-bg text-white f-12">Borrar</a></td>
                                         </tr> 
                                         {% endfor %}                               

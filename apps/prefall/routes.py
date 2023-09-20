@@ -23,7 +23,13 @@ import os
 from pathlib import Path
 import datetime
 
-from apps.prefall.decorators import admin_centro_access, clinical_data_access, patient_data_access, personal_data_access
+from apps.prefall.decorators import ( 
+    admin_centro_access, 
+    clinical_data_access, 
+    patient_data_access, 
+    personal_data_access,
+    admin_centro_access_user
+)
 from apps.prefall.forms import (
     CreateCenterAdminForm,
     CreateCenterForm,
@@ -134,6 +140,38 @@ def crear_admin_centro(id):
     return render_template(
         'prefall/create_admin_center.html', centro= centro, form=form
     )
+
+@blueprint.route('editar_detalles_usuario/<id>', methods=['GET', 'POST'])
+@admin_centro_access_user()
+def editar_detalles_usuario(id):
+    paciente = User.query.filter_by(id=id).first()
+    form = EditPersonalDataForm(request.form)
+    if 'editar_detalles_personales' in request.form and form.validate():
+        identificador = request.form['identificador']
+        nombre = request.form['nombre']
+        fecha = request.form['fecha']
+        sexo = request.form['sexo']
+        altura = request.form['altura']
+        peso = request.form['peso']
+        if identificador != "":
+            paciente.identificador = identificador
+        if nombre != "":
+            paciente.nombre = nombre
+        if fecha != "":
+            paciente.fecha_nacimiento = fecha
+        if sexo != "":
+            paciente.sexo = sexo
+        if altura != "":
+            paciente.altura = altura
+        if peso != "":
+            paciente.peso = peso
+        from apps import db
+        db.session.commit()
+        return redirect(url_for('prefall_blueprint.lista_centros'))
+        
+    return render_template(
+        'prefall/editar_detalles_personales.html', 
+        form=form, paciente=paciente)
 
 ### END ADMIN ###
 

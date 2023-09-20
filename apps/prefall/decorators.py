@@ -21,6 +21,23 @@ def admin_centro_access():
         return wrapper
     return decorator
 
+def admin_centro_access_user():
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            if current_user.has_role('admin'):
+                return f(*args, **kwargs)
+            if not current_user.has_role('admin-centro'):
+                abort(403)
+            id = request.view_args["id"]
+            user = User.query.filter_by(id=id).first()
+            if user.centro.id_admin != current_user.id:
+                abort(403)
+            else:
+                return f(*args, **kwargs)
+        return wrapper
+    return decorator
+
 def personal_data_access():
     def decorator(f):
         @wraps(f)
