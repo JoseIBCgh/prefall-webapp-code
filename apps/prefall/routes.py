@@ -154,6 +154,7 @@ def editar_detalles_usuario(id):
         sexo = request.form['sexo']
         altura = request.form['altura']
         peso = request.form['peso']
+        password = form.password.data
         if identificador != "":
             paciente.identificador = identificador
         if nombre != "":
@@ -166,6 +167,8 @@ def editar_detalles_usuario(id):
             paciente.altura = altura
         if peso != "":
             paciente.peso = peso
+        if password != "":
+            paciente.password = hash_password(password)
         from apps import db
         db.session.commit()
         return redirect(url_for('home_blueprint.index'))
@@ -261,16 +264,15 @@ def crear_user():
         peso = request.form['peso']
         role = create_user_form.tipo.data
         print(role)
-
-        default_password = "password"
-        n = randint(0,10000)
-        default_email = "default"+ str(n) +"@invented_mail.com"
+        password = request.form['password']
+        username = request.form['username']
+        email = request.form['email']
 
         from apps import user_datastore, db
         user_datastore.create_user(
             identificador=identificador, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
-            peso=peso, id_centro = current_user.id_centro,
-            password=hash_password(default_password), email=default_email, roles=[role]
+            peso=peso, id_centro = current_user.id_centro, username=username,
+            password=hash_password(password), email=email, roles=[role]
         )
         db.session.commit()
 
@@ -369,16 +371,15 @@ def crear_paciente_medico():
         altura = request.form['altura']
         peso = request.form['peso']
         antecedentes = request.form['antecedentes']
-
-        default_password = "password"
-        n = randint(0,1000000)
-        default_email = "default"+ str(n) +"@invented_mail.com"
+        password = request.form['password']
+        username = request.form['username']
+        email = request.form['email']
 
         from apps import user_datastore, db
         user_datastore.create_user(
             identificador=identificador, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
             peso=peso, antecedentes_clinicos=antecedentes, id_centro = current_user.id_centro,
-            password=hash_password(default_password), email=default_email, roles=["paciente"]
+            password=hash_password(password), email=email, roles=["paciente"], username=username
         )
         user_created = User.query.filter_by(identificador=identificador).first()
         asociacion = PacienteAsociado(id_paciente= user_created.id, id_medico=current_user.id)
@@ -977,16 +978,15 @@ def crear_paciente_auxiliar():
         sexo = request.form['sexo']
         altura = request.form['altura']
         peso = request.form['peso']
-
-        default_password = "password"
-        n = randint(0,1000000)
-        default_email = "default"+ str(n) +"@invented_mail.com"
+        password = request.form['password']
+        username = request.form['username']
+        email = request.form['email']
 
         from apps import user_datastore, db
         user_datastore.create_user(
             identificador=identificador, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
-            peso=peso, id_centro = current_user.id_centro,
-            password=hash_password(default_password), email=default_email, roles=["paciente"]
+            peso=peso, id_centro = current_user.id_centro, username=username,
+            password=hash_password(password), email=email, roles=["paciente"]
         )
         db.session.commit()
 
@@ -1051,6 +1051,7 @@ def editar_detalles_personales(id):
         sexo = request.form['sexo']
         altura = request.form['altura']
         peso = request.form['peso']
+        password = form.password.data
         if identificador != "":
             paciente.identificador = identificador
         if nombre != "":
@@ -1063,6 +1064,8 @@ def editar_detalles_personales(id):
             paciente.altura = altura
         if peso != "":
             paciente.peso = peso
+        if password != "":
+            paciente.password = hash_password(password)
         from apps import db
         db.session.commit()
         return redirect(url_for('prefall_blueprint.detalles_personales', id=id))

@@ -12,6 +12,9 @@ from flask_ckeditor import CKEditorField
 class CreatePatientClinicalForm(FlaskForm):
     identificador = StringField('Identificador',id='id_create_patient', validators=[DataRequired()])
     nombre = StringField('Nombre', id='name_create_patient', validators=[DataRequired()])
+    email = StringField('Email', id='email_create_patient', validators=[DataRequired()])
+    username = StringField('Username', id='username_create_patient', validators=[DataRequired()])
+    password = StringField('Password', id='password_create_patient', validators=[DataRequired()])
     fecha = DateField('Fecha de nacimiento', id='date_create_patient', validators=[DataRequired()])
     sexo = StringField('Sexo', id='sex_create_patient', validators=[DataRequired(), AnyOf(values=["V", "M"], message="Introduce V o M")])
     altura = DecimalField('Altura', id='height_create_patient', validators=[DataRequired()])
@@ -21,6 +24,9 @@ class CreatePatientClinicalForm(FlaskForm):
 class CreatePatientPersonalForm(FlaskForm):
     identificador = StringField('Identificador',id='id_create_patient', validators=[DataRequired()])
     nombre = StringField('Nombre', id='name_create_patient', validators=[DataRequired()])
+    email = StringField('Email', id='email_create_patient', validators=[DataRequired()])
+    username = StringField('Username', id='username_create_patient', validators=[DataRequired()])
+    password = StringField('Password', id='password_create_patient', validators=[DataRequired()])
     fecha = DateField('Fecha de nacimiento', id='date_create_patient', validators=[DataRequired()])
     sexo = StringField('Sexo', id='sex_create_patient', validators=[DataRequired(), AnyOf(values=["V", "M"], message="Introduce V o M")])
     altura = DecimalField('Altura', id='height_create_patient', validators=[DataRequired()])
@@ -29,6 +35,9 @@ class CreatePatientPersonalForm(FlaskForm):
 class CreateUserForm(FlaskForm):
     identificador = StringField('Identificador',id='id_create_user', validators=[DataRequired()])
     nombre = StringField('Nombre', id='name_create_user', validators=[DataRequired()])
+    email = StringField('Email', id='email_create_patient', validators=[DataRequired()])
+    username = StringField('Username', id='username_create_patient', validators=[DataRequired()])
+    password = StringField('Password', id='password_create_patient', validators=[DataRequired()])
     fecha = DateField('Fecha de nacimiento', id='date_create_user', validators=[DataRequired()])
     sexo = StringField('Sexo', id='sex_create_user', validators=[DataRequired(), AnyOf(values=["V", "M"], message="Introduce V o M")])
     altura = DecimalField('Altura', id='height_create_user', validators=[DataRequired()])
@@ -47,6 +56,7 @@ class CreateCenterAdminForm(FlaskForm):
 class EditPersonalDataForm(FlaskForm):
     identificador = StringField('Identificador',id='id_edit_personal_data', validators=[Optional()])
     nombre = StringField('Nombre', id='name_edit_personal_data', validators=[Optional()])
+    password = PasswordField('Contraseña', id='password_edit_personal_data', validators=[Optional()])
     fecha = DateField('Fecha de nacimiento', id='date_edit_personal_data', validators=[Optional()])
     sexo = StringField('Sexo', id='sex_edit_personal_data', validators=[Optional(), AnyOf(values=["V", "M"], message="Introduce V o M")])
     altura = DecimalField('Altura', id='height_edit_personal_data', validators=[Optional()])
