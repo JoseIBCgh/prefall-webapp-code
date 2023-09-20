@@ -56,7 +56,7 @@
                                                 <h6 class="text-muted">Probabilidad de caida</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted">{{test["probabilidad_caida"]}}</h6>
+                                                <h3 class="text-muted">{{"{:.2f}%".format(test["probabilidad_caida"] * 100)}}</h3>
                                             </td>
                                         </tr>
                                         {% endif %}

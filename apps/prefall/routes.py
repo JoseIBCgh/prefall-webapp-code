@@ -1210,6 +1210,7 @@ def upload():
 ## BEGIN PLOTS ##
 
 @blueprint.route('/plots',  methods=['GET','POST'])
+@roles_accepted("medico")
 def plots():
     graphEvolucionProbCaida = null
     pacientes = current_user.pacientes_asociados
