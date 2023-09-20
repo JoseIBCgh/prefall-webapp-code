@@ -26,6 +26,19 @@ class CreatePatientPersonalForm(FlaskForm):
     altura = DecimalField('Altura', id='height_create_patient', validators=[DataRequired()])
     peso = DecimalField('Peso', id='weight_create_patient', validators=[DataRequired()])
 
+class CreateUserForm(FlaskForm):
+    identificador = StringField('Identificador',id='id_create_user', validators=[DataRequired()])
+    nombre = StringField('Nombre', id='name_create_user', validators=[DataRequired()])
+    fecha = DateField('Fecha de nacimiento', id='date_create_user', validators=[DataRequired()])
+    sexo = StringField('Sexo', id='sex_create_user', validators=[DataRequired(), AnyOf(values=["V", "M"], message="Introduce V o M")])
+    altura = DecimalField('Altura', id='height_create_user', validators=[DataRequired()])
+    peso = DecimalField('Peso', id='weight_create_user', validators=[DataRequired()])
+    tipo = SelectField('Tipo', id='type_create_user', choices=[
+        ('paciente', 'Paciente'),
+        ('medico', 'Medico'),
+        ('auxiliar', 'Auxiliar')
+    ])
+
 class CreateCenterAdminForm(FlaskForm):
     username = StringField('Usuario', id='username_admin', validators=[DataRequired()])
     password = PasswordField('Contraseña', id='password_admin', validators=[DataRequired()])

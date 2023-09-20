@@ -35,6 +35,7 @@ from apps.prefall.forms import (
     CreateCenterForm,
     CreatePatientClinicalForm,
     CreatePatientPersonalForm,
+    CreateUserForm,
     DiagnosticarTestForm,
     EditCenterDataForm, 
     EditClinicalDataForm, 
@@ -167,7 +168,7 @@ def editar_detalles_usuario(id):
             paciente.peso = peso
         from apps import db
         db.session.commit()
-        return redirect(url_for('prefall_blueprint.lista_centros'))
+        return redirect(url_for('home_blueprint.index'))
         
     return render_template(
         'prefall/editar_detalles_personales.html', 
@@ -244,6 +245,39 @@ def editar_detalles_centro(id_centro):
         'prefall/editar_detalles_centro.html', 
         form=form, centro=centro)
 
+
+@blueprint.route('crear_user', methods=['GET', 'POST'])
+@roles_accepted("admin-centro")
+def crear_user():
+    create_user_form = CreateUserForm(request.form)
+    if 'create_user' in request.form and create_user_form.validate():
+
+        # read form data
+        identificador = request.form['identificador']
+        nombre = request.form['nombre']
+        fecha = request.form['fecha']
+        sexo = request.form['sexo']
+        altura = request.form['altura']
+        peso = request.form['peso']
+        role = create_user_form.tipo.data
+        print(role)
+
+        default_password = "password"
+        n = randint(0,10000)
+        default_email = "default"+ str(n) +"@invented_mail.com"
+
+        from apps import user_datastore, db
+        user_datastore.create_user(
+            identificador=identificador, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
+            peso=peso, id_centro = current_user.id_centro,
+            password=hash_password(default_password), email=default_email, roles=[role]
+        )
+        db.session.commit()
+
+        return redirect(url_for('home_blueprint.index'))
+
+
+    return render_template('prefall/create_user.html', form=create_user_form)
 ### END ADMIN CENTRO ###
 
 ### BEGIN MEDICO ###
