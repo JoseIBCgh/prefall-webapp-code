@@ -121,3 +121,18 @@ class CompareFasesForm(FlaskForm):
     paciente2 = SelectField('Selecciona un paciente', coerce=int)
     test2 = SelectField('Selecciona otro test', coerce=int, validate_choice=False)
     submit = SubmitField('Submit')
+
+class CompareTestsFormPaciente(FlaskForm):
+    test1 = SelectField('Selecciona un test', coerce=int)
+    test2 = SelectField('Selecciona otro test', coerce=int)
+    metric = SelectField('Selecciona la metrica', coerce=str)
+    submit = SubmitField('Submit')
+
+class CompareFasesFormPaciente(FlaskForm):
+    test1 = SelectField('Selecciona un test', coerce=int)
+    test2 = SelectField('Selecciona otro test', coerce=int)
+    submit = SubmitField('Submit')
+
+class MetricForm(FlaskForm):
+    selected_element = SelectField('Select a metric', coerce=str)
+    submit = SubmitField('Submit')
