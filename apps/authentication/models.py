@@ -69,7 +69,7 @@ class Test(db.Model):
     num_test = db.Column(db.Integer, primary_key = True)
     id_paciente = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     id_centro = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
-    date = db.Column(db.Date)
+    date = db.Column(db.DateTime)
     probabilidad_caida = db.Column(db.Float, nullable=True)
     model = db.Column(db.Integer, db.ForeignKey('model.id'), nullable=True)
     data = db.Column(db.LargeBinary, nullable=True)

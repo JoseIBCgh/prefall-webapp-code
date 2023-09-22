@@ -173,7 +173,7 @@
                                                 <h6 class="text-muted center">{{test["num_test"]}}</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted center">{{test["date"]}}</h6>
+                                                <h6 class="text-muted center">{{test["date"].strftime('%Y-%m-%d %H:%M:%S')}}</h6>
                                             </td>
                                             <td class="center"><a href="{{url_for('prefall_blueprint.get_test', paciente=paciente['id'], test=test['num_test'])}}" class="label theme-bg text-white f-12">Descargar</a></td>
                                         </tr> 

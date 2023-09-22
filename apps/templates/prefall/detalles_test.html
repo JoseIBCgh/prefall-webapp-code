@@ -37,7 +37,7 @@
                                                 <h6 class="text-muted">Fecha</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted">{{test["date"]}}</h6>
+                                                <h6 class="text-muted">{{test["date"].strftime('%Y-%m-%d %H:%M:%S')}}</h6>
                                             </td>
                                         </tr>
                                         {% if test["diagnostico"] is not none and not editing %}
