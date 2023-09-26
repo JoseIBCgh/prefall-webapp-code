@@ -13634,3 +13634,17 @@ p strong {
   margin-right: auto;
   max-width:90%;
 }
+
+/* Style for the current page link */
+.page-link.current {
+  background-color: #007bff; /* Change to the desired background color */
+  color: #fff; /* Change to the desired text color */
+  border: 1px solid #007bff; /* Change to the desired border color */
+  cursor: default; /* Disable cursor for the current page link */
+}
+
+/* Style for disabled links (Previous and Next) */
+.page-link.disabled {
+  color: #6c757d; /* Change to the desired text color */
+  pointer-events: none; /* Disable click events for disabled links */
+}

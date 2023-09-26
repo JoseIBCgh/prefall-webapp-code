@@ -35,13 +35,14 @@ class CreatePatientPersonalForm(FlaskForm):
 class CreateUserForm(FlaskForm):
     identificador = StringField('Identificador',id='id_create_user', validators=[DataRequired()])
     nombre = StringField('Nombre', id='name_create_user', validators=[DataRequired()])
+    apellidos = StringField('Apellidos', id='apellidos_create_user', validators=[DataRequired()])
     email = StringField('Email', id='email_create_patient', validators=[DataRequired()])
     username = StringField('Username', id='username_create_patient', validators=[DataRequired()])
     password = StringField('Password', id='password_create_patient', validators=[DataRequired()])
     fecha = DateField('Fecha de nacimiento', id='date_create_user', validators=[DataRequired()])
     sexo = StringField('Sexo', id='sex_create_user', validators=[DataRequired(), AnyOf(values=["V", "M"], message="Introduce V o M")])
-    altura = DecimalField('Altura', id='height_create_user', validators=[DataRequired()])
-    peso = DecimalField('Peso', id='weight_create_user', validators=[DataRequired()])
+    altura = DecimalField('Altura', id='height_create_user', validators=[Optional()])
+    peso = DecimalField('Peso', id='weight_create_user', validators=[Optional()])
     tipo = SelectField('Tipo', id='type_create_user', choices=[
         ('paciente', 'Paciente'),
         ('medico', 'Medico'),

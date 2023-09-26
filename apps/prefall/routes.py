@@ -258,20 +258,25 @@ def crear_user():
         # read form data
         identificador = request.form['identificador']
         nombre = request.form['nombre']
+        apellidos = request.form['apellidos']
         fecha = request.form['fecha']
         sexo = request.form['sexo']
-        altura = request.form['altura']
-        peso = request.form['peso']
         role = create_user_form.tipo.data
-        print(role)
         password = request.form['password']
         username = request.form['username']
         email = request.form['email']
 
+        if role == 'paciente':
+            altura = request.form['altura']
+            peso = request.form['peso']
+        else:
+            altura = None
+            peso = None
+
         from apps import user_datastore, db
         user_datastore.create_user(
-            identificador=identificador, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
-            peso=peso, id_centro = current_user.id_centro, username=username,
+            identificador=identificador, nombre=nombre, apellidos=apellidos, fecha_nacimiento=fecha, 
+            sexo=sexo, altura=altura, peso=peso, id_centro = current_user.id_centro, username=username,
             password=hash_password(password), email=email, roles=[role]
         )
         db.session.commit()
@@ -288,7 +293,10 @@ def crear_user():
 @roles_accepted("medico")
 def pantalla_principal_medico():
     from apps import db
+    from datetime import datetime
     formPacientes = FilterUserForm()
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Number of items per page
 
     if formPacientes.submitFilterUser.data and formPacientes.validate():
         identificador = formPacientes.identificador.data
@@ -300,7 +308,15 @@ def pantalla_principal_medico():
                             filter(User.id_centro == Centro.id).\
                                 filter(Centro.nombreFiscal.like('%'+centro+'%')).all()
     else:
-        pacientes = current_user.pacientes_asociados
+        pacientes = current_user.pacientes_asociados.all()
+        total_records = len(pacientes)
+
+        total_pages = (total_records - 1) // per_page + 1
+
+        start_index = (page - 1) * per_page
+        end_index = min(start_index + per_page, total_records)
+
+        pacientes = pacientes[start_index:end_index]
 
     id_asociados = [pa.id for pa in current_user.pacientes_asociados]
     formTests = FilterTestForm()
@@ -350,12 +366,12 @@ def pantalla_principal_medico():
                 AccionesTestMedico.id_paciente == Test.id_paciente)).\
                     with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
                     AccionesTestMedico.num_test, Test.date).\
-                        filter(AccionesTestMedico.visto == False).all()
+                        filter(Test.probabilidad_caida == None).all()
     
     return render_template(
         'prefall/pantalla_principal_medico.html', pacientes=pacientes, formPacientes=formPacientes,
         tests= tests, test_sin_diagnosticar=test_sin_diagnosticar, test_sin_revisar=test_sin_revisar,
-        formTests=formTests)
+        formTests=formTests, total_pages=total_pages, current_page=page)
 
 @blueprint.route('crear_paciente_medico', methods=['GET', 'POST'])
 @roles_accepted("medico")
@@ -1180,7 +1196,7 @@ def add_df_to_sql(df, id_centro, filename):
 
     test = Test(
         num_test = df.at[0,"num_test"], id_paciente= df.at[0,"id_paciente"],
-        date = date_obj, id_centro=id_centro)
+        date = date_obj, id_centro=id_centro, id_medico= current_user.id)
     db.session.add(test)
 
     for index, row in df.iterrows():

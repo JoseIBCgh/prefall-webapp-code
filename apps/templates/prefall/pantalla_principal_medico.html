@@ -26,165 +26,54 @@
                                     <h3 class="f-w-300">{{test_sin_revisar|length}}</h3>
                                     <span class="d-block text-uppercase">Test sin revisar</span>
                                 </div>
+                                <div class="col-auto">
+                                    <i class="feather icon-zap f-30 text-c-green"></i>
+                                </div>
+                                <div class="col">
+                                    <h3 class="f-w-300">{{test_sin_diagnosticar|length}}</h3>
+                                    <span class="d-block text-uppercase">Test sin diagnosticar</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="card Recent-Users">
+                    <div class="card-Recent-Users">
                         <div class="card-header">
-                            <h5>Test sin revisar</h5>
+                            <h5>Pacientes</h5>
                         </div>
                         <div class="card-block px-0 py-3">
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
-                                            <th class="center equal-width-6">Nuevo</th>
-                                            <th class="center equal-width-6">Diagnosticado</th>
-                                            <th class="center equal-width-6">Paciente</th>
-                                            <th class="center equal-width-6">Numero</th>
-                                            <th class="center equal-width-6">Fecha</th>
-                                            <th class="text-right equal-width-6"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for test in test_sin_revisar %}
-                                        <tr class="unread">
-                                            {% if test["visto"] %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">No</h6>
-                                            </td>
-                                            {% else %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">Si</h6>
-                                            </td>
-                                            {% endif %}
-                                            {% if test["diagnostico"] is none %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">No</h6>
-                                            </td>
-                                            {% else %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">Si</h6>
-                                            </td>
-                                            {% endif %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{test["nombre"]}}</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{test["num_test"]}}</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{test["date"]}}</h6>
-                                            </td>
-                                            <td>
-                                                <a href="{{url_for('prefall_blueprint.detalles_test', id=test['id'], num=test['num_test'])}}" class="label theme-bg text-white f-12 center">Ver detalles</a>
-                                            </td>
-                                        </tr> 
-                                        {% endfor %}                               
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card Recent-Users">
-                        <div class="card-header">
-                            <h5>Test sin diagnosticar</h5>
-                        </div>
-                        <div class="card-block px-0 py-3">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th class="center equal-width-6">Nuevo</th>
-                                            <th class="center equal-width-6">Diagnosticado</th>
-                                            <th class="center equal-width-6">Paciente</th>
-                                            <th class="center equal-width-6">Numero</th>
-                                            <th class="center equal-width-6">Fecha</th>
-                                            <th class="text-right equal-width-6"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for test in test_sin_diagnosticar %}
-                                        <tr class="unread">
-                                            {% if test["visto"] %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">No</h6>
-                                            </td>
-                                            {% else %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">Si</h6>
-                                            </td>
-                                            {% endif %}
-                                            {% if test["diagnostico"] is none %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">No</h6>
-                                            </td>
-                                            {% else %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">Si</h6>
-                                            </td>
-                                            {% endif %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{test["nombre"]}}</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{test["num_test"]}}</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{test["date"]}}</h6>
-                                            </td>
-                                            <td>
-                                                <a href="{{url_for('prefall_blueprint.detalles_test', id=test['id'], num=test['num_test'])}}" class="label theme-bg text-white f-12 center">Ver detalles</a>
-                                            </td>
-                                        </tr> 
-                                        {% endfor %}                               
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card Recent-Users">
-                        <div class="card-header">
-                            <h5>Pacientes asociados</h5>
-                        </div>
-                        <div class="card-block px-0 py-3">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th class="text-right width-10"></th>
-                                            <th class="center equal-width-4-90">Identificador</th>
+                                            <th class="center equal-width-4-90">Id</th>
+                                            <th class="center equal-width-4-90">Apellidos</th>
                                             <th class="center equal-width-4-90">Nombre</th>
+                                            <th class="center equal-width-4-90">CIF/NIF</th>
                                             <th class="center equal-width-4-90">Centro</th>
+                                            <th class="center equal-width-4-90">Fecha de registro</th>
                                             <th class="text-right equal-width-4-90"></th>
-                                        </tr>
-                                        <tr>
-                                            <form role="form" method="post" action="">
-                                                {{ formPacientes.csrf_token }}
-                                                <th class="text-right"></th>
-                                                {{ render_table_field(formPacientes.identificador, "Identificador") }}
-                                                {{ render_table_field(formPacientes.nombre, "Nombre") }}
-                                                {{ render_table_field(formPacientes.centro, "Centro") }}
-                                                <th class="center">{{formPacientes.submitFilterUser(class="label theme-bg text-white f-12")}}</th>
-                                            </form>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for paciente in pacientes %}
                                         <tr class="unread">
-                                            {% if paciente.sexo == "V" %}
-                                            <td><img class="rounded-circle" style="width:40px;" src="/static/assets/images/user/avatar-2.jpg" alt="activity-user"></td>
-                                            {% elif paciente.sexo == "M" %}
-                                            <td><img class="rounded-circle" style="width:40px;" src="/static/assets/images/user/avatar-1.jpg" alt="activity-user"></td>
-                                            {% endif %}
                                             <td>
                                                 <h6 class="text-muted center remove-margins">{{paciente["identificador"]}}</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted center remove-margins">{{paciente["apellidos"]}}</h6>
                                             </td>
                                             <td>
                                                 <h6 class="text-muted center remove-margins">{{paciente["nombre"]}}</h6>
                                             </td>
                                             <td>
+                                                <h6 class="text-muted center remove-margins">{{paciente["identificador"]}}</h6>
+                                            </td>
+                                            <td>
                                                 <h6 class="text-muted center remove-margins">{{paciente.centro.nombreFiscal}}</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted center remove-margins">{{paciente["create_datetime"]}}</h6>
                                             </td>
                                             <td class="center"><a href="{{url_for('prefall_blueprint.detalles_clinicos', id=paciente['id'])}}" class="label theme-bg text-white f-12 center">Ver detalles</a></td>
                                         </tr> 
@@ -193,73 +82,26 @@
                                 </table>
                             </div>
                         </div>
-                    </div>
-                    <div class="card Recent-Users">
-                        <div class="card-header">
-                            <h5>Tests de la marcha</h5>
-                        </div>
-                        <div class="card-block px-0 py-3">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th class="center width-10">Nuevo</th>
-                                            <th class="center width-10">Diagnosticado</th>
-                                            <th class="center equal-width-4-80">Paciente</th>
-                                            <th class="center equal-width-4-80">Numero</th>
-                                            <th class="center equal-width-4-80">Fecha</th>
-                                            <th class="text-right equal-width-4-80"></th>
-                                        </tr>
-                                        <tr>
-                                            <form role="form" method="post" action="">
-                                                {{ formTests.csrf_token }}
-                                                <th class="text-right"></th>
-                                                <th class="text-right"></th>
-                                                {{ render_table_field(formTests.nombrePaciente, "Nombre") }}
-                                                {{ render_table_field(formTests.numero, "Número") }}
-                                                <th class="text-right"></th>
-                                                <th class="center">{{formTests.submitFilterTest(class="label theme-bg text-white f-12")}}</th>
-                                            </form>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for test in tests %}
-                                        <tr class="unread">
-                                            {% if test["visto"] %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">No</h6>
-                                            </td>
-                                            {% else %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">Si</h6>
-                                            </td>
-                                            {% endif %}
-                                            {% if test["diagnostico"] is none %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">No</h6>
-                                            </td>
-                                            {% else %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">Si</h6>
-                                            </td>
-                                            {% endif %}
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{test["nombre"]}}</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{test["num_test"]}}</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{test["date"]}}</h6>
-                                            </td>
-                                            <td class="center">
-                                                <a href="{{url_for('prefall_blueprint.detalles_test', id=test['id'], num=test['num_test'])}}" class="label theme-bg text-white f-12 center">Ver detalles</a>
-                                            </td>
-                                        </tr> 
-                                        {% endfor %}                               
-                                    </tbody>
-                                </table>
-                            </div>
+                        <div class="pagination">
+                            {% if current_page > 1 %}
+                                <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico', page=current_page-1) }}" class="page-link">Previous</a>
+                            {% else %}
+                                <span class="page-link disabled">Previous</span>
+                            {% endif %}
+                        
+                            {% for page_num in range(1, total_pages + 1) %}
+                                {% if current_page == page_num %}
+                                    <span class="page-link current">{{ page_num }}</span>
+                                {% else %}
+                                    <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico', page=page_num) }}" class="page-link">{{ page_num }}</a>
+                                {% endif %}
+                            {% endfor %}
+                        
+                            {% if current_page < total_pages %}
+                                <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico', page=current_page+1) }}" class="page-link">Next</a>
+                            {% else %}
+                                <span class="page-link disabled">Next</span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>

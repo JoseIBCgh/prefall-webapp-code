@@ -29,13 +29,15 @@ class User(db.Model, fsqla.FsUserMixin):
     identificador = db.Column(db.String(10), unique=True)
     username = db.Column(db.String(20), unique=True)
     nombre = db.Column(db.String(50))
+    apellidos = db.Column(db.String(30))
     fecha_nacimiento = db.Column(db.Date)
     sexo = db.Column(db.String(1))
     altura = db.Column(db.Float)
     peso = db.Column(db.Float)
     antecedentes_clinicos = db.Column(db.Text)
     id_centro = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
-    tests = db.relationship("Test", backref="paciente", cascade='all, delete-orphan')
+    tests = db.relationship("Test", foreign_keys="[Test.id_paciente]", backref="paciente", cascade='all, delete-orphan')
+    tests_hechos = db.relationship("Test", foreign_keys="[Test.id_medico]", backref="medico")
     pacientes_asociados = db.relationship(
         "User", secondary='pacientes_asociados',
         primaryjoin=PacienteAsociado.id_medico==id,
@@ -69,6 +71,7 @@ class Test(db.Model):
     num_test = db.Column(db.Integer, primary_key = True)
     id_paciente = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     id_centro = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
+    id_medico = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
     date = db.Column(db.DateTime)
     probabilidad_caida = db.Column(db.Float, nullable=True)
     model = db.Column(db.Integer, db.ForeignKey('model.id'), nullable=True)

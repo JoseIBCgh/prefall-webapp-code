@@ -37,6 +37,7 @@
 
                         {{ render_field(form.identificador, "Identificador") }}
                         {{ render_field(form.nombre, "Nombre") }}
+                        {{ render_field(form.apellidos, "Apellidos") }}
                         {{ render_field(form.email, "Email") }}
                         {{ render_field(form.username, "Username") }}
                         {{ render_field(form.password, "Password") }}
@@ -56,5 +57,29 @@
             </div>
         </div>
     </div>
+    <script>
+        var tipoField = document.querySelector("#{{ form.tipo.id }}");
+    
+        var alturaField = document.querySelector("#{{ form.altura.id }}");
+        var pesoField = document.querySelector("#{{ form.peso.id }}");
+    
+        function toggleFieldsVisibility() {
+            var selectedTipo = tipoField.value;
+    
+            if (selectedTipo === "paciente") {
+                alturaField.style.display = "block";
+                pesoField.style.display = "block";
+            } else {
+                alturaField.style.display = "none";
+                pesoField.style.display = "none";
+            }
+        }
+    
+        // Initial call to set the initial visibility state
+        toggleFieldsVisibility();
+    
+        // Add an event listener to the "Tipo" field to update visibility when it changes
+        tipoField.addEventListener("change", toggleFieldsVisibility);
+    </script>
 
 {% endblock content %}
