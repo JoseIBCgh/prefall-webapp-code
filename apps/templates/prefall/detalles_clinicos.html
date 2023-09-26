@@ -17,7 +17,7 @@
                 <div class="page-wrapper">
                     <div class="card Recent-Users">
                         <div class="card-header">
-                            <h5>Detalles personales</h5>
+                            <h5>Datos del paciente</h5>
                         </div>
                         <div class="card-block px-0 py-3">
                             <div class="table-responsive">
@@ -25,31 +25,15 @@
                                     <tbody>
                                         <tr class="unread">
                                             <td>
-                                                <h6 class="text-muted">Identificador</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted">{{paciente["identificador"]}}</h6>
-                                            </td>
-                                        </tr>
-                                        <tr class="unread">
-                                            <td>
                                                 <h6 class="text-muted">Nombre</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted">{{paciente["nombre"]}}</h6>
+                                                <h6 class="text-muted">{{ paciente["nombre"] ~ ' ' ~ paciente["apellidos"] }}</h6>
                                             </td>
                                         </tr> 
                                         <tr class="unread">
                                             <td>
-                                                <h6 class="text-muted">Fecha de nacimiento</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted">{{paciente["fecha_nacimiento"]}}</h6>
-                                            </td>
-                                        </tr> 
-                                        <tr class="unread">
-                                            <td>
-                                                <h6 class="text-muted">Sexo</h6>
+                                                <h6 class="text-muted">Género</h6>
                                             </td>
                                             <td>
                                                 <h6 class="text-muted">{{paciente["sexo"]}}</h6>
@@ -57,34 +41,28 @@
                                         </tr> 
                                         <tr class="unread">
                                             <td>
-                                                <h6 class="text-muted">Altura</h6>
+                                                <h6 class="text-muted">CIF/NIF</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted">{{paciente["altura"]}}</h6>
+                                                <h6 class="text-muted">{{paciente["identificador"]}}</h6>
+                                            </td>
+                                        </tr>    
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Centro</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{paciente.centro.nombreFiscal}}</h6>
                                             </td>
                                         </tr> 
                                         <tr class="unread">
                                             <td>
-                                                <h6 class="text-muted">Peso</h6>
+                                                <h6 class="text-muted">Fecha de registro</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted">{{paciente["peso"]}}</h6>
+                                                <h6 class="text-muted">{{paciente["create_datetime"]}}</h6>
                                             </td>
-                                        </tr>  
-                                        <tr class="unread">
-                                            <td>
-                                                <h6 class="text-muted">Antecedentes clinicos</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted">{{paciente["antecedentes_clinicos"]}}</h6>
-                                            </td>
-                                        </tr>
-                                        <tr class="unread">
-                                            <td class="text-right"></td>
-                                            <td>
-                                                <a href="{{url_for('prefall_blueprint.editar_detalles_clinicos', id=paciente['id'])}}" class="label theme-bg text-white f-12">Editar</a>
-                                            </td>
-                                        </tr>                           
+                                        </tr>                          
                                     </tbody>
                                 </table>
                             </div>
@@ -154,20 +132,23 @@
                     </form>
                     <div class="card Recent-Users">
                         <div class="card-header">
-                            <h5>Test de la marcha</h5>
+                            <h5>Documentos</h5>
                         </div>
                         <div class="card-block px-0 py-3">
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
-                                            <th class="center">Numero</th>
+                                            <th class="center">#Test</th>
                                             <th class="center">Fecha</th>
-                                            <th class="text-right"></th>
+                                            <th class="center">Medico</th>
+                                            <th class="center">Revisado</th>
+                                            <th class="center">Diagnosticado</th>
+                                            <th class="center">Fichero</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for test in tests %}
+                                        {% for test, accion in tests %}
                                         <tr class="unread">
                                             <td>
                                                 <h6 class="text-muted center">{{test["num_test"]}}</h6>
@@ -175,11 +156,53 @@
                                             <td>
                                                 <h6 class="text-muted center">{{test["date"].strftime('%Y-%m-%d %H:%M:%S')}}</h6>
                                             </td>
+                                            <td>
+                                                <h6 class="text-muted center">{{test.medico.nombre ~ ' ' ~ test.medico.apellidos}}</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted center">
+                                                    {% if test.probabilidad_caida is not none %}
+                                                        Si
+                                                    {% else %}
+                                                        No
+                                                    {% endif %}
+                                                </h6>                                                
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted center">
+                                                    {% if accion.diagnostico is not none %}
+                                                        Si
+                                                    {% else %}
+                                                        No
+                                                    {% endif %}
+                                                </h6>
+                                            </td>
                                             <td class="center"><a href="{{url_for('prefall_blueprint.get_test', paciente=paciente['id'], test=test['num_test'])}}" class="label theme-bg text-white f-12">Descargar</a></td>
                                         </tr> 
                                         {% endfor %}                               
                                     </tbody>
                                 </table>
+                            </div>
+                            <div class="pagination">
+                                {% if current_page > 1 %}
+                                    <a href="{{ url_for('prefall_blueprint.detalles_clinicos', id=paciente.id, page=current_page-1) }}" class="page-link">Previous</a>
+                                {% else %}
+                                    <span class="page-link disabled">Previous</span>
+                                {% endif %}
+                            
+                                {% for page_num in range(1, total_pages + 1) %}
+                                    {% if current_page == page_num %}
+                                        <span class="page-link current">{{ page_num }}</span>
+                                    {% else %}
+                                        <a href="{{ url_for('prefall_blueprint.detalles_clinicos', id=paciente.id, page=page_num) }}" class="page-link">{{ page_num }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            
+                                {% if current_page < total_pages %}
+                                    <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico', id=paciente.id, page=current_page+1) }}" class="page-link">Next</a>
+                                {% else %}
+                                    <span class="page-link disabled">Next</span>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

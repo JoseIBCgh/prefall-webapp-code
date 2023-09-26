@@ -773,10 +773,14 @@ def generatePlot(id_paciente, num_test):
 @clinical_data_access()
 def detalles_clinicos(id):
     from apps import db
+    from sqlalchemy.orm import joinedload
+    from sqlalchemy import and_
     paciente = User.query.filter_by(id=id).first()
     formFile = UploadFileForm()
     formFilterFile = FilterFileForm()
     formTest = UploadTestForm()
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Number of items per page
 
     if formFile.submitUploadFile.data and formFile.validate():
         file = formFile.file.data
@@ -807,7 +811,29 @@ def detalles_clinicos(id):
 
         os.remove(file_path)
     
-    tests = db.session.query(Test.num_test, Test.date).filter_by(id_paciente=id).all()
+    tests = (
+        db.session.query(Test, AccionesTestMedico)
+        .join(User, User.id == Test.id_paciente)
+        .join(
+            AccionesTestMedico,
+            and_(
+                AccionesTestMedico.num_test == Test.num_test,
+                AccionesTestMedico.id_paciente == Test.id_paciente,
+                AccionesTestMedico.id_medico == current_user.id  
+            )
+        )
+        .filter(Test.id_paciente == id)
+        .options(joinedload(Test.medico))
+        .all()
+    )
+    total_records = len(tests)
+
+    total_pages = (total_records - 1) // per_page + 1
+
+    start_index = (page - 1) * per_page
+    end_index = min(start_index + per_page, total_records)
+
+    tests = tests[start_index:end_index]
     
     if formFilterFile.submitFilterFile.data and formFilterFile.validate():
         file_name = formFilterFile.nombreFichero.data
@@ -823,7 +849,8 @@ def detalles_clinicos(id):
     graphJSON = null
 
     return render_template('prefall/detalles_clinicos.html', paciente=paciente, tests=tests, files=files,
-    formFile=formFile, formTest=formTest, formFilterFile=formFilterFile, graphJSON=graphJSON)
+    formFile=formFile, formTest=formTest, formFilterFile=formFilterFile, graphJSON=graphJSON,
+    total_pages=total_pages, current_page=page)
 
 
 @blueprint.route('editar_detalles_clinicos/<id>', methods=['GET', 'POST'])
