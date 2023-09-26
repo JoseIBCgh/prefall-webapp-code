@@ -206,6 +206,104 @@
                             </div>
                         </div>
                     </div>
+                    <div class="card Recent-Users">
+                        <div class="card-header">
+                            <h5>Editar paciente</h5>
+                        </div>
+                        <div class="card-block px-0 py-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <tbody>
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Nombre</h6>
+                                            </td>
+                                            <td>
+                                                <div id="nombre" class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="text-muted">{{ paciente['nombre'] }}</h6>
+                                                    <button onclick="editarCampo({{ paciente.id }}, 'nombre', 20)">...</button>
+                                                </div>                                                
+                                            </td>
+                                        </tr> 
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Apellidos</h6>
+                                            </td>
+                                            <td>
+                                                <div id="apellidos" class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="text-muted">{{ paciente['apellidos'] }}</h6>
+                                                    <button onclick="editarCampo({{ paciente.id }}, 'apellidos', 30)">...</button>
+                                                </div>
+                                            </td>
+                                        </tr> 
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">CIF/NIF</h6>
+                                            </td>
+                                            <td>
+                                                <div id="identificador" class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="text-muted">{{ paciente['identificador'] }}</h6>
+                                                    <button onclick="editarCampo({{ paciente.id }}, 'identificador', 10)">...</button>
+                                                </div>
+                                            </td>
+                                        </tr>  
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Género</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{paciente["sexo"]}}</h6>
+                                            </td>
+                                        </tr>   
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Fecha de registro</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted">{{paciente["create_datetime"]}}</h6>
+                                            </td>
+                                        </tr>                          
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        function editarCampo(id, campo, maxlength) {
+                            const campoDiv = document.getElementById(campo);
+                            const texto = campoDiv.querySelector('h6').innerText;
+                            
+                            campoDiv.innerHTML = `
+                                <input type="text" id="nuevo_${campo}" value="${texto}" maxlength="${maxlength}">
+                                <button onclick="guardarEdicion('${id}', '${campo}')">Guardar</button>
+                            `;
+                        }
+                    
+                        function guardarEdicion(id, campo) {
+                            const nuevoValor = document.getElementById(`nuevo_${campo}`).value;
+
+                            // Envía el nuevo valor y el campo editado al servidor
+                            fetch(`/editar_paciente/${id}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                },
+                                body: `nuevo_valor=${nuevoValor}&campo_editado=${campo}`,
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                // Actualiza la vista en el cliente
+                                const campoDiv = document.getElementById(campo);
+                                campoDiv.innerHTML = `
+                                    <h6 class="text-muted">${data.nuevo_valor}</h6>
+                                    <button onclick="editarCampo({{ paciente.id }}, '${campo}')">...</button>
+                                `;
+                            })
+                            .catch(error => {
+                                console.error('Error al actualizar el campo:', error);
+                            });
+                        }
+                    </script>                    
                     <div id="charts" class="chart"></div>
                     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
                     <script type='text/javascript'>

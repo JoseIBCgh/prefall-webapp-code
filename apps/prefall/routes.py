@@ -853,6 +853,32 @@ def detalles_clinicos(id):
     total_pages=total_pages, current_page=page)
 
 
+@blueprint.route('/editar_paciente/<int:id>', methods=['POST'])
+@clinical_data_access()
+def editar_paciente(id):
+    from apps import db
+    paciente = User.query.get(id)
+    
+    if paciente is None:
+        return jsonify({'error': 'Paciente no encontrado'}), 404
+
+    nuevo_valor = request.form['nuevo_valor']
+    campo_editado = request.form['campo_editado']
+
+    if campo_editado == 'nombre':
+        paciente.nombre = nuevo_valor
+    elif campo_editado == 'apellidos':
+        paciente.apellidos = nuevo_valor
+    elif campo_editado == 'identificador':
+        paciente.identificador = nuevo_valor
+    else:
+        return jsonify({'error': 'Campo no válido'}), 400
+
+    db.session.commit()
+
+    return jsonify({'nuevo_valor': nuevo_valor})
+
+
 @blueprint.route('editar_detalles_clinicos/<id>', methods=['GET', 'POST'])
 @clinical_data_access()
 def editar_detalles_clinicos(id):
