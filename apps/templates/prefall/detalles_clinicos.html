@@ -243,7 +243,7 @@
                                             <td>
                                                 <div id="identificador" class="d-flex justify-content-between align-items-center">
                                                     <h6 class="text-muted">{{ paciente['identificador'] }}</h6>
-                                                    <button onclick="editarCampo({{ paciente.id }}, 'identificador', 10)">...</button>
+                                                    <button onclick="editarCampo('{{ paciente.id }}', 'identificador', 10)">...</button>
                                                 </div>
                                             </td>
                                         </tr>  
@@ -252,9 +252,23 @@
                                                 <h6 class="text-muted">Género</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted">{{paciente["sexo"]}}</h6>
+                                                <div id="sexo" class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="text-muted">{{ paciente['sexo'] }}</h6>
+                                                    <button onclick="editarGenero('{{ paciente.id }}', 'sexo')">...</button>
+                                                </div>
                                             </td>
                                         </tr>   
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Centro</h6>
+                                            </td>
+                                            <td>
+                                                <div id="centro" class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="text-muted">{{ paciente.centro.nombreFiscal }}</h6>
+                                                    <button onclick="editarCentro('{{ paciente.id }}', 'centro')">...</button>
+                                                </div>
+                                            </td>
+                                        </tr>                                        
                                         <tr class="unread">
                                             <td>
                                                 <h6 class="text-muted">Fecha de registro</h6>
@@ -262,7 +276,18 @@
                                             <td>
                                                 <h6 class="text-muted">{{paciente["create_datetime"]}}</h6>
                                             </td>
-                                        </tr>                          
+                                        </tr>   
+                                        <tr class="unread">
+                                            <td>
+                                                <h6 class="text-muted">Contraseña</h6>
+                                            </td>
+                                            <td>
+                                                <div id="password" class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="text-muted">*******</h6>
+                                                    <button onclick="editarCampo('{{ paciente.id }}', 'password')">...</button>
+                                                </div>
+                                            </td>
+                                        </tr>                       
                                     </tbody>
                                 </table>
                             </div>
@@ -275,11 +300,11 @@
                             
                             campoDiv.innerHTML = `
                                 <input type="text" id="nuevo_${campo}" value="${texto}" maxlength="${maxlength}">
-                                <button onclick="guardarEdicion('${id}', '${campo}')">Guardar</button>
+                                <button onclick="guardarEdicionCampo('${id}', '${campo}')">Guardar</button>
                             `;
                         }
                     
-                        function guardarEdicion(id, campo) {
+                        function guardarEdicionCampo(id, campo) {
                             const nuevoValor = document.getElementById(`nuevo_${campo}`).value;
 
                             // Envía el nuevo valor y el campo editado al servidor
@@ -303,7 +328,107 @@
                                 console.error('Error al actualizar el campo:', error);
                             });
                         }
-                    </script>                    
+                    </script>   
+                    <script>
+                        function editarGenero(id, campo) {
+                            const campoDiv = document.getElementById(campo);
+                            const genero = campoDiv.querySelector('h6').innerText;
+
+                            // Crea un select para elegir el nuevo género
+                            const selectGenero = document.createElement('select');
+                            selectGenero.innerHTML = `
+                                <option value="V" ${genero === 'V' ? 'selected' : ''}>V</option>
+                                <option value="M" ${genero === 'M' ? 'selected' : ''}>M</option>
+                            `;
+
+                            // Crea un botón para guardar la edición
+                            const guardarBoton = document.createElement('button');
+                            guardarBoton.textContent = 'Guardar';
+                            guardarBoton.onclick = () => guardarEdicionGenero(id, campo, selectGenero.value);
+
+                            // Reemplaza el contenido actual con el select y el botón
+                            campoDiv.innerHTML = '';
+                            campoDiv.appendChild(selectGenero);
+                            campoDiv.appendChild(guardarBoton);
+                        }
+
+                        function guardarEdicionGenero(id, campo, nuevoValor) {
+                            // Envía el nuevo valor y el campo editado al servidor
+                            fetch(`/editar_paciente/${id}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                },
+                                body: `nuevo_valor=${nuevoValor}&campo_editado=${campo}`,
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                // Actualiza la vista en el cliente
+                                const campoDiv = document.getElementById(campo);
+                                campoDiv.innerHTML = `
+                                    <h6 class="text-muted">${data.nuevo_valor}</h6>
+                                    <button onclick="editarGenero('${id}', '${campo}')">...</button>
+                                `;
+                            })
+                            .catch(error => {
+                                console.error('Error al actualizar el campo:', error);
+                            });
+                        }
+                    </script>  
+                    <script>
+                        function editarCentro(id, campo) {
+                            const campoDiv = document.getElementById(campo);
+                            const centro = campoDiv.querySelector('h6').innerText;
+
+                            fetch('/obtener_centros')
+                                .then(response => response.json())
+                                .then(data => {
+                                    const selectCentro = document.createElement('select');
+                                    data.centros.forEach(center => {
+                                        const option = document.createElement('option');
+                                        option.value = center.id;
+                                        option.textContent = center.nombre;
+                                        if (center.id === centro) {
+                                            option.selected = true;
+                                        }
+                                        selectCentro.appendChild(option);
+                                    });
+
+                                    const guardarBoton = document.createElement('button');
+                                    guardarBoton.textContent = 'Guardar';
+                                    guardarBoton.onclick = () => guardarEdicionCentro(id, campo, selectCentro.value);
+
+                                    campoDiv.innerHTML = '';
+                                    campoDiv.appendChild(selectCentro);
+                                    campoDiv.appendChild(guardarBoton);
+                                })
+                                .catch(error => {
+                                    console.error('Error al obtener la lista de centros:', error);
+                                });
+                        }
+
+
+                        function guardarEdicionCentro(id, campo, nuevoValor) {
+                            fetch(`/editar_paciente/${id}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                },
+                                body: `nuevo_valor=${nuevoValor}&campo_editado=${campo}`,
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                const campoDiv = document.getElementById(campo);
+                                campoDiv.innerHTML = `
+                                    <h6 class="text-muted">${data.nuevo_valor}</h6>
+                                    <button onclick="editarCentro('${id}', '${campo}')">...</button>
+                                `;
+                            })
+                            .catch(error => {
+                                console.error('Error al actualizar el campo:', error);
+                            });
+                        }
+                    </script>      
                     <div id="charts" class="chart"></div>
                     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
                     <script type='text/javascript'>

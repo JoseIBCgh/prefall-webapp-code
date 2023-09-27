@@ -871,6 +871,18 @@ def editar_paciente(id):
         paciente.apellidos = nuevo_valor
     elif campo_editado == 'identificador':
         paciente.identificador = nuevo_valor
+    elif campo_editado == 'sexo':
+        paciente.sexo = nuevo_valor
+    elif campo_editado == 'centro':
+        centro = Centro.query.filter_by(id=nuevo_valor).first()
+        if centro:
+            paciente.id_centro = centro.id 
+            db.session.commit()
+            return jsonify({"nuevo_valor": centro.nombreFiscal})
+        else:
+            return jsonify({"error": "Centro no encontrado"}), 404
+    elif campo_editado == "password":
+        paciente.password = hash_password(nuevo_valor)
     else:
         return jsonify({'error': 'Campo no válido'}), 400
 
@@ -1973,3 +1985,12 @@ def plots_paciente():
         form3DProbCaida=form3DProbCaida, graph3DProbCaida=graph3DProbCaida,
         formCompareTests=formCompareTests, graphCompareTests=graphCompareTests,
         formCompareFases=formCompareFases, graphCompareFases=graphCompareFases)
+
+@blueprint.route('/obtener_centros', methods=['GET'])
+def obtener_centros():
+    from apps import db
+    centers = Centro.query.order_by(Centro.nombreFiscal).all()
+
+    centros_list = [{"id": centro.id, "nombre": centro.nombreFiscal} for centro in centers]
+
+    return jsonify({"centros": centros_list})
