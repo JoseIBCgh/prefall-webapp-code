@@ -13648,3 +13648,32 @@ p strong {
   color: #6c757d; /* Change to the desired text color */
   pointer-events: none; /* Disable click events for disabled links */
 }
+
+.nav-plots {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background-color: #333; /* Cambia el color de fondo de la barra de navegación */
+  overflow: hidden;
+}
+
+.nav-plots li {
+  float: left;
+}
+
+.nav-plots li a {
+  display: block;
+  color: white; /* Cambia el color del texto de los enlaces */
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  transition: background-color 0.3s ease; /* Efecto de transición al pasar el ratón por encima */
+}
+
+.nav-plots li a:hover {
+  background-color: #555; /* Cambia el color de fondo al pasar el ratón por encima */
+}
+
+.nav-plots li.active a {
+  background-color: #4CAF50; /* Cambia el color de fondo de la pestaña activa */
+}

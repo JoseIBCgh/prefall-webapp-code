@@ -46,6 +46,7 @@ from apps.prefall.forms import (
     UploadFileForm,
     UploadTestForm,
     ElementForm,
+    ElementStringForm,
     DoubleElementForm,
     CompareTestsForm,
     CompareFasesForm,
@@ -1694,6 +1695,226 @@ def plots():
         formCompareTests=formCompareTests, graphCompareTests=graphCompareTests,
         formCompareFases=formCompareFases, graphCompareFases=graphCompareFases)
 
+
+@blueprint.route('/plots/individual',  methods=['GET','POST'])
+@roles_accepted("medico")
+def plots_individual():
+    import plotly
+    import plotly.graph_objs as go
+    from apps import db
+    import pickle
+    import math
+    pacientes = current_user.pacientes_asociados
+    formEvolucionProbCaida = ElementForm()
+    formEvolucionProbCaida.selected_element.label = "Selecciona un paciente"
+    formEvolucionProbCaida.selected_element.choices = [(element.id, element.username) for element in pacientes]
+    selected_element_id = pacientes[0].id
+    if formEvolucionProbCaida.validate_on_submit():
+        selected_element_id = formEvolucionProbCaida.selected_element.data
+    
+    tests = db.session.query(
+        Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+        .filter_by(id_paciente=selected_element_id)\
+        .filter(Test.probabilidad_caida.isnot(None)).all()
+    
+    x = [test.date for test in tests]
+    y = [test.probabilidad_caida for test in tests]
+    
+    fig = go.Figure()
+    
+    trace = go.Scatter(x=x, y=y, mode='lines+markers')
+
+    fig.add_trace(trace)
+
+    fig.update_xaxes(title_text='Date')
+    fig.update_yaxes(title_text='Probability of Falling', range=[0, 1])
+
+    graphEvolucionProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+    form3DProbCaida = ElementStringForm()
+    form3DProbCaida.selected_element.label = "Selecciona una métrica"
+    form3DProbCaida.selected_element.choices = [("la","Linear Acceleration"), ("m","Magnetometer"), ("g","Gyroscope")]
+    metric_prefix = "la"
+    if form3DProbCaida.validate_on_submit():
+        metric_prefix = form3DProbCaida.selected_element.data
+    
+    choices = form3DProbCaida.selected_element.choices
+
+    full_name = null
+
+    for choice_value, choice_label in choices:
+        if choice_value == metric_prefix:
+            full_name = choice_label
+            break
+
+    dataframes = []
+
+    for test in tests:
+        blob_data = test.data  
+        if blob_data:
+            df = pickle.loads(blob_data)
+            dataframes.append(df)
+
+    x = []
+    for df in dataframes:
+        mean = (df[metric_prefix + 'x_mean_f1'] * df['duracion_f1']\
+        + df[metric_prefix + 'x_mean_f2'] * df['duracion_f2']\
+        + df[metric_prefix + 'x_mean_f3'] * df['duracion_f3']\
+        + df[metric_prefix + 'x_mean_f4'] * df['duracion_f4'])\
+        / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
+        x.append(mean.values[0])
+
+    y = []
+    for df in dataframes:
+        mean = (df[metric_prefix + 'y_mean_f1'] * df['duracion_f1']\
+        + df[metric_prefix + 'y_mean_f2'] * df['duracion_f2']\
+        + df[metric_prefix + 'y_mean_f3'] * df['duracion_f3']\
+        + df[metric_prefix + 'y_mean_f4'] * df['duracion_f4'])\
+        / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
+        y.append(mean.values[0])
+
+    z = []
+    for df in dataframes:
+        mean = (df[metric_prefix + 'z_mean_f1'] * df['duracion_f1']\
+        + df[metric_prefix + 'z_mean_f2'] * df['duracion_f2']\
+        + df[metric_prefix + 'z_mean_f3'] * df['duracion_f3']\
+        + df[metric_prefix + 'z_mean_f4'] * df['duracion_f4'])\
+        / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
+        z.append(mean.values[0])
+
+    c = [test.probabilidad_caida for test in tests]
+
+    fig = go.Figure()
+
+    trace = go.Scatter3d(
+        x=x,
+        y=y,
+        z=z,
+        mode='markers',
+        marker=dict(
+            size=5, 
+            color=c, 
+            colorscale='Viridis', 
+            colorbar=dict(len=1, y=0, yanchor='bottom'),  
+            opacity=1, 
+        )
+    )
+
+    fig.add_trace(trace)
+
+    fig.update_scenes(xaxis_title=full_name + ' X', yaxis_title=full_name + ' Y', zaxis_title=full_name + ' Z')
+    
+    x_floor = math.floor(min(x))
+    x_ceil = math.ceil(max(x))
+
+    y_floor = math.floor(min(y))
+    y_ceil = math.ceil(max(y))
+
+    z_floor = math.floor(min(z))
+    z_ceil = math.ceil(max(z))
+
+    fig.update_layout(scene=dict(
+        xaxis=dict(range=[x_floor, x_ceil]),
+        yaxis=dict(range=[y_floor, y_ceil]),
+        zaxis=dict(range=[z_floor, z_ceil]),
+    ))
+
+    graph3DProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+    return render_template(
+        'prefall/plots_individual.html', active_tab='individual', 
+        formEvolucionProbCaida=formEvolucionProbCaida, graphEvolucionProbCaida=graphEvolucionProbCaida,
+        form3DProbCaida=form3DProbCaida, graph3DProbCaida=graph3DProbCaida)
+
+@blueprint.route('/plots/comparativa',  methods=['GET','POST'])
+@roles_accepted("medico")
+def plots_comparativa():
+    pacientes = current_user.pacientes_asociados
+    formCompareFases = CompareFasesForm()
+    formCompareFases.paciente1.choices = [(element.id, element.username) for element in pacientes]
+    formCompareFases.paciente2.choices = [(element.id, element.username) for element in pacientes]
+    formCompareFases.test1.choices = []
+    formCompareFases.test2.choices = []
+    graphCompareFases = null
+    if formCompareFases.validate_on_submit():
+        print("formCompareTests validated")
+        import plotly
+        import plotly.graph_objs as go
+        from apps import db
+        import pickle
+        import math
+        selected_paciente_id1 = formCompareFases.paciente1.data
+        selected_paciente_id2 = formCompareFases.paciente2.data
+
+        full_name_paciente1 = null
+
+        for choice_value, choice_label in formCompareFases.paciente1.choices:
+            if choice_value == selected_paciente_id1:
+                full_name_paciente1 = choice_label
+                break
+
+        full_name_paciente2 = null
+
+        for choice_value, choice_label in formCompareFases.paciente2.choices:
+            if choice_value == selected_paciente_id2:
+                full_name_paciente2 = choice_label
+                break
+
+        test1 = db.session.query(
+            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+            .filter_by(id_paciente=selected_paciente_id1)\
+            .filter(Test.num_test==formCompareFases.test1.data).first()
+
+        test2 = db.session.query(
+            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+            .filter_by(id_paciente=selected_paciente_id2)\
+            .filter(Test.num_test==formCompareFases.test2.data).first()
+
+        dataframes = []
+        blob_data1 = test1.data  
+        if blob_data1:
+            df1 = pickle.loads(blob_data1)
+            dataframes.append(df1)
+
+        blob_data2 = test2.data  
+        if blob_data2:
+            df2 = pickle.loads(blob_data2)
+            dataframes.append(df2)
+
+        fase1 = []
+        for df in dataframes:
+            fase1.append(df['duracion_f1'].values[0])
+        
+        fase2 = []
+        for df in dataframes:
+            fase2.append(df['duracion_f2'].values[0])
+
+        fase3 = []
+        for df in dataframes:
+            fase3.append(df['duracion_f3'].values[0])
+
+        fase4 = []
+        for df in dataframes:
+            fase4.append(df['duracion_f4'].values[0])
+
+        fig = go.Figure()
+
+        labels = ["Fase 1", "Fase 2", "Fase 3", "Fase 4"]
+        bars1 = [fase1[0], fase2[0], fase3[0], fase4[0]]
+        bars2 = [fase1[1], fase2[1], fase3[1], fase4[1]]
+        trace_group1 = go.Bar(x=labels, y=bars1, name=full_name_paciente1 + " " + test1.date.strftime("%Y-%m-%d"), text=bars1, textposition='outside')
+        trace_group2 = go.Bar(x=labels, y=bars2, name=full_name_paciente2 + " " + test2.date.strftime("%Y-%m-%d"), text=bars2, textposition='outside')
+
+        fig.add_trace(trace_group1)
+        fig.add_trace(trace_group2)
+
+        fig.update_traces(texttemplate='%{text:.2f}', textposition='outside', selector=dict(type='bar'))
+
+        graphCompareFases = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+    return render_template(
+        'prefall/plots_comparativa.html', active_tab='comparacion',
+        formCompareFases=formCompareFases, graphCompareFases=graphCompareFases)
 
 @blueprint.route('/get_paciente_tests', methods=['POST'])
 def get_paciente_tests():

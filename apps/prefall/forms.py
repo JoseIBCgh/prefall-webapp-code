@@ -126,6 +126,10 @@ class ElementForm(FlaskForm):
     selected_element = SelectField('Select an Element', coerce=int)
     submit = SubmitField('Submit')
 
+class ElementStringForm(FlaskForm):
+    selected_element = SelectField('Select an Element', coerce=str)
+    submit = SubmitField('Submit')
+
 class DoubleElementForm(FlaskForm):
     selected_element = SelectField('Select an Element', coerce=int)
     second_selected_element = SelectField('Select Another Element', coerce=str)
