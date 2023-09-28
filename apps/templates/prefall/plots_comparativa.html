@@ -23,6 +23,15 @@
                         {{ formCompareFases.submit }}
                     </form>
                     <div id="graphCompareFases" class="chart"></div>
+                    <div class="pagination">
+                        <button onclick="showDiv('acelerometro')">Acelerómetro</button>
+                        <button onclick="showDiv('giroscopio')">Giroscopio</button>
+                        <button onclick="showDiv('magnetometro')">Magnetómetro</button>
+                    </div>
+                      
+                    <div id="acelerometro" class="chart" style="display: block;"></div>
+                    <div id="giroscopio" class="chart" style="display: none;"></div>
+                    <div id="magnetometro" class="chart" style="display: none;"></div> 
                 </div>
             </div>
             <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -73,6 +82,41 @@
                 console.log("Time plot= " + (Date.now() - start_time))
             </script>
             {% endif %}
+            {% if graphAcc %}
+            <script type='text/javascript'>
+                var start_time = Date.now()
+                var graphs = {{graphAcc | safe}};
+                Plotly.plot('acelerometro',graphs,{});
+                console.log("Time plot= " + (Date.now() - start_time))
+            </script>
+            {% endif %}
+            {% if graphGyr %}
+            <script type='text/javascript'>
+                var start_time = Date.now()
+                var graphs = {{graphGyr | safe}};
+                Plotly.plot('giroscopio',graphs,{});
+                console.log("Time plot= " + (Date.now() - start_time))
+            </script>
+            {% endif %}
+            {% if graphMag %}
+            <script type='text/javascript'>
+                var start_time = Date.now()
+                var graphs = {{graphMag | safe}};
+                Plotly.plot('magnetometro',graphs,{});
+                console.log("Time plot= " + (Date.now() - start_time))
+            </script>
+            {% endif %}
+            <script>
+                function showDiv(pageName) {
+                  // Ocultar todos los divs
+                  document.getElementById('acelerometro').style.display = 'none';
+                  document.getElementById('giroscopio').style.display = 'none';
+                  document.getElementById('magnetometro').style.display = 'none';
+              
+                  // Mostrar el div correspondiente a la página seleccionada
+                  document.getElementById(pageName).style.display = 'block';
+                }
+            </script>
         </div>
     </div>
 

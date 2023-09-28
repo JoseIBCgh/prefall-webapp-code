@@ -146,7 +146,7 @@ class CompareTestsForm(FlaskForm):
 class CompareFasesForm(FlaskForm):
     paciente1 = SelectField('Selecciona un paciente', coerce=int)
     test1 = SelectField('Selecciona un test', coerce=int, validate_choice=False)
-    paciente2 = SelectField('Selecciona un paciente', coerce=int)
+    paciente2 = SelectField('Selecciona otro paciente', coerce=int)
     test2 = SelectField('Selecciona otro test', coerce=int, validate_choice=False)
     submit = SubmitField('Submit')
 

@@ -1710,194 +1710,197 @@ def plots_individual():
     formEvolucionProbCaida.selected_element.label = "Selecciona un paciente"
     formEvolucionProbCaida.selected_element.choices = [(element.id, element.username) for element in pacientes]
     if formEvolucionProbCaida.validate_on_submit():
-        session['form_individual_paciente'] = formEvolucionProbCaida.selected_element.data
-    formEvolucionProbCaida.selected_element.data = session.get('form_individual_paciente', None)
-    selected_element_id = formEvolucionProbCaida.selected_element.data
+        selected_element_id = formEvolucionProbCaida.selected_element.data
     
-    tests = db.session.query(
-        Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
-        .filter_by(id_paciente=selected_element_id)\
-        .filter(Test.probabilidad_caida.isnot(None)).all()
-    
-    x = [test.date for test in tests]
-    y = [test.probabilidad_caida for test in tests]
-    
-    fig = go.Figure()
-    
-    trace = go.Scatter(x=x, y=y, mode='lines+markers')
+        tests = db.session.query(
+            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+            .filter_by(id_paciente=selected_element_id)\
+            .filter(Test.probabilidad_caida.isnot(None)).all()
+        
+        x = [test.date for test in tests]
+        y = [test.probabilidad_caida for test in tests]
+        
+        fig = go.Figure()
+        
+        trace = go.Scatter(x=x, y=y, mode='lines+markers')
 
-    fig.add_trace(trace)
+        fig.add_trace(trace)
 
-    fig.update_xaxes(title_text='Date')
-    fig.update_yaxes(title_text='Probability of Falling', range=[0, 1])
+        fig.update_xaxes(title_text='Date')
+        fig.update_yaxes(title_text='Probability of Falling', range=[0, 1])
 
-    graphEvolucionProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        graphEvolucionProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
-    mean_acc_x = []
-    mean_acc_y = []
-    mean_acc_z = []
+        mean_acc_x = []
+        mean_acc_y = []
+        mean_acc_z = []
 
-    mean_gyr_x = []
-    mean_gyr_y = []
-    mean_gyr_z = []
+        mean_gyr_x = []
+        mean_gyr_y = []
+        mean_gyr_z = []
 
-    mean_mag_x = []
-    mean_mag_y = []
-    mean_mag_z = []
+        mean_mag_x = []
+        mean_mag_y = []
+        mean_mag_z = []
 
-    probs_caida = []
+        probs_caida = []
 
-    for test in tests:
-        rows = TestUnit.query.filter_by(num_test=test.num_test).all()
+        for test in tests:
+            rows = TestUnit.query.filter_by(num_test=test.num_test).all()
 
-        acc_x_values = [row.acc_x for row in rows]
-        acc_y_values = [row.acc_y for row in rows]
-        acc_z_values = [row.acc_z for row in rows]
+            acc_x_values = [row.acc_x for row in rows]
+            acc_y_values = [row.acc_y for row in rows]
+            acc_z_values = [row.acc_z for row in rows]
 
-        gyr_x_values = [row.gyr_x for row in rows]
-        gyr_y_values = [row.gyr_y for row in rows]
-        gyr_z_values = [row.gyr_z for row in rows]
+            gyr_x_values = [row.gyr_x for row in rows]
+            gyr_y_values = [row.gyr_y for row in rows]
+            gyr_z_values = [row.gyr_z for row in rows]
 
-        mag_x_values = [row.mag_x for row in rows]
-        mag_y_values = [row.mag_y for row in rows]
-        mag_z_values = [row.mag_z for row in rows]
+            mag_x_values = [row.mag_x for row in rows]
+            mag_y_values = [row.mag_y for row in rows]
+            mag_z_values = [row.mag_z for row in rows]
 
-        mean_acc_x.append(np.mean(acc_x_values))
-        mean_acc_y.append(np.mean(acc_y_values))
-        mean_acc_z.append(np.mean(acc_z_values))
+            mean_acc_x.append(np.mean(acc_x_values))
+            mean_acc_y.append(np.mean(acc_y_values))
+            mean_acc_z.append(np.mean(acc_z_values))
 
-        mean_gyr_x.append(np.mean(gyr_x_values))
-        mean_gyr_y.append(np.mean(gyr_y_values))
-        mean_gyr_z.append(np.mean(gyr_z_values))
+            mean_gyr_x.append(np.mean(gyr_x_values))
+            mean_gyr_y.append(np.mean(gyr_y_values))
+            mean_gyr_z.append(np.mean(gyr_z_values))
 
-        mean_mag_x.append(np.mean(mag_x_values))
-        mean_mag_y.append(np.mean(mag_y_values))
-        mean_mag_z.append(np.mean(mag_z_values))
+            mean_mag_x.append(np.mean(mag_x_values))
+            mean_mag_y.append(np.mean(mag_y_values))
+            mean_mag_z.append(np.mean(mag_z_values))
 
-        probs_caida.append(test.probabilidad_caida)
+            probs_caida.append(test.probabilidad_caida)
 
 
-    fig = go.Figure()
+        fig = go.Figure()
 
-    trace = go.Scatter3d(
-        x=mean_acc_x,
-        y=mean_acc_y,
-        z=mean_acc_z,
-        mode='markers',
-        marker=dict(
-            size=5, 
-            color=probs_caida, 
-            colorscale='Viridis', 
-            colorbar=dict(len=1, y=0, yanchor='bottom'),  
-            opacity=1, 
+        trace = go.Scatter3d(
+            x=mean_acc_x,
+            y=mean_acc_y,
+            z=mean_acc_z,
+            mode='markers',
+            marker=dict(
+                size=5, 
+                color=probs_caida, 
+                colorscale='Viridis', 
+                colorbar=dict(len=1, y=0, yanchor='bottom'),  
+                opacity=1, 
+            )
         )
-    )
 
-    fig.add_trace(trace)
+        fig.add_trace(trace)
 
-    fig.update_scenes(xaxis_title='Aceleracion X', yaxis_title='Aceleracion Y', zaxis_title='Aceleracion Z')
-    
-    if len(mean_acc_x) > 0:
-        x_floor = math.floor(min(mean_acc_x))
-        x_ceil = math.ceil(max(mean_acc_x))
+        fig.update_scenes(xaxis_title='Aceleracion X', yaxis_title='Aceleracion Y', zaxis_title='Aceleracion Z')
+        
+        if len(mean_acc_x) > 0:
+            x_floor = math.floor(min(mean_acc_x))
+            x_ceil = math.ceil(max(mean_acc_x))
 
-        y_floor = math.floor(min(mean_acc_y))
-        y_ceil = math.ceil(max(mean_acc_y))
+            y_floor = math.floor(min(mean_acc_y))
+            y_ceil = math.ceil(max(mean_acc_y))
 
-        z_floor = math.floor(min(mean_acc_z))
-        z_ceil = math.ceil(max(mean_acc_z))
+            z_floor = math.floor(min(mean_acc_z))
+            z_ceil = math.ceil(max(mean_acc_z))
 
-        fig.update_layout(scene=dict(
-            xaxis=dict(range=[x_floor, x_ceil]),
-            yaxis=dict(range=[y_floor, y_ceil]),
-            zaxis=dict(range=[z_floor, z_ceil]),
-        ))
+            fig.update_layout(scene=dict(
+                xaxis=dict(range=[x_floor, x_ceil]),
+                yaxis=dict(range=[y_floor, y_ceil]),
+                zaxis=dict(range=[z_floor, z_ceil]),
+            ))
 
-    graph3DProbCaidaAcc = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        graph3DProbCaidaAcc = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
-    fig = go.Figure()
+        fig = go.Figure()
 
-    trace = go.Scatter3d(
-        x=mean_gyr_x,
-        y=mean_gyr_y,
-        z=mean_gyr_z,
-        mode='markers',
-        marker=dict(
-            size=5, 
-            color=probs_caida, 
-            colorscale='Viridis', 
-            colorbar=dict(len=1, y=0, yanchor='bottom'),  
-            opacity=1, 
+        trace = go.Scatter3d(
+            x=mean_gyr_x,
+            y=mean_gyr_y,
+            z=mean_gyr_z,
+            mode='markers',
+            marker=dict(
+                size=5, 
+                color=probs_caida, 
+                colorscale='Viridis', 
+                colorbar=dict(len=1, y=0, yanchor='bottom'),  
+                opacity=1, 
+            )
         )
-    )
 
-    fig.add_trace(trace)
+        fig.add_trace(trace)
 
-    fig.update_scenes(xaxis_title='Gyroscopio X', yaxis_title='Gyroscopio Y', zaxis_title='Gyroscopio Z')
-    
-    if len(mean_gyr_x) > 0:
-        x_floor = math.floor(min(mean_gyr_x))
-        x_ceil = math.ceil(max(mean_gyr_x))
+        fig.update_scenes(xaxis_title='Gyroscopio X', yaxis_title='Gyroscopio Y', zaxis_title='Gyroscopio Z')
+        
+        if len(mean_gyr_x) > 0:
+            x_floor = math.floor(min(mean_gyr_x))
+            x_ceil = math.ceil(max(mean_gyr_x))
 
-        y_floor = math.floor(min(mean_gyr_y))
-        y_ceil = math.ceil(max(mean_gyr_y))
+            y_floor = math.floor(min(mean_gyr_y))
+            y_ceil = math.ceil(max(mean_gyr_y))
 
-        z_floor = math.floor(min(mean_gyr_z))
-        z_ceil = math.ceil(max(mean_gyr_z))
+            z_floor = math.floor(min(mean_gyr_z))
+            z_ceil = math.ceil(max(mean_gyr_z))
 
-        fig.update_layout(scene=dict(
-            xaxis=dict(range=[x_floor, x_ceil]),
-            yaxis=dict(range=[y_floor, y_ceil]),
-            zaxis=dict(range=[z_floor, z_ceil]),
-        ))
+            fig.update_layout(scene=dict(
+                xaxis=dict(range=[x_floor, x_ceil]),
+                yaxis=dict(range=[y_floor, y_ceil]),
+                zaxis=dict(range=[z_floor, z_ceil]),
+            ))
 
-    graph3DProbCaidaGyr = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        graph3DProbCaidaGyr = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
-    fig = go.Figure()
+        fig = go.Figure()
 
-    trace = go.Scatter3d(
-        x=mean_mag_x,
-        y=mean_mag_y,
-        z=mean_mag_z,
-        mode='markers',
-        marker=dict(
-            size=5, 
-            color=probs_caida, 
-            colorscale='Viridis', 
-            colorbar=dict(len=1, y=0, yanchor='bottom'),  
-            opacity=1, 
+        trace = go.Scatter3d(
+            x=mean_mag_x,
+            y=mean_mag_y,
+            z=mean_mag_z,
+            mode='markers',
+            marker=dict(
+                size=5, 
+                color=probs_caida, 
+                colorscale='Viridis', 
+                colorbar=dict(len=1, y=0, yanchor='bottom'),  
+                opacity=1, 
+            )
         )
-    )
 
-    fig.add_trace(trace)
+        fig.add_trace(trace)
 
-    fig.update_scenes(xaxis_title='Magnetometro X', yaxis_title='Magnetometro Y', zaxis_title='Magnetometro Z')
-    
-    if len(mean_mag_x) > 0:
-        x_floor = math.floor(min(mean_mag_x))
-        x_ceil = math.ceil(max(mean_mag_x))
+        fig.update_scenes(xaxis_title='Magnetometro X', yaxis_title='Magnetometro Y', zaxis_title='Magnetometro Z')
+        
+        if len(mean_mag_x) > 0:
+            x_floor = math.floor(min(mean_mag_x))
+            x_ceil = math.ceil(max(mean_mag_x))
 
-        y_floor = math.floor(min(mean_mag_y))
-        y_ceil = math.ceil(max(mean_mag_y))
+            y_floor = math.floor(min(mean_mag_y))
+            y_ceil = math.ceil(max(mean_mag_y))
 
-        z_floor = math.floor(min(mean_mag_z))
-        z_ceil = math.ceil(max(mean_mag_z))
+            z_floor = math.floor(min(mean_mag_z))
+            z_ceil = math.ceil(max(mean_mag_z))
 
-        fig.update_layout(scene=dict(
-            xaxis=dict(range=[x_floor, x_ceil]),
-            yaxis=dict(range=[y_floor, y_ceil]),
-            zaxis=dict(range=[z_floor, z_ceil]),
-        ))
+            fig.update_layout(scene=dict(
+                xaxis=dict(range=[x_floor, x_ceil]),
+                yaxis=dict(range=[y_floor, y_ceil]),
+                zaxis=dict(range=[z_floor, z_ceil]),
+            ))
 
-    graph3DProbCaidaMag = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        graph3DProbCaidaMag = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
+        return render_template(
+            'prefall/plots_individual.html', active_tab='individual', 
+            formEvolucionProbCaida=formEvolucionProbCaida, graphEvolucionProbCaida=graphEvolucionProbCaida,
+            graphAcc=graph3DProbCaidaAcc, graphGyr=graph3DProbCaidaGyr,
+            graphMag=graph3DProbCaidaMag)
     return render_template(
-        'prefall/plots_individual.html', active_tab='individual', 
-        formEvolucionProbCaida=formEvolucionProbCaida, graphEvolucionProbCaida=graphEvolucionProbCaida,
-        graphAcc=graph3DProbCaidaAcc, graphGyr=graph3DProbCaidaGyr,
-        graphMag=graph3DProbCaidaMag)
+            'prefall/plots_individual.html', active_tab='individual', 
+            formEvolucionProbCaida=formEvolucionProbCaida, graphEvolucionProbCaida=None,
+            graphAcc=None, graphGyr=None,
+            graphMag=None)
 
 @blueprint.route('/plots/comparativa',  methods=['GET','POST'])
 @roles_accepted("medico")
@@ -1916,6 +1919,7 @@ def plots_comparativa():
         from apps import db
         import pickle
         import math
+        import numpy as np
         selected_paciente_id1 = formCompareFases.paciente1.data
         selected_paciente_id2 = formCompareFases.paciente2.data
 
@@ -1985,9 +1989,118 @@ def plots_comparativa():
 
         graphCompareFases = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
+
+        rows1 = TestUnit.query.filter_by(num_test=test1.num_test).all()
+
+        acc_x_values1 = [row.acc_x for row in rows1]
+        acc_y_values1 = [row.acc_y for row in rows1]
+        acc_z_values1 = [row.acc_z for row in rows1]
+
+        gyr_x_values1 = [row.gyr_x for row in rows1]
+        gyr_y_values1 = [row.gyr_y for row in rows1]
+        gyr_z_values1 = [row.gyr_z for row in rows1]
+
+        mag_x_values1 = [row.mag_x for row in rows1]
+        mag_y_values1 = [row.mag_y for row in rows1]
+        mag_z_values1 = [row.mag_z for row in rows1]
+
+        mean_acc_x1 = np.mean(acc_x_values1)
+        mean_acc_y1 = np.mean(acc_y_values1)
+        mean_acc_z1 = np.mean(acc_z_values1)
+
+        mean_gyr_x1 = np.mean(gyr_x_values1)
+        mean_gyr_y1 = np.mean(gyr_y_values1)
+        mean_gyr_z1 = np.mean(gyr_z_values1)
+
+        mean_mag_x1 = np.mean(mag_x_values1)
+        mean_mag_y1 = np.mean(mag_y_values1)
+        mean_mag_z1 = np.mean(mag_z_values1)
+
+
+        rows2 = TestUnit.query.filter_by(num_test=test2.num_test).all()
+
+        acc_x_values2 = [row.acc_x for row in rows2]
+        acc_y_values2 = [row.acc_y for row in rows2]
+        acc_z_values2 = [row.acc_z for row in rows2]
+
+        gyr_x_values2 = [row.gyr_x for row in rows2]
+        gyr_y_values2 = [row.gyr_y for row in rows2]
+        gyr_z_values2 = [row.gyr_z for row in rows2]
+
+        mag_x_values2 = [row.mag_x for row in rows2]
+        mag_y_values2 = [row.mag_y for row in rows2]
+        mag_z_values2 = [row.mag_z for row in rows2]
+
+        mean_acc_x2 = np.mean(acc_x_values2)
+        mean_acc_y2 = np.mean(acc_y_values2)
+        mean_acc_z2 = np.mean(acc_z_values2)
+
+        mean_gyr_x2 = np.mean(gyr_x_values2)
+        mean_gyr_y2 = np.mean(gyr_y_values2)
+        mean_gyr_z2 = np.mean(gyr_z_values2)
+
+        mean_mag_x2 = np.mean(mag_x_values2)
+        mean_mag_y2 = np.mean(mag_y_values2)
+        mean_mag_z2 = np.mean(mag_z_values2)
+
+
+        fig = go.Figure()
+
+        labels = ["Aceleracion X", "Aceleracion Y", "Aceleracion Z"]
+        bars1 = [mean_acc_x1, mean_acc_y1, mean_acc_z1]
+        bars2 = [mean_acc_x2, mean_acc_y2, mean_acc_z2]
+        trace_group1 = go.Bar(x=labels, y=bars1, name=full_name_paciente1 + " " + test1.date.strftime("%Y-%m-%d"), text=bars1, textposition='outside')
+        trace_group2 = go.Bar(x=labels, y=bars2, name=full_name_paciente2 + " " + test2.date.strftime("%Y-%m-%d"), text=bars2, textposition='outside')
+
+        fig.add_trace(trace_group1)
+        fig.add_trace(trace_group2)
+
+        fig.update_traces(texttemplate='%{text:.2f}', textposition='outside', selector=dict(type='bar'))
+
+        graphCompareTestsAcc = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+
+        fig = go.Figure()
+
+        labels = ["Giroscopio X", "Giroscopio Y", "Giroscopio Z"]
+        bars1 = [mean_gyr_x1, mean_gyr_y1, mean_gyr_z1]
+        bars2 = [mean_gyr_x2, mean_gyr_y2, mean_gyr_z2]
+        trace_group1 = go.Bar(x=labels, y=bars1, name=full_name_paciente1 + " " + test1.date.strftime("%Y-%m-%d"), text=bars1, textposition='outside')
+        trace_group2 = go.Bar(x=labels, y=bars2, name=full_name_paciente2 + " " + test2.date.strftime("%Y-%m-%d"), text=bars2, textposition='outside')
+
+        fig.add_trace(trace_group1)
+        fig.add_trace(trace_group2)
+
+        fig.update_traces(texttemplate='%{text:.2f}', textposition='outside', selector=dict(type='bar'))
+
+        graphCompareTestGyr = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+
+        fig = go.Figure()
+
+        labels = ["Magnetometro X", "Magnetometro Y", "Magnetometro Z"]
+        bars1 = [mean_mag_x1, mean_mag_y1, mean_mag_z1]
+        bars2 = [mean_mag_x2, mean_mag_y2, mean_mag_z2]
+        trace_group1 = go.Bar(x=labels, y=bars1, name=full_name_paciente1 + " " + test1.date.strftime("%Y-%m-%d"), text=bars1, textposition='outside')
+        trace_group2 = go.Bar(x=labels, y=bars2, name=full_name_paciente2 + " " + test2.date.strftime("%Y-%m-%d"), text=bars2, textposition='outside')
+
+        fig.add_trace(trace_group1)
+        fig.add_trace(trace_group2)
+
+        fig.update_traces(texttemplate='%{text:.2f}', textposition='outside', selector=dict(type='bar'))
+
+        graphCompareTestMag = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+
+        return render_template(
+            'prefall/plots_comparativa.html', active_tab='comparacion',
+            formCompareFases=formCompareFases, graphCompareFases=graphCompareFases,
+            graphAcc=graphCompareTestsAcc, graphGyr=graphCompareTestGyr, graphMag=graphCompareTestMag)
+
     return render_template(
-        'prefall/plots_comparativa.html', active_tab='comparacion',
-        formCompareFases=formCompareFases, graphCompareFases=graphCompareFases)
+            'prefall/plots_comparativa.html', active_tab='comparacion',
+            formCompareFases=formCompareFases, graphCompareFases=None,
+            graphAcc=None, graphGyr=None, graphMag=None)
 
 @blueprint.route('/get_paciente_tests', methods=['POST'])
 def get_paciente_tests():
