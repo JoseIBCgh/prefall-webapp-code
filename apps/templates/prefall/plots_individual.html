@@ -9,7 +9,7 @@
             <!-- [ breadcrumb ] end -->
             <div class="main-body">
                 <div class="page-wrapper">
-                    <form method="POST">
+                    <form id="pacienteForm" method="POST">
                         {{ formEvolucionProbCaida.hidden_tag() }}
                         {{ formEvolucionProbCaida.selected_element.label }}
                         {{ formEvolucionProbCaida.selected_element }}
@@ -17,14 +17,15 @@
                         {{ formEvolucionProbCaida.submit }}
                     </form>
                     <div id="chartEvolucionProbCaida" class="chart"></div>
-                    <form method="POST">
-                        {{ form3DProbCaida.hidden_tag() }}
-                        {{ form3DProbCaida.selected_element.label }}
-                        {{ form3DProbCaida.selected_element }}
-                        <br>
-                        {{ form3DProbCaida.submit }}
-                    </form>
-                    <div id="chart3DProbCaida" class="chart"></div>
+                    <div class="pagination">
+                        <button onclick="showDiv('acelerometro')">Acelerómetro</button>
+                        <button onclick="showDiv('giroscopio')">Giroscopio</button>
+                        <button onclick="showDiv('magnetometro')">Magnetómetro</button>
+                    </div>
+                      
+                    <div id="acelerometro" class="chart" style="display: block;"></div>
+                    <div id="giroscopio" class="chart" style="display: none;"></div>
+                    <div id="magnetometro" class="chart" style="display: none;"></div>                      
                 </div>
             </div>
             <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -36,76 +37,35 @@
             </script>
             <script type='text/javascript'>
                 var start_time = Date.now()
-                var graphs = {{graph3DProbCaida | safe}};
-                Plotly.plot('chart3DProbCaida',graphs,{});
+                var graphs = {{graphAcc | safe}};
+                Plotly.plot('acelerometro',graphs,{});
+                console.log("Time plot= " + (Date.now() - start_time))
+            </script>
+            <script type='text/javascript'>
+                var start_time = Date.now()
+                var graphs = {{graphGyr | safe}};
+                Plotly.plot('giroscopio',graphs,{});
+                console.log("Time plot= " + (Date.now() - start_time))
+            </script>
+            <script type='text/javascript'>
+                var start_time = Date.now()
+                var graphs = {{graphMag | safe}};
+                Plotly.plot('magnetometro',graphs,{});
                 console.log("Time plot= " + (Date.now() - start_time))
             </script>
             <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
             <script>
-                $(document).ready(function() {
-                    function updateSelectors(selector, dependentSelector)
-                    {
-                        var selectedValue = selector.val();
-                        dependentSelector.empty();
-
-                        
-                        $.ajax({
-                            type: 'POST',
-                            url: '/get_paciente_tests',
-                            data: { id_paciente: selectedValue },
-                            success: function(response) {
-                                console.log("ajax response")
-                                console.log(response)
-                                var testsData = response.tests;
-                                
-                                $.each(testsData, function(index, value) {
-                                    dependentSelector.append($('<option>').text(value.date).attr('value', value.num_test));
-                                });
-                            },
-                            error: function(error) {
-                                console.log('Error:', error);
-                            }
-                        });
-                    }
-                    
-                    $('#compareTestsPaciente1').change(function() {
-                        updateSelectors($('#compareTestsPaciente1'), $('#compareTestsTest1'))
-                    });
-                    $('#compareTestsPaciente2').change(function() {
-                        updateSelectors($('#compareTestsPaciente2'), $('#compareTestsTest2'))
-                    });
-
-                    $('#compareFasesPaciente1').change(function() {
-                        updateSelectors($('#compareFasesPaciente1'), $('#compareFasesTest1'))
-                    });
-                    $('#compareFasesPaciente2').change(function() {
-                        updateSelectors($('#compareFasesPaciente2'), $('#compareFasesTest2'))
-                    });
-
-
-                    updateSelectors($('#compareTestsPaciente1'), $('#compareTestsTest1'))
-                    updateSelectors($('#compareTestsPaciente2'), $('#compareTestsTest2'))
-
-                    updateSelectors($('#compareFasesPaciente1'), $('#compareFasesTest1'))
-                    updateSelectors($('#compareFasesPaciente2'), $('#compareFasesTest2'))
-                });
+                function showDiv(pageName) {
+                  // Ocultar todos los divs
+                  document.getElementById('acelerometro').style.display = 'none';
+                  document.getElementById('giroscopio').style.display = 'none';
+                  document.getElementById('magnetometro').style.display = 'none';
+              
+                  // Mostrar el div correspondiente a la página seleccionada
+                  document.getElementById(pageName).style.display = 'block';
+                }
             </script>
-            {% if graphCompareTests %}
-            <script type='text/javascript'>
-                var start_time = Date.now()
-                var graphs = {{graphCompareTests | safe}};
-                Plotly.plot('graphCompareTests',graphs,{});
-                console.log("Time plot= " + (Date.now() - start_time))
-            </script>
-            {% endif %}
-            {% if graphCompareFases %}
-            <script type='text/javascript'>
-                var start_time = Date.now()
-                var graphs = {{graphCompareFases | safe}};
-                Plotly.plot('graphCompareFases',graphs,{});
-                console.log("Time plot= " + (Date.now() - start_time))
-            </script>
-            {% endif %}
+              
         </div>
     </div>
 

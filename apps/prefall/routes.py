@@ -6,7 +6,7 @@ from io import BytesIO
 
 from apps.authentication.models import AccionesTestMedico, DocumentoPaciente, PacienteAsociado, Role, Test, TestUnit, User, Centro, File, Model, Boundary, TrainingPoint
 from apps.prefall import blueprint
-from flask import abort, jsonify, render_template, request, redirect, url_for, send_file
+from flask import abort, jsonify, render_template, request, redirect, url_for, send_file, session
 from jinja2 import TemplateNotFound
 
 from flask_security import (
@@ -1704,13 +1704,15 @@ def plots_individual():
     from apps import db
     import pickle
     import math
+    import numpy as np
     pacientes = current_user.pacientes_asociados
     formEvolucionProbCaida = ElementForm()
     formEvolucionProbCaida.selected_element.label = "Selecciona un paciente"
     formEvolucionProbCaida.selected_element.choices = [(element.id, element.username) for element in pacientes]
-    selected_element_id = pacientes[0].id
     if formEvolucionProbCaida.validate_on_submit():
-        selected_element_id = formEvolucionProbCaida.selected_element.data
+        session['form_individual_paciente'] = formEvolucionProbCaida.selected_element.data
+    formEvolucionProbCaida.selected_element.data = session.get('form_individual_paciente', None)
+    selected_element_id = formEvolucionProbCaida.selected_element.data
     
     tests = db.session.query(
         Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
@@ -1731,69 +1733,60 @@ def plots_individual():
 
     graphEvolucionProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
-    form3DProbCaida = ElementStringForm()
-    form3DProbCaida.selected_element.label = "Selecciona una métrica"
-    form3DProbCaida.selected_element.choices = [("la","Linear Acceleration"), ("m","Magnetometer"), ("g","Gyroscope")]
-    metric_prefix = "la"
-    if form3DProbCaida.validate_on_submit():
-        metric_prefix = form3DProbCaida.selected_element.data
-    
-    choices = form3DProbCaida.selected_element.choices
+    mean_acc_x = []
+    mean_acc_y = []
+    mean_acc_z = []
 
-    full_name = null
+    mean_gyr_x = []
+    mean_gyr_y = []
+    mean_gyr_z = []
 
-    for choice_value, choice_label in choices:
-        if choice_value == metric_prefix:
-            full_name = choice_label
-            break
+    mean_mag_x = []
+    mean_mag_y = []
+    mean_mag_z = []
 
-    dataframes = []
+    probs_caida = []
 
     for test in tests:
-        blob_data = test.data  
-        if blob_data:
-            df = pickle.loads(blob_data)
-            dataframes.append(df)
+        rows = TestUnit.query.filter_by(num_test=test.num_test).all()
 
-    x = []
-    for df in dataframes:
-        mean = (df[metric_prefix + 'x_mean_f1'] * df['duracion_f1']\
-        + df[metric_prefix + 'x_mean_f2'] * df['duracion_f2']\
-        + df[metric_prefix + 'x_mean_f3'] * df['duracion_f3']\
-        + df[metric_prefix + 'x_mean_f4'] * df['duracion_f4'])\
-        / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
-        x.append(mean.values[0])
+        acc_x_values = [row.acc_x for row in rows]
+        acc_y_values = [row.acc_y for row in rows]
+        acc_z_values = [row.acc_z for row in rows]
 
-    y = []
-    for df in dataframes:
-        mean = (df[metric_prefix + 'y_mean_f1'] * df['duracion_f1']\
-        + df[metric_prefix + 'y_mean_f2'] * df['duracion_f2']\
-        + df[metric_prefix + 'y_mean_f3'] * df['duracion_f3']\
-        + df[metric_prefix + 'y_mean_f4'] * df['duracion_f4'])\
-        / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
-        y.append(mean.values[0])
+        gyr_x_values = [row.gyr_x for row in rows]
+        gyr_y_values = [row.gyr_y for row in rows]
+        gyr_z_values = [row.gyr_z for row in rows]
 
-    z = []
-    for df in dataframes:
-        mean = (df[metric_prefix + 'z_mean_f1'] * df['duracion_f1']\
-        + df[metric_prefix + 'z_mean_f2'] * df['duracion_f2']\
-        + df[metric_prefix + 'z_mean_f3'] * df['duracion_f3']\
-        + df[metric_prefix + 'z_mean_f4'] * df['duracion_f4'])\
-        / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
-        z.append(mean.values[0])
+        mag_x_values = [row.mag_x for row in rows]
+        mag_y_values = [row.mag_y for row in rows]
+        mag_z_values = [row.mag_z for row in rows]
 
-    c = [test.probabilidad_caida for test in tests]
+        mean_acc_x.append(np.mean(acc_x_values))
+        mean_acc_y.append(np.mean(acc_y_values))
+        mean_acc_z.append(np.mean(acc_z_values))
+
+        mean_gyr_x.append(np.mean(gyr_x_values))
+        mean_gyr_y.append(np.mean(gyr_y_values))
+        mean_gyr_z.append(np.mean(gyr_z_values))
+
+        mean_mag_x.append(np.mean(mag_x_values))
+        mean_mag_y.append(np.mean(mag_y_values))
+        mean_mag_z.append(np.mean(mag_z_values))
+
+        probs_caida.append(test.probabilidad_caida)
+
 
     fig = go.Figure()
 
     trace = go.Scatter3d(
-        x=x,
-        y=y,
-        z=z,
+        x=mean_acc_x,
+        y=mean_acc_y,
+        z=mean_acc_z,
         mode='markers',
         marker=dict(
             size=5, 
-            color=c, 
+            color=probs_caida, 
             colorscale='Viridis', 
             colorbar=dict(len=1, y=0, yanchor='bottom'),  
             opacity=1, 
@@ -1802,29 +1795,109 @@ def plots_individual():
 
     fig.add_trace(trace)
 
-    fig.update_scenes(xaxis_title=full_name + ' X', yaxis_title=full_name + ' Y', zaxis_title=full_name + ' Z')
+    fig.update_scenes(xaxis_title='Aceleracion X', yaxis_title='Aceleracion Y', zaxis_title='Aceleracion Z')
     
-    x_floor = math.floor(min(x))
-    x_ceil = math.ceil(max(x))
+    if len(mean_acc_x) > 0:
+        x_floor = math.floor(min(mean_acc_x))
+        x_ceil = math.ceil(max(mean_acc_x))
 
-    y_floor = math.floor(min(y))
-    y_ceil = math.ceil(max(y))
+        y_floor = math.floor(min(mean_acc_y))
+        y_ceil = math.ceil(max(mean_acc_y))
 
-    z_floor = math.floor(min(z))
-    z_ceil = math.ceil(max(z))
+        z_floor = math.floor(min(mean_acc_z))
+        z_ceil = math.ceil(max(mean_acc_z))
 
-    fig.update_layout(scene=dict(
-        xaxis=dict(range=[x_floor, x_ceil]),
-        yaxis=dict(range=[y_floor, y_ceil]),
-        zaxis=dict(range=[z_floor, z_ceil]),
-    ))
+        fig.update_layout(scene=dict(
+            xaxis=dict(range=[x_floor, x_ceil]),
+            yaxis=dict(range=[y_floor, y_ceil]),
+            zaxis=dict(range=[z_floor, z_ceil]),
+        ))
 
-    graph3DProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    graph3DProbCaidaAcc = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+
+    fig = go.Figure()
+
+    trace = go.Scatter3d(
+        x=mean_gyr_x,
+        y=mean_gyr_y,
+        z=mean_gyr_z,
+        mode='markers',
+        marker=dict(
+            size=5, 
+            color=probs_caida, 
+            colorscale='Viridis', 
+            colorbar=dict(len=1, y=0, yanchor='bottom'),  
+            opacity=1, 
+        )
+    )
+
+    fig.add_trace(trace)
+
+    fig.update_scenes(xaxis_title='Gyroscopio X', yaxis_title='Gyroscopio Y', zaxis_title='Gyroscopio Z')
+    
+    if len(mean_gyr_x) > 0:
+        x_floor = math.floor(min(mean_gyr_x))
+        x_ceil = math.ceil(max(mean_gyr_x))
+
+        y_floor = math.floor(min(mean_gyr_y))
+        y_ceil = math.ceil(max(mean_gyr_y))
+
+        z_floor = math.floor(min(mean_gyr_z))
+        z_ceil = math.ceil(max(mean_gyr_z))
+
+        fig.update_layout(scene=dict(
+            xaxis=dict(range=[x_floor, x_ceil]),
+            yaxis=dict(range=[y_floor, y_ceil]),
+            zaxis=dict(range=[z_floor, z_ceil]),
+        ))
+
+    graph3DProbCaidaGyr = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+
+    fig = go.Figure()
+
+    trace = go.Scatter3d(
+        x=mean_mag_x,
+        y=mean_mag_y,
+        z=mean_mag_z,
+        mode='markers',
+        marker=dict(
+            size=5, 
+            color=probs_caida, 
+            colorscale='Viridis', 
+            colorbar=dict(len=1, y=0, yanchor='bottom'),  
+            opacity=1, 
+        )
+    )
+
+    fig.add_trace(trace)
+
+    fig.update_scenes(xaxis_title='Magnetometro X', yaxis_title='Magnetometro Y', zaxis_title='Magnetometro Z')
+    
+    if len(mean_mag_x) > 0:
+        x_floor = math.floor(min(mean_mag_x))
+        x_ceil = math.ceil(max(mean_mag_x))
+
+        y_floor = math.floor(min(mean_mag_y))
+        y_ceil = math.ceil(max(mean_mag_y))
+
+        z_floor = math.floor(min(mean_mag_z))
+        z_ceil = math.ceil(max(mean_mag_z))
+
+        fig.update_layout(scene=dict(
+            xaxis=dict(range=[x_floor, x_ceil]),
+            yaxis=dict(range=[y_floor, y_ceil]),
+            zaxis=dict(range=[z_floor, z_ceil]),
+        ))
+
+    graph3DProbCaidaMag = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
     return render_template(
         'prefall/plots_individual.html', active_tab='individual', 
         formEvolucionProbCaida=formEvolucionProbCaida, graphEvolucionProbCaida=graphEvolucionProbCaida,
-        form3DProbCaida=form3DProbCaida, graph3DProbCaida=graph3DProbCaida)
+        graphAcc=graph3DProbCaidaAcc, graphGyr=graph3DProbCaidaGyr,
+        graphMag=graph3DProbCaidaMag)
 
 @blueprint.route('/plots/comparativa',  methods=['GET','POST'])
 @roles_accepted("medico")
