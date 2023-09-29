@@ -295,6 +295,9 @@ def crear_user():
 def pantalla_principal_medico():
     from apps import db
     from datetime import datetime
+    from sqlalchemy import and_
+    from sqlalchemy.orm import joinedload
+    from sqlalchemy.orm import aliased
     formPacientes = FilterUserForm()
     page = request.args.get('page', 1, type=int)
     per_page = 10  # Number of items per page
@@ -353,6 +356,7 @@ def pantalla_principal_medico():
                 filter(Test.id_paciente.in_(id_asociados)).\
                     filter(Test.id_paciente == User.id).\
                         filter(Test.diagnostico == None).all()'''
+    '''
     test_sin_diagnosticar = current_user.tests_de_pacientes.\
         join(User, AccionesTestMedico.id_paciente == User.id).\
             join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
@@ -360,18 +364,73 @@ def pantalla_principal_medico():
                     with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
                     AccionesTestMedico.num_test, Test.date).\
                         filter(AccionesTestMedico.diagnostico == None).all()
+    '''
 
+    Medico = aliased(User)
+
+    test_sin_diagnosticar = current_user.tests_de_pacientes.\
+        join(User, AccionesTestMedico.id_paciente == User.id).\
+        join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
+            AccionesTestMedico.id_paciente == Test.id_paciente)).\
+        outerjoin(Medico, Test.id_medico == User.id).\
+        with_entities(
+            AccionesTestMedico.visto, 
+            AccionesTestMedico.diagnostico, 
+            User.nombre.label('nombre_paciente'),
+            User.id.label('id_paciente'),
+            AccionesTestMedico.num_test, 
+            Test.date, 
+            Medico.nombre.label('nombre_medico'),
+            Medico.apellidos.label('apellidos_medico')
+        ).filter(AccionesTestMedico.diagnostico == None).all()
+
+    test_sin_diagnosticar_list = [
+        {
+            "visto": item[0],
+            "diagnostico": item[1],
+            "nombre_paciente": item[2],
+            "id_paciente": item[3],
+            "num_test": item[4],
+            "date": item[5].strftime('%Y-%m-%d %H:%M:%S'),
+            "nombre_medico": item[6],
+            "apellidos_medico": item[7]
+        }
+        for item in test_sin_diagnosticar
+    ]
+    
     test_sin_revisar = current_user.tests_de_pacientes.\
         join(User, AccionesTestMedico.id_paciente == User.id).\
-            join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
-                AccionesTestMedico.id_paciente == Test.id_paciente)).\
-                    with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
-                    AccionesTestMedico.num_test, Test.date).\
-                        filter(Test.probabilidad_caida == None).all()
-    
+        join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
+            AccionesTestMedico.id_paciente == Test.id_paciente)).\
+        outerjoin(Medico, Test.id_medico == User.id).\
+        with_entities(
+            AccionesTestMedico.visto, 
+            AccionesTestMedico.diagnostico, 
+            User.nombre.label('nombre_paciente'),
+            User.id.label('id_paciente'),
+            AccionesTestMedico.num_test, 
+            Test.date, 
+            Medico.nombre.label('nombre_medico'),
+            Medico.apellidos.label('apellidos_medico')
+        ).filter(Test.probabilidad_caida == None).all()
+
+    test_sin_revisar_list = [
+        {
+            "visto": item[0],
+            "diagnostico": item[1],
+            "nombre_paciente": item[2],
+            "id_paciente": item[3],
+            "num_test": item[4],
+            "date": item[5].strftime('%Y-%m-%d %H:%M:%S'),
+            "nombre_medico": item[6],
+            "apellidos_medico": item[7]
+        }
+        for item in test_sin_revisar
+    ]
+
     return render_template(
         'prefall/pantalla_principal_medico.html', pacientes=pacientes, formPacientes=formPacientes,
-        tests= tests, test_sin_diagnosticar=test_sin_diagnosticar, test_sin_revisar=test_sin_revisar,
+        tests= tests, test_sin_diagnosticar=test_sin_diagnosticar_list, test_sin_revisar=test_sin_revisar_list,
         formTests=formTests, total_pages=total_pages, current_page=page)
 
 @blueprint.route('crear_paciente_medico', methods=['GET', 'POST'])

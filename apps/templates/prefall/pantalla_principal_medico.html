@@ -22,20 +22,82 @@
                                 <div class="col-auto">
                                     <i class="feather icon-zap f-30 text-c-green"></i>
                                 </div>
-                                <div class="col">
+                                <div class="col" id="test-sin-revisar">
                                     <h3 class="f-w-300">{{test_sin_revisar|length}}</h3>
                                     <span class="d-block text-uppercase">Test sin revisar</span>
                                 </div>
                                 <div class="col-auto">
                                     <i class="feather icon-zap f-30 text-c-green"></i>
                                 </div>
-                                <div class="col">
+                                <div class="col" id="test-sin-diagnosticar">
                                     <h3 class="f-w-300">{{test_sin_diagnosticar|length}}</h3>
                                     <span class="d-block text-uppercase">Test sin diagnosticar</span>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <div id="test-sin-revisar-popup" class="popup">
+                        <div class="popup-content">
+                            <div class="card Recent-Users">
+                                <div class="card-header">
+                                    <h5>Test sin revisar</h5>
+                                </div>
+                                <div class="card-block px-0 py-3">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th class="center">#Test</th>
+                                                    <th class="center">Fecha</th>
+                                                    <th class="center">Medico</th>
+                                                    <th class="center">Detalles</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                                             
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="pagination">
+                                    <button id="prev-page-revisar">Previous</button>
+                                    <span id="page-info-revisar">Page 1 of 1</span>
+                                    <button id="next-page-revisar">Next</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>  
+                    <div id="test-sin-diagnosticar-popup" class="popup">
+                        <div class="popup-content">
+                            <div class="card Recent-Users">
+                                <div class="card-header">
+                                    <h5>Test sin diagnosticar</h5>
+                                </div>
+                                <div class="card-block px-0 py-3">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th class="center">#Test</th>
+                                                    <th class="center">Fecha</th>
+                                                    <th class="center">Medico</th>
+                                                    <th class="center">Detalles</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                                             
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="pagination">
+                                    <button id="prev-page-diagnosticar">Previous</button>
+                                    <span id="page-info-diagnosticar">Page 1 of 1</span>
+                                    <button id="next-page-diagnosticar">Next</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>                  
                     <div class="card-Recent-Users">
                         <div class="card-header">
                             <h5>Pacientes</h5>
@@ -108,5 +170,155 @@
             </div>
         </div>
     </div>
+    <script>       
+        var testSinRevisar = document.getElementById("test-sin-revisar");
+        var popupRevisar = document.getElementById("test-sin-revisar-popup");
+
+        // Function to show the popup
+        function showPopupRevisar() {
+            popupRevisar.style.display = "block";
+            renderTableRevisar(); // Initial rendering of the table
+        }
+
+        testSinRevisar.addEventListener("click", showPopupRevisar);
+
+        popupRevisar.addEventListener("click", function(event) {
+            if (event.target === popupRevisar) {
+                popupRevisar.style.display = "none";
+            }
+        });
+
+        var testSinRevisar = {{ test_sin_revisar|tojson|safe }};
+
+        var currentPageRevisar = 1;
+        var itemsPerPage = 5; // Number of items per page
+
+        function renderTableRevisar() {
+            var startIndex = (currentPageRevisar - 1) * itemsPerPage;
+            var endIndex = startIndex + itemsPerPage;
+            var paginatedData = testSinRevisar.slice(startIndex, endIndex);
+
+            var tableBody = popupRevisar.querySelector('.table tbody');
+            tableBody.innerHTML = '';
+
+            for (var i = 0; i < paginatedData.length; i++) {
+                var test = paginatedData[i];
+                var row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${test.num_test}</td>
+                    <td>${test.date}</td>
+                    <td>${test.nombre_medico} ${test.apellidos_medico}</td>
+                    <td><a href="${generateRevisarURL(test.id_paciente, test.num_test)}" class="btn btn-primary">Revisar</a></td>
+                `;
+                tableBody.appendChild(row);
+            }
+        }
+
+        function generateRevisarURL(id_paciente, num_test) {
+            return `/detalles_test/${id_paciente}/${num_test}`;
+        }
+
+        function updatePaginationRevisar() {
+            var totalPagesRevisar = Math.ceil(testSinRevisar.length / itemsPerPage);
+            document.getElementById('page-info-revisar').textContent = `Page ${currentPageRevisar} of ${totalPagesRevisar}`;
+            document.getElementById('prev-page-revisar').disabled = currentPageRevisar === 1;
+            document.getElementById('next-page-revisar').disabled = currentPageRevisar === totalPagesRevisar;
+        }
+
+        document.getElementById('prev-page-revisar').addEventListener('click', function () {
+            if (currentPageRevisar > 1) {
+                currentPageRevisar--;
+                renderTableRevisar();
+                updatePaginationRevisar();
+            }
+        });
+
+        document.getElementById('next-page-revisar').addEventListener('click', function () {
+            var totalPagesRevisar = Math.ceil(testSinRevisar.length / itemsPerPage);
+            if (currentPageRevisar < totalPagesRevisar) {
+                currentPageRevisar++;
+                renderTableRevisar();
+                updatePaginationRevisar();
+            }
+        });
+
+        renderTableRevisar();
+
+    </script>
+    <script>       
+        var testSinDiagnosticar = document.getElementById("test-sin-diagnosticar");
+        var popupDiagnosticar = document.getElementById("test-sin-diagnosticar-popup");
+
+        // Function to show the popup
+        function showPopupDiagnosticar() {
+            popupDiagnosticar.style.display = "block";
+            renderTableDiagnosticar(); // Initial rendering of the table
+        }
+
+        testSinDiagnosticar.addEventListener("click", showPopupDiagnosticar);
+
+        popupDiagnosticar.addEventListener("click", function(event) {
+            if (event.target === popupDiagnosticar) {
+                popupDiagnosticar.style.display = "none";
+            }
+        });
+
+        var testSinDiagnosticar = {{ test_sin_diagnosticar|tojson|safe }};
+
+        var currentPageDiagnosticar = 1;
+        var itemsPerPage = 5; // Number of items per page
+
+        function renderTableDiagnosticar() {
+            var startIndex = (currentPageDiagnosticar - 1) * itemsPerPage;
+            var endIndex = startIndex + itemsPerPage;
+            var paginatedData = testSinDiagnosticar.slice(startIndex, endIndex);
+
+            var tableBody = popupDiagnosticar.querySelector('.table tbody');
+            tableBody.innerHTML = '';
+
+            for (var i = 0; i < paginatedData.length; i++) {
+                var test = paginatedData[i];
+                var row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${test.num_test}</td>
+                    <td>${test.date}</td>
+                    <td>${test.nombre_medico} ${test.apellidos_medico}</td>
+                    <td><a href="${generateDiagnosticarURL(test.id_paciente, test.num_test)}" class="btn btn-primary">Revisar</a></td>
+                `;
+                tableBody.appendChild(row);
+            }
+        }
+
+        function generateDiagnosticarURL(id_paciente, num_test) {
+            return `/detalles_test/${id_paciente}/${num_test}`;
+        }
+
+        function updatePaginationDiagnosticar() {
+            var totalPagesDiagnosticar = Math.ceil(testSinDiagnosticar.length / itemsPerPage);
+            document.getElementById('page-info-diagnosticar').textContent = `Page ${currentPageDiagnosticar} of ${totalPagesDiagnosticar}`;
+            document.getElementById('prev-page-diagnosticar').disabled = currentPageDiagnosticar === 1;
+            document.getElementById('next-page-diagnosticar').disabled = currentPageDiagnosticar === totalPagesDiagnosticar;
+        }
+
+        document.getElementById('prev-page-diagnosticar').addEventListener('click', function () {
+            if (currentPageDiagnosticar > 1) {
+                currentPageDiagnosticar--;
+                renderTableDiagnosticar();
+                updatePaginationDiagnosticar();
+            }
+        });
+
+        document.getElementById('next-page-diagnosticar').addEventListener('click', function () {
+            var totalPagesDiagnosticar = Math.ceil(testSinDiagnosticar.length / itemsPerPage);
+            if (currentPageDiagnosticar < totalPagesDiagnosticar) {
+                currentPageDiagnosticar++;
+                renderTableDiagnosticar();
+                updatePaginationDiagnosticar();
+            }
+        });
+
+        renderTableDiagnosticar();
+
+    </script>
 
 {% endblock %}
