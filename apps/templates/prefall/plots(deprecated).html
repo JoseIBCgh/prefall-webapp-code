@@ -1,0 +1,148 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+
+    <div class="pcoded-content">
+        <div class="pcoded-inner-content">
+            <!-- [ breadcrumb ] start -->
+
+            <!-- [ breadcrumb ] end -->
+            <div class="main-body">
+                <div class="page-wrapper">
+                    <form method="POST">
+                        {{ formEvolucionProbCaida.hidden_tag() }}
+                        {{ formEvolucionProbCaida.selected_element.label }}
+                        {{ formEvolucionProbCaida.selected_element }}
+                        <br>
+                        {{ formEvolucionProbCaida.submit }}
+                    </form>
+                    <div id="chartEvolucionProbCaida" class="chart"></div>
+                    <form method="POST">
+                        {{ form3DProbCaida.hidden_tag() }}
+                        {{ form3DProbCaida.selected_element.label }}
+                        {{ form3DProbCaida.selected_element }}
+                        {{ form3DProbCaida.second_selected_element.label }}
+                        {{ form3DProbCaida.second_selected_element }}
+                        <br>
+                        {{ form3DProbCaida.submit }}
+                    </form>
+                    <div id="chart3DProbCaida" class="chart"></div>
+                    <form method="POST">
+                        {{ formCompareTests.hidden_tag() }}
+                        {{ formCompareTests.paciente1.label }}
+                        {{ formCompareTests.paciente1(id='compareTestsPaciente1') }}
+                        {{ formCompareTests.test1.label }}
+                        {{ formCompareTests.test1(id='compareTestsTest1') }}
+                        {{ formCompareTests.paciente2.label }}
+                        {{ formCompareTests.paciente2(id='compareTestsPaciente2') }}
+                        {{ formCompareTests.test2.label }}
+                        {{ formCompareTests.test2(id='compareTestsTest2') }}
+                        {{ formCompareTests.metric.label }}
+                        {{ formCompareTests.metric }}
+                        <br>
+                        {{ formCompareTests.submit }}
+                    </form>
+                    <div id="graphCompareTests" class="chart"></div>
+                    <form method="POST">
+                        {{ formCompareFases.hidden_tag() }}
+                        {{ formCompareFases.paciente1.label }}
+                        {{ formCompareFases.paciente1(id='compareFasesPaciente1') }}
+                        {{ formCompareFases.test1.label }}
+                        {{ formCompareFases.test1(id='compareFasesTest1') }}
+                        {{ formCompareFases.paciente2.label }}
+                        {{ formCompareFases.paciente2(id='compareFasesPaciente2') }}
+                        {{ formCompareFases.test2.label }}
+                        {{ formCompareFases.test2(id='compareFasesTest2') }}
+                        <br>
+                        {{ formCompareFases.submit }}
+                    </form>
+                    <div id="graphCompareFases" class="chart"></div>
+                </div>
+            </div>
+            <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+            {% if graphEvolucionProbCaida %}
+            <script type='text/javascript'>
+                var start_time = Date.now()
+                var graphs = {{graphEvolucionProbCaida | safe}};
+                Plotly.plot('chartEvolucionProbCaida',graphs,{});
+                console.log("Time plot= " + (Date.now() - start_time))
+            </script>
+            {% endif %}
+            {% if graph3DProbCaida %}
+            <script type='text/javascript'>
+                var start_time = Date.now()
+                var graphs = {{graph3DProbCaida | safe}};
+                Plotly.plot('chart3DProbCaida',graphs,{});
+                console.log("Time plot= " + (Date.now() - start_time))
+            </script>
+            {% endif %}
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+            <script>
+                $(document).ready(function() {
+                    function updateSelectors(selector, dependentSelector)
+                    {
+                        var selectedValue = selector.val();
+                        dependentSelector.empty();
+
+                        
+                        $.ajax({
+                            type: 'POST',
+                            url: '/get_paciente_tests',
+                            data: { id_paciente: selectedValue },
+                            success: function(response) {
+                                console.log("ajax response")
+                                console.log(response)
+                                var testsData = response.tests;
+                                
+                                $.each(testsData, function(index, value) {
+                                    dependentSelector.append($('<option>').text(value.date).attr('value', value.num_test));
+                                });
+                            },
+                            error: function(error) {
+                                console.log('Error:', error);
+                            }
+                        });
+                    }
+                    
+                    $('#compareTestsPaciente1').change(function() {
+                        updateSelectors($('#compareTestsPaciente1'), $('#compareTestsTest1'))
+                    });
+                    $('#compareTestsPaciente2').change(function() {
+                        updateSelectors($('#compareTestsPaciente2'), $('#compareTestsTest2'))
+                    });
+
+                    $('#compareFasesPaciente1').change(function() {
+                        updateSelectors($('#compareFasesPaciente1'), $('#compareFasesTest1'))
+                    });
+                    $('#compareFasesPaciente2').change(function() {
+                        updateSelectors($('#compareFasesPaciente2'), $('#compareFasesTest2'))
+                    });
+
+
+                    updateSelectors($('#compareTestsPaciente1'), $('#compareTestsTest1'))
+                    updateSelectors($('#compareTestsPaciente2'), $('#compareTestsTest2'))
+
+                    updateSelectors($('#compareFasesPaciente1'), $('#compareFasesTest1'))
+                    updateSelectors($('#compareFasesPaciente2'), $('#compareFasesTest2'))
+                });
+            </script>
+            {% if graphCompareTests %}
+            <script type='text/javascript'>
+                var start_time = Date.now()
+                var graphs = {{graphCompareTests | safe}};
+                Plotly.plot('graphCompareTests',graphs,{});
+                console.log("Time plot= " + (Date.now() - start_time))
+            </script>
+            {% endif %}
+            {% if graphCompareFases %}
+            <script type='text/javascript'>
+                var start_time = Date.now()
+                var graphs = {{graphCompareFases | safe}};
+                Plotly.plot('graphCompareFases',graphs,{});
+                console.log("Time plot= " + (Date.now() - start_time))
+            </script>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}

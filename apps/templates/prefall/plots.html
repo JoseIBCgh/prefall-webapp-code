@@ -4,145 +4,161 @@
 
     <div class="pcoded-content">
         <div class="pcoded-inner-content">
-            <!-- [ breadcrumb ] start -->
-
-            <!-- [ breadcrumb ] end -->
-            <div class="main-body">
-                <div class="page-wrapper">
-                    <form method="POST">
-                        {{ formEvolucionProbCaida.hidden_tag() }}
-                        {{ formEvolucionProbCaida.selected_element.label }}
-                        {{ formEvolucionProbCaida.selected_element }}
-                        <br>
-                        {{ formEvolucionProbCaida.submit }}
-                    </form>
-                    <div id="chartEvolucionProbCaida" class="chart"></div>
-                    <form method="POST">
-                        {{ form3DProbCaida.hidden_tag() }}
-                        {{ form3DProbCaida.selected_element.label }}
-                        {{ form3DProbCaida.selected_element }}
-                        {{ form3DProbCaida.second_selected_element.label }}
-                        {{ form3DProbCaida.second_selected_element }}
-                        <br>
-                        {{ form3DProbCaida.submit }}
-                    </form>
-                    <div id="chart3DProbCaida" class="chart"></div>
-                    <form method="POST">
-                        {{ formCompareTests.hidden_tag() }}
-                        {{ formCompareTests.paciente1.label }}
-                        {{ formCompareTests.paciente1(id='compareTestsPaciente1') }}
-                        {{ formCompareTests.test1.label }}
-                        {{ formCompareTests.test1(id='compareTestsTest1') }}
-                        {{ formCompareTests.paciente2.label }}
-                        {{ formCompareTests.paciente2(id='compareTestsPaciente2') }}
-                        {{ formCompareTests.test2.label }}
-                        {{ formCompareTests.test2(id='compareTestsTest2') }}
-                        {{ formCompareTests.metric.label }}
-                        {{ formCompareTests.metric }}
-                        <br>
-                        {{ formCompareTests.submit }}
-                    </form>
-                    <div id="graphCompareTests" class="chart"></div>
-                    <form method="POST">
-                        {{ formCompareFases.hidden_tag() }}
-                        {{ formCompareFases.paciente1.label }}
-                        {{ formCompareFases.paciente1(id='compareFasesPaciente1') }}
-                        {{ formCompareFases.test1.label }}
-                        {{ formCompareFases.test1(id='compareFasesTest1') }}
-                        {{ formCompareFases.paciente2.label }}
-                        {{ formCompareFases.paciente2(id='compareFasesPaciente2') }}
-                        {{ formCompareFases.test2.label }}
-                        {{ formCompareFases.test2(id='compareFasesTest2') }}
-                        <br>
-                        {{ formCompareFases.submit }}
-                    </form>
-                    <div id="graphCompareFases" class="chart"></div>
+            <div class="card-Recent-Users">
+                <div class="card-header">
+                    <h5>Pacientes</h5>
+                </div>
+                <div class="card-block px-0 py-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th class="center equal-width-4-90">Id</th>
+                                    <th class="center equal-width-4-90">Apellidos</th>
+                                    <th class="center equal-width-4-90">Nombre</th>
+                                    <th class="center equal-width-4-90">CIF/NIF</th>
+                                    <th class="center equal-width-4-90">Centro</th>
+                                    <th class="text-right equal-width-4-90"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for paciente in pacientes %}
+                                <tr class="unread">
+                                    <td>
+                                        <h6 class="text-muted center remove-margins">{{paciente["identificador"]}}</h6>
+                                    </td>
+                                    <td>
+                                        <h6 class="text-muted center remove-margins">{{paciente["apellidos"]}}</h6>
+                                    </td>
+                                    <td>
+                                        <h6 class="text-muted center remove-margins">{{paciente["nombre"]}}</h6>
+                                    </td>
+                                    <td>
+                                        <h6 class="text-muted center remove-margins">{{paciente["identificador"]}}</h6>
+                                    </td>
+                                    <td>
+                                        <h6 class="text-muted center remove-margins">{{paciente.centro.nombreFiscal}}</h6>
+                                    </td>
+                                    <td class="center">
+                                        <a class="label theme-bg text-white f-12 center plotear-button" data-paciente-id="{{ paciente.id }}">Plotear</a>
+                                    </td>
+                                </tr> 
+                                {% endfor %}                               
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="pagination">
+                    {% if current_page > 1 %}
+                        <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico', page=current_page-1) }}" class="page-link">Previous</a>
+                    {% else %}
+                        <span class="page-link disabled">Previous</span>
+                    {% endif %}
+                
+                    {% for page_num in range(1, total_pages + 1) %}
+                        {% if current_page == page_num %}
+                            <span class="page-link current">{{ page_num }}</span>
+                        {% else %}
+                            <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico', page=page_num) }}" class="page-link">{{ page_num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                
+                    {% if current_page < total_pages %}
+                        <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico', page=current_page+1) }}" class="page-link">Next</a>
+                    {% else %}
+                        <span class="page-link disabled">Next</span>
+                    {% endif %}
                 </div>
             </div>
-            <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-            {% if graphEvolucionProbCaida %}
-            <script type='text/javascript'>
-                var start_time = Date.now()
-                var graphs = {{graphEvolucionProbCaida | safe}};
-                Plotly.plot('chartEvolucionProbCaida',graphs,{});
-                console.log("Time plot= " + (Date.now() - start_time))
-            </script>
-            {% endif %}
-            {% if graph3DProbCaida %}
-            <script type='text/javascript'>
-                var start_time = Date.now()
-                var graphs = {{graph3DProbCaida | safe}};
-                Plotly.plot('chart3DProbCaida',graphs,{});
-                console.log("Time plot= " + (Date.now() - start_time))
-            </script>
-            {% endif %}
-            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-            <script>
-                $(document).ready(function() {
-                    function updateSelectors(selector, dependentSelector)
-                    {
-                        var selectedValue = selector.val();
-                        dependentSelector.empty();
-
-                        
-                        $.ajax({
-                            type: 'POST',
-                            url: '/get_paciente_tests',
-                            data: { id_paciente: selectedValue },
-                            success: function(response) {
-                                console.log("ajax response")
-                                console.log(response)
-                                var testsData = response.tests;
-                                
-                                $.each(testsData, function(index, value) {
-                                    dependentSelector.append($('<option>').text(value.date).attr('value', value.num_test));
-                                });
-                            },
-                            error: function(error) {
-                                console.log('Error:', error);
-                            }
-                        });
-                    }
-                    
-                    $('#compareTestsPaciente1').change(function() {
-                        updateSelectors($('#compareTestsPaciente1'), $('#compareTestsTest1'))
-                    });
-                    $('#compareTestsPaciente2').change(function() {
-                        updateSelectors($('#compareTestsPaciente2'), $('#compareTestsTest2'))
-                    });
-
-                    $('#compareFasesPaciente1').change(function() {
-                        updateSelectors($('#compareFasesPaciente1'), $('#compareFasesTest1'))
-                    });
-                    $('#compareFasesPaciente2').change(function() {
-                        updateSelectors($('#compareFasesPaciente2'), $('#compareFasesTest2'))
-                    });
-
-
-                    updateSelectors($('#compareTestsPaciente1'), $('#compareTestsTest1'))
-                    updateSelectors($('#compareTestsPaciente2'), $('#compareTestsTest2'))
-
-                    updateSelectors($('#compareFasesPaciente1'), $('#compareFasesTest1'))
-                    updateSelectors($('#compareFasesPaciente2'), $('#compareFasesTest2'))
-                });
-            </script>
-            {% if graphCompareTests %}
-            <script type='text/javascript'>
-                var start_time = Date.now()
-                var graphs = {{graphCompareTests | safe}};
-                Plotly.plot('graphCompareTests',graphs,{});
-                console.log("Time plot= " + (Date.now() - start_time))
-            </script>
-            {% endif %}
-            {% if graphCompareFases %}
-            <script type='text/javascript'>
-                var start_time = Date.now()
-                var graphs = {{graphCompareFases | safe}};
-                Plotly.plot('graphCompareFases',graphs,{});
-                console.log("Time plot= " + (Date.now() - start_time))
-            </script>
-            {% endif %}
+            <div id="pagination" class="pagination"></div>
+            <div id="chartContainer"></div>
         </div>
     </div>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        lastGraph = null
+        function plotGraph(graphDivId, graphData) {
+            var start_time = Date.now()
+            Plotly.plot(graphDivId, graphData, {});
+            console.log("Time plot= " + (Date.now() - start_time))
+        }
+        function showDiv(divId) {
+            document.querySelectorAll('.chart').forEach(function(chartDiv) {
+                chartDiv.style.display = 'none';
+            });
+
+            var selectedDiv = document.getElementById(divId);
+            selectedDiv.style.display = 'block';
+
+        }
+
+        var paginationData = [
+            { label: 'Acelerómetro', id: 'acelerometro' },
+            { label: 'Giroscopio', id: 'giroscopio' },
+            { label: 'Magnetometro', id: 'magnetometro' }
+        ];
+
+        function generateGraphDivs() {
+            var paginationContainer = document.getElementById('pagination');
+            var chartsContainer = document.getElementById('chartContainer');
+
+            paginationData.forEach(function(item) {
+                // Create a pagination button
+                var button = document.createElement('button');
+                button.textContent = item.label;
+                button.onclick = function() {
+                    showDiv(item.id);
+                };
+                paginationContainer.appendChild(button);
+
+                // Create a chart div
+                var chartDiv = document.createElement('div');
+                chartDiv.id = item.id;
+                chartDiv.className = 'chart';
+                chartDiv.style.display = 'none';
+                chartsContainer.appendChild(chartDiv);
+            });
+        }
+        // Agrega un manejador de eventos a los botones "Plotear"
+        const botonesPlotear = document.querySelectorAll('.plotear-button');
+        botonesPlotear.forEach(boton => {
+            boton.addEventListener('click', function () {
+                // Obtén el ID del paciente desde el atributo de datos
+                const idPaciente = boton.getAttribute('data-paciente-id');
+                
+                // Realiza una solicitud HTTP al backend con el ID del paciente
+                fetch(`/plots/generar_paciente/${idPaciente}`, {
+                    method: 'GET', // O el método que corresponda
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        console.error('Error en la solicitud al backend');
+                    }
+                })
+                .then(data => {
+                    if (data) {
+                        if(lastGraph !== 'individual'){
+                            generateGraphDivs();
+                            lastGraph = 'individual';
+                        }
+                        
+                        const graphDataAcc = data.acelerometro;
+                        const graphDataGyr = data.giroscopio;
+                        const graphDataMag = data.magnetometro;
+
+                        
+                        plotGraph('acelerometro', JSON.parse(graphDataAcc));
+                        plotGraph('giroscopio', JSON.parse(graphDataGyr));
+                        plotGraph('magnetometro', JSON.parse(graphDataMag));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error en la solicitud al backend:', error);
+                });
+            });
+        });
+    </script>
 
 {% endblock %}

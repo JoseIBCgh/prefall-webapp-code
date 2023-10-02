@@ -1431,125 +1431,150 @@ def upload():
 @blueprint.route('/plots',  methods=['GET','POST'])
 @roles_accepted("medico")
 def plots():
-    graphEvolucionProbCaida = null
-    pacientes = current_user.pacientes_asociados
-    formEvolucionProbCaida = ElementForm()
-    formEvolucionProbCaida.selected_element.choices = [(element.id, element.username) for element in pacientes]
-    if formEvolucionProbCaida.validate_on_submit():
-        import plotly
-        import plotly.graph_objs as go
-        from apps import db
-        selected_element_id = formEvolucionProbCaida.selected_element.data
-        tests = db.session.query(
-            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
-            .filter_by(id_paciente=selected_element_id)\
-            .filter(Test.probabilidad_caida.isnot(None)).all()
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # Number of items per page
+
+    pacientes = current_user.pacientes_asociados.all()
+    
+    total_records = len(pacientes)
+
+    total_pages = (total_records - 1) // per_page + 1
+
+    start_index = (page - 1) * per_page
+    end_index = min(start_index + per_page, total_records)
+
+    pacientes = pacientes[start_index:end_index]
+
+    return render_template(
+        'prefall/plots.html', 
+        pacientes=pacientes, total_pages=total_pages, current_page=page)
+
+@blueprint.route('/plots/generar_paciente/<id>', methods=['GET'])
+@roles_accepted("medico")
+def generate_plots_paciente(id):
+    import plotly
+    import plotly.graph_objs as go
+    from apps import db
+    import pickle
+    import math
+    import numpy as np
+
+    print("/plot/generar_paciente/" + id)
+    
+    tests = db.session.query(
+        Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+        .filter_by(id_paciente=id)\
+        .filter(Test.probabilidad_caida.isnot(None)).all()
+    
+    x = [test.date for test in tests]
+    y = [test.probabilidad_caida for test in tests]
+    
+    fig = go.Figure()
+    
+    trace = go.Scatter(x=x, y=y, mode='lines+markers')
+
+    fig.add_trace(trace)
+
+    fig.update_xaxes(title_text='Date')
+    fig.update_yaxes(title_text='Probability of Falling', range=[0, 1])
+
+    graphEvolucionProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+    mean_acc_x = []
+    mean_acc_y = []
+    mean_acc_z = []
+
+    mean_gyr_x = []
+    mean_gyr_y = []
+    mean_gyr_z = []
+
+    mean_mag_x = []
+    mean_mag_y = []
+    mean_mag_z = []
+
+    probs_caida = []
+
+    for test in tests:
+        """
+        rows = TestUnit.query.filter_by(num_test=test.num_test).all()
+
         
-        x = [test.date for test in tests]
-        y = [test.probabilidad_caida for test in tests]
-        
-        fig = go.Figure()
-        
-        trace = go.Scatter(x=x, y=y, mode='lines+markers')
+        acc_x_values = [row.acc_x for row in rows]
+        acc_y_values = [row.acc_y for row in rows]
+        acc_z_values = [row.acc_z for row in rows]
 
-        fig.add_trace(trace)
+        gyr_x_values = [row.gyr_x for row in rows]
+        gyr_y_values = [row.gyr_y for row in rows]
+        gyr_z_values = [row.gyr_z for row in rows]
 
-        fig.update_xaxes(title_text='Date')
-        fig.update_yaxes(title_text='Probability of Falling', range=[0, 1])
+        mag_x_values = [row.mag_x for row in rows]
+        mag_y_values = [row.mag_y for row in rows]
+        mag_z_values = [row.mag_z for row in rows]
 
-        graphEvolucionProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+        mean_acc_x.append(np.mean(acc_x_values))
+        mean_acc_y.append(np.mean(acc_y_values))
+        mean_acc_z.append(np.mean(acc_z_values))
 
-    graph3DProbCaida = null    
-    form3DProbCaida = DoubleElementForm()
-    form3DProbCaida.selected_element.choices = [(element.id, element.username) for element in pacientes]
-    form3DProbCaida.second_selected_element.choices = [("la","Linear Acceleration"), ("m","Magnetometer"), ("g","Gyroscope")]
-    if form3DProbCaida.validate_on_submit():
-        import plotly
-        import plotly.graph_objs as go
-        from apps import db
-        import pickle
-        import math
-        selected_element_id = form3DProbCaida.selected_element.data
-        metric_prefix = form3DProbCaida.second_selected_element.data
-        choices = form3DProbCaida.second_selected_element.choices
+        mean_gyr_x.append(np.mean(gyr_x_values))
+        mean_gyr_y.append(np.mean(gyr_y_values))
+        mean_gyr_z.append(np.mean(gyr_z_values))
 
-        full_name = null
+        mean_mag_x.append(np.mean(mag_x_values))
+        mean_mag_y.append(np.mean(mag_y_values))
+        mean_mag_z.append(np.mean(mag_z_values))
+        """
+        data_query = db.session.query(
+            TestUnit.acc_x, TestUnit.acc_y, TestUnit.acc_z,
+            TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
+            TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z,
+        ).filter_by(num_test=test.num_test).all()
 
-        for choice_value, choice_label in choices:
-            if choice_value == metric_prefix:
-                full_name = choice_label
-                break
+        mean_values = np.mean(data_query, axis=0)
 
-        tests = db.session.query(
-            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
-            .filter_by(id_paciente=selected_element_id)\
-            .filter(Test.probabilidad_caida.isnot(None)).all()
+        mean_acc_x.append(mean_values[0])
+        mean_acc_y.append(mean_values[1])
+        mean_acc_z.append(mean_values[2])
+        mean_gyr_x.append(mean_values[3])
+        mean_gyr_y.append(mean_values[4])
+        mean_gyr_z.append(mean_values[5])
+        mean_mag_x.append(mean_values[6])
+        mean_mag_y.append(mean_values[7])
+        mean_mag_z.append(mean_values[8])
 
-        dataframes = []
+        probs_caida.append(test.probabilidad_caida)
 
-        for test in tests:
-            blob_data = test.data  
-            if blob_data:
-                df = pickle.loads(blob_data)
-                dataframes.append(df)
 
-        x = []
-        for df in dataframes:
-            mean = (df[metric_prefix + 'x_mean_f1'] * df['duracion_f1']\
-            + df[metric_prefix + 'x_mean_f2'] * df['duracion_f2']\
-            + df[metric_prefix + 'x_mean_f3'] * df['duracion_f3']\
-            + df[metric_prefix + 'x_mean_f4'] * df['duracion_f4'])\
-            / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
-            x.append(mean.values[0])
+    print("after loop data extraction")
+    
+    fig = go.Figure()
 
-        y = []
-        for df in dataframes:
-            mean = (df[metric_prefix + 'y_mean_f1'] * df['duracion_f1']\
-            + df[metric_prefix + 'y_mean_f2'] * df['duracion_f2']\
-            + df[metric_prefix + 'y_mean_f3'] * df['duracion_f3']\
-            + df[metric_prefix + 'y_mean_f4'] * df['duracion_f4'])\
-            / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
-            y.append(mean.values[0])
-
-        z = []
-        for df in dataframes:
-            mean = (df[metric_prefix + 'z_mean_f1'] * df['duracion_f1']\
-            + df[metric_prefix + 'z_mean_f2'] * df['duracion_f2']\
-            + df[metric_prefix + 'z_mean_f3'] * df['duracion_f3']\
-            + df[metric_prefix + 'z_mean_f4'] * df['duracion_f4'])\
-            / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
-            z.append(mean.values[0])
-
-        c = [test.probabilidad_caida for test in tests]
-
-        fig = go.Figure()
-
-        trace = go.Scatter3d(
-            x=x,
-            y=y,
-            z=z,
-            mode='markers',
-            marker=dict(
-                size=5, 
-                color=c, 
-                colorscale='Viridis', 
-                colorbar=dict(len=1, y=0, yanchor='bottom'),  
-                opacity=1, 
-            )
+    trace = go.Scatter3d(
+        x=mean_acc_x,
+        y=mean_acc_y,
+        z=mean_acc_z,
+        mode='markers',
+        marker=dict(
+            size=5, 
+            color=probs_caida, 
+            colorscale='Viridis', 
+            colorbar=dict(len=1, y=0, yanchor='bottom'),  
+            opacity=1, 
         )
+    )
 
-        fig.add_trace(trace)
+    fig.add_trace(trace)
 
-        fig.update_scenes(xaxis_title=full_name + ' X', yaxis_title=full_name + ' Y', zaxis_title=full_name + ' Z')
-        
-        x_floor = math.floor(min(x))
-        x_ceil = math.ceil(max(x))
+    fig.update_scenes(xaxis_title='Aceleracion X', yaxis_title='Aceleracion Y', zaxis_title='Aceleracion Z')
+    
+    if len(mean_acc_x) > 0:
+        x_floor = math.floor(min(mean_acc_x))
+        x_ceil = math.ceil(max(mean_acc_x))
 
-        y_floor = math.floor(min(y))
-        y_ceil = math.ceil(max(y))
+        y_floor = math.floor(min(mean_acc_y))
+        y_ceil = math.ceil(max(mean_acc_y))
 
-        z_floor = math.floor(min(z))
-        z_ceil = math.ceil(max(z))
+        z_floor = math.floor(min(mean_acc_z))
+        z_ceil = math.ceil(max(mean_acc_z))
 
         fig.update_layout(scene=dict(
             xaxis=dict(range=[x_floor, x_ceil]),
@@ -1557,202 +1582,94 @@ def plots():
             zaxis=dict(range=[z_floor, z_ceil]),
         ))
 
-        graph3DProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    graph3DProbCaidaAcc = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
-    graphCompareTests = null
-    formCompareTests = CompareTestsForm()
-    formCompareTests.paciente1.choices = [(element.id, element.username) for element in pacientes]
-    formCompareTests.paciente2.choices = [(element.id, element.username) for element in pacientes]
-    formCompareTests.metric.choices = [("la","Linear Acceleration"), ("m","Magnetometer"), ("g","Gyroscope")]
-    formCompareTests.test1.choices = []
-    formCompareTests.test2.choices = []
-    if formCompareTests.validate_on_submit():
-        print("formCompareTests validated")
-        import plotly
-        import plotly.graph_objs as go
-        from apps import db
-        import pickle
-        import math
-        selected_paciente_id1 = formCompareTests.paciente1.data
-        selected_paciente_id2 = formCompareTests.paciente2.data
 
-        metric_prefix = formCompareTests.metric.data
+    fig = go.Figure()
 
-        choices = formCompareTests.metric.choices
+    trace = go.Scatter3d(
+        x=mean_gyr_x,
+        y=mean_gyr_y,
+        z=mean_gyr_z,
+        mode='markers',
+        marker=dict(
+            size=5, 
+            color=probs_caida, 
+            colorscale='Viridis', 
+            colorbar=dict(len=1, y=0, yanchor='bottom'),  
+            opacity=1, 
+        )
+    )
 
-        full_name_paciente1 = null
+    fig.add_trace(trace)
 
-        for choice_value, choice_label in formCompareTests.paciente1.choices:
-            if choice_value == selected_paciente_id1:
-                full_name_paciente1 = choice_label
-                break
-
-        full_name_paciente2 = null
-
-        for choice_value, choice_label in formCompareTests.paciente2.choices:
-            if choice_value == selected_paciente_id2:
-                full_name_paciente2 = choice_label
-                break
-
-        full_name = null
-
-        for choice_value, choice_label in choices:
-            if choice_value == metric_prefix:
-                full_name = choice_label
-                break
-
-        test1 = db.session.query(
-            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
-            .filter_by(id_paciente=selected_paciente_id1)\
-            .filter(Test.num_test==formCompareTests.test1.data).first()
-
-        test2 = db.session.query(
-            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
-            .filter_by(id_paciente=selected_paciente_id2)\
-            .filter(Test.num_test==formCompareTests.test2.data).first()
-
-        dataframes = []
-        blob_data1 = test1.data  
-        if blob_data1:
-            df1 = pickle.loads(blob_data1)
-            dataframes.append(df1)
-
-        blob_data2 = test2.data  
-        if blob_data2:
-            df2 = pickle.loads(blob_data2)
-            dataframes.append(df2)
-
-        x = []
-        for df in dataframes:
-            mean = (df[metric_prefix + 'x_mean_f1'] * df['duracion_f1']\
-            + df[metric_prefix + 'x_mean_f2'] * df['duracion_f2']\
-            + df[metric_prefix + 'x_mean_f3'] * df['duracion_f3']\
-            + df[metric_prefix + 'x_mean_f4'] * df['duracion_f4'])\
-            / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
-            x.append(mean.values[0])
-
-        y = []
-        for df in dataframes:
-            mean = (df[metric_prefix + 'y_mean_f1'] * df['duracion_f1']\
-            + df[metric_prefix + 'y_mean_f2'] * df['duracion_f2']\
-            + df[metric_prefix + 'y_mean_f3'] * df['duracion_f3']\
-            + df[metric_prefix + 'y_mean_f4'] * df['duracion_f4'])\
-            / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
-            y.append(mean.values[0])
-
-        z = []
-        for df in dataframes:
-            mean = (df[metric_prefix + 'z_mean_f1'] * df['duracion_f1']\
-            + df[metric_prefix + 'z_mean_f2'] * df['duracion_f2']\
-            + df[metric_prefix + 'z_mean_f3'] * df['duracion_f3']\
-            + df[metric_prefix + 'z_mean_f4'] * df['duracion_f4'])\
-            / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
-            z.append(mean.values[0])
-        
-        fig = go.Figure()
-
-        labels = [full_name + " X", full_name + " Y", full_name + " Z"]
-        bars1 = [x[0], y[0], z[0]]
-        bars2 = [x[1], y[1], z[1]]
-        trace_group1 = go.Bar(x=labels, y=bars1, name=full_name_paciente1 + " " + test1.date.strftime("%Y-%m-%d"), text=bars1, textposition='outside')
-        trace_group2 = go.Bar(x=labels, y=bars2, name=full_name_paciente2 + " " + test2.date.strftime("%Y-%m-%d"), text=bars2, textposition='outside')
-
-        fig.add_trace(trace_group1)
-        fig.add_trace(trace_group2)
-
-        fig.update_traces(texttemplate='%{text:.2f}', textposition='outside', selector=dict(type='bar'))
-
-        graphCompareTests = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    fig.update_scenes(xaxis_title='Gyroscopio X', yaxis_title='Gyroscopio Y', zaxis_title='Gyroscopio Z')
     
-    graphCompareFases = null
-    formCompareFases = CompareFasesForm()
-    formCompareFases.paciente1.choices = [(element.id, element.username) for element in pacientes]
-    formCompareFases.paciente2.choices = [(element.id, element.username) for element in pacientes]
-    formCompareFases.test1.choices = []
-    formCompareFases.test2.choices = []
-    if formCompareFases.validate_on_submit():
-        print("formCompareTests validated")
-        import plotly
-        import plotly.graph_objs as go
-        from apps import db
-        import pickle
-        import math
-        selected_paciente_id1 = formCompareFases.paciente1.data
-        selected_paciente_id2 = formCompareFases.paciente2.data
+    if len(mean_gyr_x) > 0:
+        x_floor = math.floor(min(mean_gyr_x))
+        x_ceil = math.ceil(max(mean_gyr_x))
 
-        full_name_paciente1 = null
+        y_floor = math.floor(min(mean_gyr_y))
+        y_ceil = math.ceil(max(mean_gyr_y))
 
-        for choice_value, choice_label in formCompareFases.paciente1.choices:
-            if choice_value == selected_paciente_id1:
-                full_name_paciente1 = choice_label
-                break
+        z_floor = math.floor(min(mean_gyr_z))
+        z_ceil = math.ceil(max(mean_gyr_z))
 
-        full_name_paciente2 = null
+        fig.update_layout(scene=dict(
+            xaxis=dict(range=[x_floor, x_ceil]),
+            yaxis=dict(range=[y_floor, y_ceil]),
+            zaxis=dict(range=[z_floor, z_ceil]),
+        ))
 
-        for choice_value, choice_label in formCompareFases.paciente2.choices:
-            if choice_value == selected_paciente_id2:
-                full_name_paciente2 = choice_label
-                break
-
-        test1 = db.session.query(
-            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
-            .filter_by(id_paciente=selected_paciente_id1)\
-            .filter(Test.num_test==formCompareTests.test1.data).first()
-
-        test2 = db.session.query(
-            Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
-            .filter_by(id_paciente=selected_paciente_id2)\
-            .filter(Test.num_test==formCompareTests.test2.data).first()
-
-        dataframes = []
-        blob_data1 = test1.data  
-        if blob_data1:
-            df1 = pickle.loads(blob_data1)
-            dataframes.append(df1)
-
-        blob_data2 = test2.data  
-        if blob_data2:
-            df2 = pickle.loads(blob_data2)
-            dataframes.append(df2)
-
-        fase1 = []
-        for df in dataframes:
-            fase1.append(df['duracion_f1'].values[0])
-        
-        fase2 = []
-        for df in dataframes:
-            fase2.append(df['duracion_f2'].values[0])
-
-        fase3 = []
-        for df in dataframes:
-            fase3.append(df['duracion_f3'].values[0])
-
-        fase4 = []
-        for df in dataframes:
-            fase4.append(df['duracion_f4'].values[0])
-
-        fig = go.Figure()
-
-        labels = ["Fase 1", "Fase 2", "Fase 3", "Fase 4"]
-        bars1 = [fase1[0], fase2[0], fase3[0], fase4[0]]
-        bars2 = [fase1[1], fase2[1], fase3[1], fase4[1]]
-        trace_group1 = go.Bar(x=labels, y=bars1, name=full_name_paciente1 + " " + test1.date.strftime("%Y-%m-%d"), text=bars1, textposition='outside')
-        trace_group2 = go.Bar(x=labels, y=bars2, name=full_name_paciente2 + " " + test2.date.strftime("%Y-%m-%d"), text=bars2, textposition='outside')
-
-        fig.add_trace(trace_group1)
-        fig.add_trace(trace_group2)
-
-        fig.update_traces(texttemplate='%{text:.2f}', textposition='outside', selector=dict(type='bar'))
-
-        graphCompareFases = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    graph3DProbCaidaGyr = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
 
-    return render_template(
-        'prefall/plots.html', 
-        formEvolucionProbCaida=formEvolucionProbCaida, graphEvolucionProbCaida=graphEvolucionProbCaida,
-        form3DProbCaida=form3DProbCaida, graph3DProbCaida=graph3DProbCaida,
-        formCompareTests=formCompareTests, graphCompareTests=graphCompareTests,
-        formCompareFases=formCompareFases, graphCompareFases=graphCompareFases)
+    fig = go.Figure()
+
+    trace = go.Scatter3d(
+        x=mean_mag_x,
+        y=mean_mag_y,
+        z=mean_mag_z,
+        mode='markers',
+        marker=dict(
+            size=5, 
+            color=probs_caida, 
+            colorscale='Viridis', 
+            colorbar=dict(len=1, y=0, yanchor='bottom'),  
+            opacity=1, 
+        )
+    )
+
+    fig.add_trace(trace)
+
+    fig.update_scenes(xaxis_title='Magnetometro X', yaxis_title='Magnetometro Y', zaxis_title='Magnetometro Z')
+    
+    if len(mean_mag_x) > 0:
+        x_floor = math.floor(min(mean_mag_x))
+        x_ceil = math.ceil(max(mean_mag_x))
+
+        y_floor = math.floor(min(mean_mag_y))
+        y_ceil = math.ceil(max(mean_mag_y))
+
+        z_floor = math.floor(min(mean_mag_z))
+        z_ceil = math.ceil(max(mean_mag_z))
+
+        fig.update_layout(scene=dict(
+            xaxis=dict(range=[x_floor, x_ceil]),
+            yaxis=dict(range=[y_floor, y_ceil]),
+            zaxis=dict(range=[z_floor, z_ceil]),
+        ))
+
+    graph3DProbCaidaMag = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+    graficos = {
+        "evolucion_prob_caida": graphEvolucionProbCaida,
+        "acelerometro": graph3DProbCaidaAcc,
+        "giroscopio": graph3DProbCaidaGyr,
+        "magnetometro": graph3DProbCaidaMag
+    }
+
+    return jsonify(graficos)
 
 
 @blueprint.route('/plots/individual',  methods=['GET','POST'])
