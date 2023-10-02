@@ -1664,6 +1664,26 @@ def generate_plots_paciente(id):
     return jsonify(graficos)
 
 
+@blueprint.route('/get_tests/<id_paciente>',  methods=['GET'])
+@clinical_data_access()
+def get_tests(id_paciente):
+    from apps import db
+    from sqlalchemy.orm import aliased
+
+    Paciente = aliased(User)
+    Medico = aliased(User)
+
+    tests = (
+        db.session.query(Test, Centro, Paciente, Medico)
+        .join(Centro, Test.id_centro == Centro.id)
+        .join(Paciente, Test.id_paciente == Paciente.id)
+        .outerjoin(Medico, Test.id_medico == Medico.id)
+        .filter(Test.id_paciente == id_paciente)
+        .all()
+    )
+    tests_data = [{"num_test": test.Test.num_test, "date": test.Test.date} for test in tests]
+    return jsonify(tests_data)
+
 @blueprint.route('/plots/individual',  methods=['GET','POST'])
 @roles_accepted("medico")
 def plots_individual():

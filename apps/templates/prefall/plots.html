@@ -5,6 +5,11 @@
     <div class="pcoded-content">
         <div class="pcoded-inner-content">
             <div id="tabulator"></div>
+            <div id="test-popup" class="popup">
+                <div class="popup-content">
+                    <div id="test-table"></div>
+                </div>
+            </div>
             <div id="pagination" class="pagination"></div>
             <div id="chartContainer"></div>
         </div>
@@ -29,6 +34,18 @@
                     button.textContent = "Plotear";
                     button.addEventListener("click", function() {
                         fetchAndPlotData(rowData.id);
+                    });
+                    return button;
+                },
+            },
+            {
+                title: "",
+                formatter: function(cell, formatterParams, onRendered) {
+                    var rowData = cell.getRow().getData();
+                    var button = document.createElement("button");
+                    button.textContent = "Tests";
+                    button.addEventListener("click", function() {
+                        fetchTestAndDisplay(rowData.id);
                     });
                     return button;
                 },
@@ -62,6 +79,13 @@
             selectedDiv.style.display = 'block';
 
         }
+        const popup = document.getElementById('test-popup');
+        function showPopup() {
+            popup.style.display = 'block';
+        }
+        function closePopup() {
+            popup.style.display = 'none';
+        }
 
         var paginationData = [
             { label: 'Acelerómetro', id: 'acelerometro' },
@@ -74,7 +98,6 @@
             var chartsContainer = document.getElementById('chartContainer');
 
             paginationData.forEach(function(item) {
-                // Create a pagination button
                 var button = document.createElement('button');
                 button.textContent = item.label;
                 button.onclick = function() {
@@ -82,7 +105,6 @@
                 };
                 paginationContainer.appendChild(button);
 
-                // Create a chart div
                 var chartDiv = document.createElement('div');
                 chartDiv.id = item.id;
                 chartDiv.className = 'chart';
@@ -122,46 +144,50 @@
                 console.error('Error en la solicitud al backend:', error);
             });
         }
-        // Agrega un manejador de eventos a los botones "Plotear"
-        const botonesPlotear = document.querySelectorAll('.plotear-button');
-        botonesPlotear.forEach(boton => {
-            boton.addEventListener('click', function () {
-                // Obtén el ID del paciente desde el atributo de datos
-                const idPaciente = boton.getAttribute('data-paciente-id');
-                
-                // Realiza una solicitud HTTP al backend con el ID del paciente
-                fetch(`/plots/generar_paciente/${idPaciente}`, {
-                    method: 'GET', // O el método que corresponda
-                })
-                .then(response => {
-                    if (response.ok) {
-                        return response.json();
-                    } else {
-                        console.error('Error en la solicitud al backend');
-                    }
-                })
-                .then(data => {
-                    if (data) {
-                        if(lastGraph !== 'individual'){
-                            generateGraphDivs();
-                            lastGraph = 'individual';
-                        }
-                        
-                        const graphDataAcc = data.acelerometro;
-                        const graphDataGyr = data.giroscopio;
-                        const graphDataMag = data.magnetometro;
-
-                        
-                        plotGraph('acelerometro', JSON.parse(graphDataAcc));
-                        plotGraph('giroscopio', JSON.parse(graphDataGyr));
-                        plotGraph('magnetometro', JSON.parse(graphDataMag));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error en la solicitud al backend:', error);
-                });
+        function fetchTestAndDisplay(pacienteId) {
+            fetch(`/get_tests/${pacienteId}`, {
+                method: 'GET', 
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    console.error('Error fetching test data');
+                }
+            })
+            .then(testData => {
+                displayTestsInTabulator(testData);
+            })
+            .catch(error => {
+                console.error('Error fetching test data:', error);
             });
+        }
+
+        function displayTestsInTabulator(testData) {
+            
+            var testTable = new Tabulator("#test-table", {
+                data: testData, 
+                columns: [
+                    { title: "Num Test", field: "num_test" },
+                    { title: "Fecha", field: "date" },
+                ],
+                layout:"fitColumns",
+                responsiveLayout:"hide",
+                pagination: "local",
+                paginationSize:5,
+                paginationCounter:"rows",
+                movableColumns:true,
+            });
+            showPopup();
+        }
+
+        popup.addEventListener('click', function (event) {
+            console.log(event.target)
+            if (event.target === popup) {
+                closePopup();
+            }
         });
+
     </script>
 
 {% endblock %}
