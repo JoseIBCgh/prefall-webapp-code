@@ -1431,23 +1431,15 @@ def upload():
 @blueprint.route('/plots',  methods=['GET','POST'])
 @roles_accepted("medico")
 def plots():
-    page = request.args.get('page', 1, type=int)
-    per_page = 10  # Number of items per page
-
     pacientes = current_user.pacientes_asociados.all()
-    
-    total_records = len(pacientes)
 
-    total_pages = (total_records - 1) // per_page + 1
-
-    start_index = (page - 1) * per_page
-    end_index = min(start_index + per_page, total_records)
-
-    pacientes = pacientes[start_index:end_index]
+    pacientes_data = [{"id": paciente.id, "apellidos": paciente.apellidos, 
+    "nombre": paciente.nombre, "identificador": paciente.identificador, 
+    "centro": paciente.centro.nombreFiscal} for paciente in pacientes]
 
     return render_template(
         'prefall/plots.html', 
-        pacientes=pacientes, total_pages=total_pages, current_page=page)
+        pacientes=pacientes_data)
 
 @blueprint.route('/plots/generar_paciente/<id>', methods=['GET'])
 @roles_accepted("medico")

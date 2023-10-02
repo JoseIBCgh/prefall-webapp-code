@@ -4,77 +4,48 @@
 
     <div class="pcoded-content">
         <div class="pcoded-inner-content">
-            <div class="card-Recent-Users">
-                <div class="card-header">
-                    <h5>Pacientes</h5>
-                </div>
-                <div class="card-block px-0 py-3">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th class="center equal-width-4-90">Id</th>
-                                    <th class="center equal-width-4-90">Apellidos</th>
-                                    <th class="center equal-width-4-90">Nombre</th>
-                                    <th class="center equal-width-4-90">CIF/NIF</th>
-                                    <th class="center equal-width-4-90">Centro</th>
-                                    <th class="text-right equal-width-4-90"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for paciente in pacientes %}
-                                <tr class="unread">
-                                    <td>
-                                        <h6 class="text-muted center remove-margins">{{paciente["identificador"]}}</h6>
-                                    </td>
-                                    <td>
-                                        <h6 class="text-muted center remove-margins">{{paciente["apellidos"]}}</h6>
-                                    </td>
-                                    <td>
-                                        <h6 class="text-muted center remove-margins">{{paciente["nombre"]}}</h6>
-                                    </td>
-                                    <td>
-                                        <h6 class="text-muted center remove-margins">{{paciente["identificador"]}}</h6>
-                                    </td>
-                                    <td>
-                                        <h6 class="text-muted center remove-margins">{{paciente.centro.nombreFiscal}}</h6>
-                                    </td>
-                                    <td class="center">
-                                        <a class="label theme-bg text-white f-12 center plotear-button" data-paciente-id="{{ paciente.id }}">Plotear</a>
-                                    </td>
-                                </tr> 
-                                {% endfor %}                               
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="pagination">
-                    {% if current_page > 1 %}
-                        <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico', page=current_page-1) }}" class="page-link">Previous</a>
-                    {% else %}
-                        <span class="page-link disabled">Previous</span>
-                    {% endif %}
-                
-                    {% for page_num in range(1, total_pages + 1) %}
-                        {% if current_page == page_num %}
-                            <span class="page-link current">{{ page_num }}</span>
-                        {% else %}
-                            <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico', page=page_num) }}" class="page-link">{{ page_num }}</a>
-                        {% endif %}
-                    {% endfor %}
-                
-                    {% if current_page < total_pages %}
-                        <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico', page=current_page+1) }}" class="page-link">Next</a>
-                    {% else %}
-                        <span class="page-link disabled">Next</span>
-                    {% endif %}
-                </div>
-            </div>
+            <div id="tabulator"></div>
             <div id="pagination" class="pagination"></div>
             <div id="chartContainer"></div>
         </div>
     </div>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/css/tabulator.min.css" integrity="sha512-HdUIebGeOK7s+At/fOnnbX8vsz6Cl1KTeiRlBiQABTMSqw7kZRCxGiUnuF9lr+1xz5y8pL7jkCR+NNtVVkEqKg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/js/tabulator.min.js" integrity="sha512-oU2NOn7vXb9igwNelYL+57+t+zb3liitNE8/NXg8QFJhBCSvH+dt9+s3H02aM41FUF7WYWx0kPeFV5yIkm1MVA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        var pacientesData = {{ pacientes | tojson | safe }};
+
+        var columns = [
+            { title: "Id", field: "id" },
+            { title: "Apellidos", field: "apellidos" },
+            { title: "Nombre", field: "nombre" },
+            { title: "CIF/NIF", field: "identificador" },
+            { title: "Centro", field: "centro" },
+            {
+                title: "",
+                formatter: function(cell, formatterParams, onRendered) {
+                    var rowData = cell.getRow().getData();
+                    var button = document.createElement("button");
+                    button.textContent = "Plotear";
+                    button.addEventListener("click", function() {
+                        fetchAndPlotData(rowData.id);
+                    });
+                    return button;
+                },
+            },
+        ];
+
+        var table = new Tabulator("#tabulator", {
+            data: pacientesData,
+            columns: columns,
+            layout:"fitColumns",
+            responsiveLayout:"hide",
+            pagination: "local",
+            paginationSize:5,
+            paginationCounter:"rows",
+            movableColumns:true,
+        });
+    </script>
     <script>
         lastGraph = null
         function plotGraph(graphDivId, graphData) {
@@ -117,6 +88,38 @@
                 chartDiv.className = 'chart';
                 chartDiv.style.display = 'none';
                 chartsContainer.appendChild(chartDiv);
+            });
+        }
+        function fetchAndPlotData(id){
+            fetch(`/plots/generar_paciente/${id}`, {
+                method: 'GET', 
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    console.error('Error en la solicitud al backend');
+                }
+            })
+            .then(data => {
+                if (data) {
+                    if(lastGraph !== 'individual'){
+                        generateGraphDivs();
+                        lastGraph = 'individual';
+                    }
+                    
+                    const graphDataAcc = data.acelerometro;
+                    const graphDataGyr = data.giroscopio;
+                    const graphDataMag = data.magnetometro;
+
+                    
+                    plotGraph('acelerometro', JSON.parse(graphDataAcc));
+                    plotGraph('giroscopio', JSON.parse(graphDataGyr));
+                    plotGraph('magnetometro', JSON.parse(graphDataMag));
+                }
+            })
+            .catch(error => {
+                console.error('Error en la solicitud al backend:', error);
             });
         }
         // Agrega un manejador de eventos a los botones "Plotear"
