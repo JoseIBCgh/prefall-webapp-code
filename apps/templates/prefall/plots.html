@@ -88,6 +88,7 @@
         }
 
         var paginationDataPaciente = [
+            { label: 'Evolución probabilidad caída', id: 'prob_caida' },
             { label: 'Acelerómetro', id: 'acelerometro' },
             { label: 'Giroscopio', id: 'giroscopio' },
             { label: 'Magnetometro', id: 'magnetometro' }
@@ -119,6 +120,20 @@
                 chartsContainer.appendChild(chartDiv);
             });
         }
+
+        function clearGraphDivs() {
+            var paginationContainer = document.getElementById('pagination');
+            var chartsContainer = document.getElementById('chartContainer');
+
+            while (paginationContainer.firstChild) {
+                paginationContainer.removeChild(paginationContainer.firstChild);
+            }
+
+            while (chartsContainer.firstChild) {
+                chartsContainer.removeChild(chartsContainer.firstChild);
+            }
+        }
+
         function fetchAndPlotData(id){
             fetch(`/plots/generar_paciente/${id}`, {
                 method: 'GET', 
@@ -132,16 +147,19 @@
             })
             .then(data => {
                 if (data) {
+                    clearGraphDivs();
+                    generateGraphDivs(paginationDataPaciente);
                     if(lastGraph !== 'paciente'){
-                        generateGraphDivs(paginationDataPaciente);
                         lastGraph = 'paciente';
                     }
                     
+                    const graphProbCaida = data.prob_caida;
                     const graphDataAcc = data.acelerometro;
                     const graphDataGyr = data.giroscopio;
                     const graphDataMag = data.magnetometro;
 
-                    
+
+                    plotGraph('prob_caida', JSON.parse(graphProbCaida));
                     plotGraph('acelerometro', JSON.parse(graphDataAcc));
                     plotGraph('giroscopio', JSON.parse(graphDataGyr));
                     plotGraph('magnetometro', JSON.parse(graphDataMag));
@@ -221,6 +239,7 @@
             .then(data => {
                 if (data) {
                     if(lastGraph !== 'test'){
+                        clearGraphDivs();
                         generateGraphDivs(paginationDataTest);
                         lastGraph = 'test';
                     }

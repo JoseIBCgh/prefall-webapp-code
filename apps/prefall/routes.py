@@ -1653,7 +1653,7 @@ def generate_plots_paciente(id):
     graph3DProbCaidaMag = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
     graficos = {
-        "evolucion_prob_caida": graphEvolucionProbCaida,
+        "prob_caida": graphEvolucionProbCaida,
         "acelerometro": graph3DProbCaidaAcc,
         "giroscopio": graph3DProbCaidaGyr,
         "magnetometro": graph3DProbCaidaMag
