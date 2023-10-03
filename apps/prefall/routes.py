@@ -1450,8 +1450,6 @@ def generate_plots_paciente(id):
     import pickle
     import math
     import numpy as np
-
-    print("/plot/generar_paciente/" + id)
     
     tests = db.session.query(
         Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
@@ -1681,8 +1679,50 @@ def get_tests(id_paciente):
         .filter(Test.id_paciente == id_paciente)
         .all()
     )
-    tests_data = [{"num_test": test.Test.num_test, "date": test.Test.date} for test in tests]
+    tests_data = [{"num_test": test.Test.num_test, "id_paciente":test.Test.id_paciente,
+     "date": test.Test.date} for test in tests]
     return jsonify(tests_data)
+
+@blueprint.route('/plots/get_test_data/<id_paciente>/<num_test>', methods=['GET'])
+@clinical_data_access()
+def get_data(id_paciente, num_test):
+    from apps import db
+    import pickle
+    import numpy as np
+    paciente = db.session.query(
+        User.nombre, User.apellidos)\
+        .filter_by(id=id_paciente).first()
+    test = db.session.query(
+        Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+        .filter_by(id_paciente=id_paciente)\
+        .filter(Test.num_test==num_test).first()
+    fases = None
+    blob_data = test.data  
+    if blob_data:
+        df = pickle.loads(blob_data)
+        fases = {
+            'fase1': df['duracion_f1'].values[0],
+            'fase2': df['duracion_f2'].values[0],
+            'fase3': df['duracion_f3'].values[0],
+            'fase4': df['duracion_f4'].values[0]
+        }
+    test_data = db.session.query(
+            TestUnit.acc_x, TestUnit.acc_y, TestUnit.acc_z,
+            TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
+            TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z,
+        ).filter_by(num_test=test.num_test).all()
+    
+    mean_values = np.mean(test_data, axis=0)
+
+    acc = {"x": mean_values[0], "y": mean_values[1], "z":mean_values[2]}
+    gyr = {"x": mean_values[3], "y": mean_values[4], "z":mean_values[5]}
+    mag = {"x": mean_values[6], "y": mean_values[7], "z":mean_values[8]}
+
+    full_name = paciente.nombre + (" " + paciente.apellidos if paciente.apellidos else "")
+    data = {"fases": fases, "acc": acc, "gyr": gyr, "mag": mag,
+    "full_name":full_name, "date": test.date}
+    return jsonify(data)
+    
 
 @blueprint.route('/plots/individual',  methods=['GET','POST'])
 @roles_accepted("medico")
