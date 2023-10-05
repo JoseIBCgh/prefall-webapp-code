@@ -13700,3 +13700,27 @@ p strong {
   border-radius: 5px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
 }
+
+
+/* Style for the tooltip text */
+.custom-tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 4px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  top: 0%; /* Position below the parent element */
+  left: 100px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+/* Show the tooltip text when hovering over the container */
+.custom-tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}

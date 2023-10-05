@@ -22,16 +22,18 @@
                                 <div class="col-auto">
                                     <i class="feather icon-zap f-30 text-c-green"></i>
                                 </div>
-                                <div class="col" id="test-sin-revisar">
+                                <div class="col custom-tooltip" id="test-sin-revisar">
                                     <h3 class="f-w-300">{{test_sin_revisar|length}}</h3>
                                     <span class="d-block text-uppercase">Test sin revisar</span>
+                                    <span class="tooltiptext">Click para ver</span>
                                 </div>
                                 <div class="col-auto">
                                     <i class="feather icon-zap f-30 text-c-green"></i>
                                 </div>
-                                <div class="col" id="test-sin-diagnosticar">
+                                <div class="col custom-tooltip" id="test-sin-diagnosticar">
                                     <h3 class="f-w-300">{{test_sin_diagnosticar|length}}</h3>
                                     <span class="d-block text-uppercase">Test sin diagnosticar</span>
+                                    <span class="tooltiptext">Click para ver</span>
                                 </div>
                             </div>
                         </div>
@@ -129,6 +131,8 @@
         }
 
         testSinRevisar.addEventListener("click", showPopupRevisar);
+
+        testSinRevisar
 
         popupRevisar.addEventListener("click", function(event) {
             if (event.target === popupRevisar) {
