@@ -831,21 +831,9 @@ def detalles_clinicos(id):
     from sqlalchemy.orm import joinedload
     from sqlalchemy import and_
     paciente = User.query.filter_by(id=id).first()
-    formFile = UploadFileForm()
-    formFilterFile = FilterFileForm()
     formTest = UploadTestForm()
     page = request.args.get('page', 1, type=int)
     per_page = 10  # Number of items per page
-
-    if formFile.submitUploadFile.data and formFile.validate():
-        file = formFile.file.data
-
-        upload = File(filename=file.filename, data=file.read())
-        db.session.add(upload)
-        db.session.commit()
-        documentoPaciente = DocumentoPaciente(id_paciente = id, id_medico=current_user.id, id_file=upload.id)
-        db.session.add(documentoPaciente)
-        db.session.commit()
 
     if formTest.submitUploadTest.data and formTest.validate():
         file = formTest.test.data
@@ -888,23 +876,13 @@ def detalles_clinicos(id):
     start_index = (page - 1) * per_page
     end_index = min(start_index + per_page, total_records)
 
-    tests = tests[start_index:end_index]
-    
-    if formFilterFile.submitFilterFile.data and formFilterFile.validate():
-        file_name = formFilterFile.nombreFichero.data
-        files = File.query.filter(File.id == DocumentoPaciente.id_file).\
-            filter(DocumentoPaciente.id_paciente==id).filter(DocumentoPaciente.id_medico==current_user.id).\
-                filter(File.filename.like('%'+file_name+'%')).all()
-    else:
-        files = File.query.filter(File.id == DocumentoPaciente.id_file).\
-            filter(DocumentoPaciente.id_paciente==id).filter(DocumentoPaciente.id_medico==current_user.id).all()
-    
+    tests = tests[start_index:end_index]    
 
     #graphJSON = generatePlotPaciente(id)
     graphJSON = null
 
-    return render_template('prefall/detalles_clinicos.html', paciente=paciente, tests=tests, files=files,
-    formFile=formFile, formTest=formTest, formFilterFile=formFilterFile, graphJSON=graphJSON,
+    return render_template('prefall/detalles_clinicos.html', paciente=paciente, tests=tests,
+    formTest=formTest, graphJSON=graphJSON,
     total_pages=total_pages, current_page=page)
 
 
