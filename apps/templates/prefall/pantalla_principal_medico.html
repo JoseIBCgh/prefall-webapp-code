@@ -61,6 +61,8 @@
                                             <th class="center equal-width-4-90">Apellidos</th>
                                             <th class="center equal-width-4-90">Nombre</th>
                                             <th class="center equal-width-4-90">CIF/NIF</th>
+                                            <th class="center equal-width-4-90">Sin revisar</th>
+                                            <th class="center equal-width-4-90">Sin diagnosticar</th>
                                             <th class="center equal-width-4-90">Centro</th>
                                             <th class="center equal-width-4-90">Fecha de registro</th>
                                             <th class="text-right equal-width-4-90"></th>
@@ -70,24 +72,30 @@
                                         {% for paciente in pacientes %}
                                         <tr class="unread">
                                             <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente["identificador"]}}</h6>
+                                                <h6 class="text-muted center remove-margins">{{paciente.User.id}}</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente["apellidos"]}}</h6>
+                                                <h6 class="text-muted center remove-margins">{{paciente.User.apellidos}}</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente["nombre"]}}</h6>
+                                                <h6 class="text-muted center remove-margins">{{paciente.User.nombre}}</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente["identificador"]}}</h6>
+                                                <h6 class="text-muted center remove-margins">{{paciente.User.identificador}}</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente.centro.nombreFiscal}}</h6>
+                                                <h6 class="text-muted center remove-margins">{{paciente.revisiones_pendientes}}</h6>
                                             </td>
                                             <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente["create_datetime"]}}</h6>
+                                                <h6 class="text-muted center remove-margins">{{paciente.diagnosticos_pendientes}}</h6>
                                             </td>
-                                            <td class="center"><a href="{{url_for('prefall_blueprint.detalles_clinicos', id=paciente['id'])}}" class="label theme-bg text-white f-12 center">Ver detalles</a></td>
+                                            <td>
+                                                <h6 class="text-muted center remove-margins">{{paciente.User.centro.nombreFiscal}}</h6>
+                                            </td>
+                                            <td>
+                                                <h6 class="text-muted center remove-margins">{{paciente.User.create_datetime}}</h6>
+                                            </td>
+                                            <td class="center"><a href="{{url_for('prefall_blueprint.detalles_clinicos', id=paciente.User.id)}}" class="label theme-bg text-white f-12 center">Ver detalles</a></td>
                                         </tr> 
                                         {% endfor %}                               
                                     </tbody>

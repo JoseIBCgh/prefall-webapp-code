@@ -295,76 +295,71 @@ def crear_user():
 def pantalla_principal_medico():
     from apps import db
     from datetime import datetime
-    from sqlalchemy import and_
+    from sqlalchemy import and_, func, select, literal, case
     from sqlalchemy.orm import joinedload
     from sqlalchemy.orm import aliased
     formPacientes = FilterUserForm()
     page = request.args.get('page', 1, type=int)
     per_page = 10  # Number of items per page
 
-    if formPacientes.submitFilterUser.data and formPacientes.validate():
-        identificador = formPacientes.identificador.data
-        nombre = formPacientes.nombre.data
-        centro = formPacientes.centro.data
-        pacientes = current_user.pacientes_asociados.\
-                    filter(User.nombre.like('%'+nombre+'%')).\
-                        filter(User.identificador.like('%'+identificador+'%')).\
-                            filter(User.id_centro == Centro.id).\
-                                filter(Centro.nombreFiscal.like('%'+centro+'%')).all()
-    else:
-        pacientes = current_user.pacientes_asociados.all()
-        total_records = len(pacientes)
+    test_sin_diagnosticar_subquery = (
+        select([
+            User.id.label('id_paciente'),
+            func.count().label('tests_sin_diagnostico')
+        ])
+        .select_from(User)
+        .join(AccionesTestMedico, User.id == AccionesTestMedico.id_paciente)
+        .join(Test, and_(
+            AccionesTestMedico.num_test == Test.num_test,
+            AccionesTestMedico.id_paciente == Test.id_paciente
+        ))
+        .filter(AccionesTestMedico.id_medico == current_user.id)
+        .filter(AccionesTestMedico.diagnostico == None)
+        .group_by(User.id)
+        .alias()
+    )
 
-        total_pages = (total_records - 1) // per_page + 1
+    test_sin_revisar_subquery = (
+        select([
+            User.id.label('id_paciente'),
+            func.count().label('tests_sin_revisar')
+        ])
+        .select_from(User)
+        .join(AccionesTestMedico, User.id == AccionesTestMedico.id_paciente)
+        .join(Test, and_(
+            AccionesTestMedico.num_test == Test.num_test,
+            AccionesTestMedico.id_paciente == Test.id_paciente
+        ))
+        .filter(AccionesTestMedico.id_medico == current_user.id)
+        .filter(Test.probabilidad_caida == None)
+        .group_by(User.id)
+        .alias()
+    )
 
-        start_index = (page - 1) * per_page
-        end_index = min(start_index + per_page, total_records)
+    pacientes = (
+        current_user.pacientes_asociados
+        .join(test_sin_diagnosticar_subquery, test_sin_diagnosticar_subquery.c.id_paciente == User.id, isouter=True)
+        .join(test_sin_revisar_subquery, test_sin_revisar_subquery.c.id_paciente == User.id, isouter=True)
+        .with_entities(
+            User,
+            case([(test_sin_diagnosticar_subquery.c.tests_sin_diagnostico.is_(None), literal(0))],
+             else_=test_sin_diagnosticar_subquery.c.tests_sin_diagnostico).label('diagnosticos_pendientes'),
+            case([(test_sin_revisar_subquery.c.tests_sin_revisar.is_(None), literal(0))],
+             else_=test_sin_revisar_subquery.c.tests_sin_revisar).label('revisiones_pendientes'),
 
-        pacientes = pacientes[start_index:end_index]
+        )
+        .all()
+    )
+    total_records = len(pacientes)
+
+    total_pages = (total_records - 1) // per_page + 1
+
+    start_index = (page - 1) * per_page
+    end_index = min(start_index + per_page, total_records)
+
+    pacientes = pacientes[start_index:end_index]
 
     id_asociados = [pa.id for pa in current_user.pacientes_asociados]
-    formTests = FilterTestForm()
-    if formTests.submitFilterTest.data and formTests.validate():
-        nombre = formTests.nombrePaciente.data
-        numero = formTests.numero.data
-        if numero == None:
-            numero = ""
-        else:
-            numero = str(numero)
-            
-        tests = current_user.tests_de_pacientes.\
-            join(User, AccionesTestMedico.id_paciente == User.id).\
-                join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
-                    AccionesTestMedico.id_paciente == Test.id_paciente)).\
-                        with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
-                        AccionesTestMedico.num_test, Test.date).\
-                            filter(User.nombre.like('%'+nombre+'%')).\
-                                filter(cast(Test.num_test, db.String).like('%'+numero+'%')).all()
-    
-    else:
-        '''tests = db.session.query(Test.nuevo, Test.diagnostico, User.nombre, User.id, Test.num_test, Test.date).\
-                    filter(Test.id_paciente.in_(id_asociados)).\
-                        filter(Test.id_paciente == User.id).all()'''
-        tests = current_user.tests_de_pacientes.\
-            join(User, AccionesTestMedico.id_paciente == User.id).\
-                join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
-                    AccionesTestMedico.id_paciente == Test.id_paciente)).\
-                        with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
-                        AccionesTestMedico.num_test, Test.date).all()
-    
-    '''alertas = db.session.query(Test.nuevo, Test.diagnostico, User.nombre, User.id, Test.num_test, Test.date).\
-                filter(Test.id_paciente.in_(id_asociados)).\
-                    filter(Test.id_paciente == User.id).\
-                        filter(Test.diagnostico == None).all()'''
-    '''
-    test_sin_diagnosticar = current_user.tests_de_pacientes.\
-        join(User, AccionesTestMedico.id_paciente == User.id).\
-            join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
-                AccionesTestMedico.id_paciente == Test.id_paciente)).\
-                    with_entities(AccionesTestMedico.visto, AccionesTestMedico.diagnostico, User.nombre, User.id, 
-                    AccionesTestMedico.num_test, Test.date).\
-                        filter(AccionesTestMedico.diagnostico == None).all()
-    '''
 
     Medico = aliased(User)
 
@@ -429,9 +424,9 @@ def pantalla_principal_medico():
     ]
 
     return render_template(
-        'prefall/pantalla_principal_medico.html', pacientes=pacientes, formPacientes=formPacientes,
-        tests= tests, test_sin_diagnosticar=test_sin_diagnosticar_list, test_sin_revisar=test_sin_revisar_list,
-        formTests=formTests, total_pages=total_pages, current_page=page)
+        'prefall/pantalla_principal_medico.html', pacientes=pacientes,
+        test_sin_diagnosticar=test_sin_diagnosticar_list, test_sin_revisar=test_sin_revisar_list,
+        total_pages=total_pages, current_page=page)
 
 @blueprint.route('crear_paciente_medico', methods=['GET', 'POST'])
 @roles_accepted("medico")
