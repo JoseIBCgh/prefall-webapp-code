@@ -53,75 +53,7 @@
                             <h5>Pacientes</h5>
                         </div>
                         <div class="card-block px-0 py-3">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th class="center equal-width-4-90">Id</th>
-                                            <th class="center equal-width-4-90">Apellidos</th>
-                                            <th class="center equal-width-4-90">Nombre</th>
-                                            <th class="center equal-width-4-90">CIF/NIF</th>
-                                            <th class="center equal-width-4-90">Sin revisar</th>
-                                            <th class="center equal-width-4-90">Sin diagnosticar</th>
-                                            <th class="center equal-width-4-90">Centro</th>
-                                            <th class="center equal-width-4-90">Fecha de registro</th>
-                                            <th class="text-right equal-width-4-90"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for paciente in pacientes %}
-                                        <tr class="unread">
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente.User.id}}</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente.User.apellidos}}</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente.User.nombre}}</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente.User.identificador}}</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente.revisiones_pendientes}}</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente.diagnosticos_pendientes}}</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente.User.centro.nombreFiscal}}</h6>
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted center remove-margins">{{paciente.User.create_datetime}}</h6>
-                                            </td>
-                                            <td class="center"><a href="{{url_for('prefall_blueprint.detalles_clinicos', id=paciente.User.id)}}" class="label theme-bg text-white f-12 center">Ver detalles</a></td>
-                                        </tr> 
-                                        {% endfor %}                               
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="pagination">
-                            {% if current_page > 1 %}
-                                <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico', page=current_page-1) }}" class="page-link">Previous</a>
-                            {% else %}
-                                <span class="page-link disabled">Previous</span>
-                            {% endif %}
-                        
-                            {% for page_num in range(1, total_pages + 1) %}
-                                {% if current_page == page_num %}
-                                    <span class="page-link current">{{ page_num }}</span>
-                                {% else %}
-                                    <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico', page=page_num) }}" class="page-link">{{ page_num }}</a>
-                                {% endif %}
-                            {% endfor %}
-                        
-                            {% if current_page < total_pages %}
-                                <a href="{{ url_for('prefall_blueprint.pantalla_principal_medico', page=current_page+1) }}" class="page-link">Next</a>
-                            {% else %}
-                                <span class="page-link disabled">Next</span>
-                            {% endif %}
+                            <div id="tabulator-pacientes"></div>
                         </div>
                     </div>
                 </div>
@@ -130,6 +62,38 @@
     </div>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/css/tabulator.min.css" integrity="sha512-HdUIebGeOK7s+At/fOnnbX8vsz6Cl1KTeiRlBiQABTMSqw7kZRCxGiUnuF9lr+1xz5y8pL7jkCR+NNtVVkEqKg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/js/tabulator.min.js" integrity="sha512-oU2NOn7vXb9igwNelYL+57+t+zb3liitNE8/NXg8QFJhBCSvH+dt9+s3H02aM41FUF7WYWx0kPeFV5yIkm1MVA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        var usersData = {{ pacientes_data | tojson | safe }};
+        var columns = [
+            { title: "Id", field: "id", headerFilter:true },
+            { title: "DNI", field: "identificador", headerFilter:true },
+            { title: "Nombre", field: "nombre", headerFilter:true },
+            { title: "Apellidos", field: "apellidos", headerFilter:true },
+            { title: "Tests sin revisar", field: "tests_sin_revisar", headerFilter:true },
+            { title: "Tests sin diagnosticar", field: "tests_sin_diagnosticar", headerFilter:true },
+            { title: "Centro", field: "centro", headerFilter:true },
+            { title: "Fecha registro", field: "fecha_registro", headerFilter:true },
+            {
+                title: "",
+                field: "id", // Replace with the appropriate field that holds the ID
+                headerSort: false,
+                formatter: function (cell) {
+                    return '<a href="/detalles_clinicos/' + cell.getValue() + '" class="label theme-bg text-white f-12 center">Ver detalles</a>';
+                }
+            }
+        ];
+
+        var table = new Tabulator("#tabulator-pacientes", {
+            data: usersData,
+            columns: columns,
+            layout:"fitColumns",
+            responsiveLayout:"hide",
+            pagination: "local",
+            paginationSize:10,
+            paginationCounter:"rows",
+            movableColumns:true,
+        });
+    </script>
     <script>       
         var testSinRevisar = document.getElementById("test-sin-revisar");
         var popupRevisar = document.getElementById("test-sin-revisar-popup");

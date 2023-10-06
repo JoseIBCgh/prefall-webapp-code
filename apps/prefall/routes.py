@@ -357,6 +357,12 @@ def pantalla_principal_medico():
         )
         .all()
     )
+
+    pacientes_data = [{"id": paciente.User.id, "apellidos": paciente.User.apellidos, 
+        "centro": paciente.User.centro.nombreFiscal, "nombre": paciente.User.nombre, 
+        "identificador": paciente.User.identificador, "fecha_registro":paciente.User.create_datetime,
+        "tests_sin_diagnostigar": paciente.diagnosticos_pendientes, "tests_sin_revisar": paciente.revisiones_pendientes
+        } for paciente in pacientes]
     total_records = len(pacientes)
 
     total_pages = (total_records - 1) // per_page + 1
@@ -431,7 +437,7 @@ def pantalla_principal_medico():
     ]
 
     return render_template(
-        'prefall/pantalla_principal_medico.html', pacientes=pacientes,
+        'prefall/pantalla_principal_medico.html', pacientes=pacientes, pacientes_data=pacientes_data,
         test_sin_diagnosticar=test_sin_diagnosticar_list, test_sin_revisar=test_sin_revisar_list,
         total_pages=total_pages, current_page=page)
 
