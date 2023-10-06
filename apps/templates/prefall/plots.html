@@ -7,12 +7,20 @@
             <div id="tabulator"></div>
             <div id="test-popup" class="popup">
                 <div class="popup-content">
+                    <h4 id="test-paciente"></h4>
                     <div id="test-table"></div>
                 </div>
             </div>
-            <div id="pagination" class="pagination"></div>
             <div id="chartContainer"></div>
-            <button id="exportButton">Exportar a PDF</button>
+            <div id="pagination" class="pagination"></div>
+            <div class="row">
+                <button id="clearButton">
+                    <img src="/static/assets/images/icons/limpiar.png" style="width: 50px; height: 50px;"/>
+                </button>
+                <button id="exportButton">
+                    <img src="/static/assets/images/icons/exportar_pdf.png" style="width: 50px; height: 50px;"/>
+                </button>
+            </div>
         </div>
     </div>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/css/tabulator.min.css" integrity="sha512-HdUIebGeOK7s+At/fOnnbX8vsz6Cl1KTeiRlBiQABTMSqw7kZRCxGiUnuF9lr+1xz5y8pL7jkCR+NNtVVkEqKg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -31,11 +39,15 @@
             { title: "CIF/NIF", field: "identificador" },
             { title: "Centro", field: "centro" },
             {
-                title: "",
+                title: "Individual",
                 formatter: function(cell, formatterParams, onRendered) {
                     var rowData = cell.getRow().getData();
                     var button = document.createElement("button");
-                    button.textContent = "Plotear";
+                    button.style.backgroundImage = 'url("/static/assets/images/icons/plotear.png")';
+                    button.style.backgroundSize = 'contain';
+                    button.style.backgroundRepeat = 'no-repeat';
+                    button.style.width = '30px';
+                    button.style.height = '30px';
                     button.addEventListener("click", function() {
                         fetchAndPlotData(rowData.id);
                     });
@@ -43,13 +55,17 @@
                 },
             },
             {
-                title: "",
+                title: "Comparativa",
                 formatter: function(cell, formatterParams, onRendered) {
                     var rowData = cell.getRow().getData();
                     var button = document.createElement("button");
-                    button.textContent = "Tests";
+                    button.style.backgroundImage = 'url("/static/assets/images/icons/comparativa.png")';
+                    button.style.backgroundSize = 'contain';
+                    button.style.backgroundRepeat = 'no-repeat';
+                    button.style.width = '30px';
+                    button.style.height = '30px';
                     button.addEventListener("click", function() {
-                        fetchTestAndDisplay(rowData.id);
+                        fetchTestAndDisplay(rowData);
                     });
                     return button;
                 },
@@ -92,17 +108,17 @@
         }
 
         var paginationDataPaciente = [
-            { label: 'Evolución probabilidad caída', id: 'prob_caida' },
-            { label: 'Acelerómetro', id: 'acelerometro' },
-            { label: 'Giroscopio', id: 'giroscopio' },
-            { label: 'Magnetometro', id: 'magnetometro' }
+            { label: '1', id: 'prob_caida' },
+            { label: '2', id: 'acelerometro' },
+            { label: '3', id: 'giroscopio' },
+            { label: '4', id: 'magnetometro' }
         ];
 
         var paginationDataTest = [
-            { label: 'Fases de la marcha', id: 'fases' },
-            { label: 'Acelerómetro', id: 'acelerometro' },
-            { label: 'Giroscopio', id: 'giroscopio' },
-            { label: 'Magnetometro', id: 'magnetometro' }
+            { label: '1', id: 'fases' },
+            { label: '2', id: 'acelerometro' },
+            { label: '3', id: 'giroscopio' },
+            { label: '4', id: 'magnetometro' }
         ];
 
         function generateGraphDivs(paginationData) {
@@ -173,8 +189,8 @@
                 console.error('Error en la solicitud al backend:', error);
             });
         }
-        function fetchTestAndDisplay(pacienteId) {
-            fetch(`/get_tests/${pacienteId}`, {
+        function fetchTestAndDisplay(paciente) {
+            fetch(`/get_tests/${paciente.id}`, {
                 method: 'GET', 
             })
             .then(response => {
@@ -185,6 +201,8 @@
                 }
             })
             .then(testData => {
+                var title = document.getElementById("test-paciente");
+                title.textContent = paciente.nombre + " " + paciente.apellidos + " " + paciente.identificador;
                 displayTestsInTabulator(testData);
             })
             .catch(error => {
@@ -200,11 +218,15 @@
                     { title: "Num Test", field: "num_test" },
                     { title: "Fecha", field: "date" },
                     {
-                        title: "",
+                        title: "Añadir gráfico",
                         formatter: function(cell, formatterParams, onRendered) {
                             var rowData = cell.getRow().getData();
                             var button = document.createElement("button");
-                            button.textContent = "Plotear";
+                            button.style.backgroundImage = 'url("/static/assets/images/icons/añadir.jpeg")';
+                            button.style.backgroundSize = 'contain';
+                            button.style.backgroundRepeat = 'no-repeat';
+                            button.style.width = '30px';
+                            button.style.height = '30px';
                             button.addEventListener("click", function() {
                                 fetchAndPlotDataTest(rowData.id_paciente, rowData.num_test);
                             });
@@ -365,6 +387,11 @@
 
         exportButton.addEventListener('click', function() {
             exportChartsToPDF();
+        });
+
+        var clearButton = document.getElementById('clearButton');
+        clearButton.addEventListener('click', function(){
+            clearGraphDivs();
         });
     </script>
 
