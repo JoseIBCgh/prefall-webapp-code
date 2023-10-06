@@ -99,40 +99,46 @@
                         <div class="card-header">
                             <h5>Usuarios del centro</h5>
                         </div>
-                        <div class="card-block px-0 py-3">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Tipo de usuario</th>
-                                            <th>Nombre</th>
-                                            <th class="text-right"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for user in users %}
-                                        <tr class="unread">
-                                            <td>
-                                                {% for role in user.roles %}
-                                                <h6 class="text-muted">{{role.name}}</h6>
-                                                {% endfor %}
-                                            </td>
-                                            <td>
-                                                <h6 class="text-muted">{{user["nombre"]}}</h6>
-                                            </td>
-                                            <td><a href="{{url_for('prefall_blueprint.editar_detalles_usuario', id=user['id'])}}" class="label theme-bg text-white f-12">Editar</a></td>
-                                            <td><a href="{{url_for('prefall_blueprint.borrar_usuario', id_centro=centro['id'], id_user=user['id'])}}" class="label theme-bg text-white f-12">Borrar</a></td>
-                                        </tr> 
-                                        {% endfor %}                               
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <div id="tabulator-users"></div>
                     </div>
                     {% block after_tables %}{% endblock %}
                 </div>
             </div>
         </div>
     </div>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/css/tabulator.min.css" integrity="sha512-HdUIebGeOK7s+At/fOnnbX8vsz6Cl1KTeiRlBiQABTMSqw7kZRCxGiUnuF9lr+1xz5y8pL7jkCR+NNtVVkEqKg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/js/tabulator.min.js" integrity="sha512-oU2NOn7vXb9igwNelYL+57+t+zb3liitNE8/NXg8QFJhBCSvH+dt9+s3H02aM41FUF7WYWx0kPeFV5yIkm1MVA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        var usersData = {{ users_data | tojson | safe }};
+        var columns = [
+            { 
+                title: "Tipo de usuario", 
+                field: "role",
+                headerFilter: "list",
+                headerFilterParams: {
+                    values: [
+                        { label: "Todos", value: ""},
+                        { label: "Pacientes", value: "paciente" },
+                        { label: "Médicos", value: "medico" },
+                        { label: "Auxiliares", value: "auxiliar" },
+                    ],
+                },
+            },
+            { title: "Fecha nacimiento", field: "fecha_nacimiento", headerFilter:true },
+            { title: "Nombre", field: "nombre", headerFilter:true },
+            { title: "Apellidos", field: "apellidos", headerFilter:true },
+            { title: "DNI", field: "identificador", headerFilter:true },
+        ];
 
+        var table = new Tabulator("#tabulator-users", {
+            data: usersData,
+            columns: columns,
+            layout:"fitColumns",
+            responsiveLayout:"hide",
+            pagination: "local",
+            paginationSize:5,
+            paginationCounter:"rows",
+            movableColumns:true,
+        });
+    </script>
 {% endblock %}

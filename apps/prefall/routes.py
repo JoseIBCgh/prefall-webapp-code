@@ -111,11 +111,15 @@ def detalles_centro_admin(id):
     centro = Centro.query.filter_by(id=id).first()
     users = User.query.filter_by(id_centro=id).filter(Centro.id == id).\
         filter(db.or_(Centro.id_admin == None,Centro.id_admin != User.id)).all()
+    users_data = [{"id": user.id, "apellidos": user.apellidos, "role": user.roles[0].name, 
+        "nombre": user.nombre, "identificador": user.identificador, "fecha_nacimiento":user.fecha_nacimiento,
+        } for user in users]
     admin = User.query.filter_by(id_centro=id).filter(Centro.id == id).\
         filter(Centro.id_admin == User.id).first()
 
     return render_template(
-        'prefall/detalles_centro_admin.html', centro=centro, users=users, admin=admin)
+        'prefall/detalles_centro_admin.html', centro=centro,
+        users_data=users_data, admin=admin)
 
 
 @blueprint.route('crear_admin_centro/<id>', methods=['GET', 'POST'])
@@ -193,9 +197,12 @@ def detalles_centro(id_centro):
     admin_centro_role = Role.query.filter_by(name="admin-centro").first()
     users = User.query.filter_by(id_centro=id_centro).\
         filter(db.not_(User.roles.contains(admin_centro_role))).all()
+    users_data = [{"id": user.id, "apellidos": user.apellidos, "role": user.roles[0].name, 
+        "nombre": user.nombre, "identificador": user.identificador, "fecha_nacimiento":user.fecha_nacimiento,
+        } for user in users]
 
     return render_template(
-        'prefall/detalles_centro.html', centro=centro, users=users)
+        'prefall/detalles_centro.html', centro=centro, users_data=users_data)
 
 
 @blueprint.route('borrar_usuario/<id_centro>/<id_user>', methods=['GET','POST'])
