@@ -15,3 +15,7 @@
     </a>
 </li>
 {% endblock %}
+{% block bottom_navbar %}
+<span class="nav-link">{{ current_user.username }}</span>
+{% block user_type %}{% endblock %}
+{% endblock %}
