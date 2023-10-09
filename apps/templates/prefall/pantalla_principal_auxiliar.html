@@ -16,53 +16,49 @@
             <div class="main-body">
                 <div class="page-wrapper">
                     <h5 class="card-title center">Centro médico: {{current_user.centro.nombreFiscal}}</h5>
-                    <div class="card Recent-Users">
+                    <div class="card-Recent-Users">
                         <div class="card-header">
-                            <h5>Pacientes del hospital</h5>
+                            <h5>Pacientes</h5>
                         </div>
                         <div class="card-block px-0 py-3">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th class="center equal-width-4">Identificador</th>
-                                            <th class="center equal-width-4">Nombre</th>
-                                            <th class="center equal-width-4">Centro</th>
-                                            <th class="text-right equal-width-4"></th>
-                                        </tr>
-                                        <tr>
-                                            <form role="form" method="post" action="">
-                                                {{ formPacientes.csrf_token }}
-                                                {{ render_table_field(formPacientes.identificador, "Identificador") }}
-                                                {{ render_table_field(formPacientes.nombre, "Nombre") }}
-                                                {{ render_table_field(formPacientes.centro, "Centro") }}
-                                                <th class="center equal-width-4">{{formPacientes.submitFilterUser(value="Filtrar", class="label theme-bg text-white f-12 center")}}</th>
-                                            </form>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for paciente in pacientes %}
-                                        <tr class="unread">
-                                            <td class="equal-width-4">
-                                                <h6 class="text-muted center remove-margins">{{paciente["identificador"]}}</h6>
-                                            </td>
-                                            <td class="equal-width-4">
-                                                <h6 class="text-muted center remove-margins">{{paciente["nombre"]}}</h6>
-                                            </td>
-                                            <td class="equal-width-4">
-                                                <h6 class="text-muted center remove-margins">{{paciente.centro.nombreFiscal}}</h6>
-                                            </td>
-                                            <td class="equal-width-4 center"><a href="{{url_for('prefall_blueprint.detalles_personales', id=paciente['id'])}}" class="label theme-bg text-white f-12 center">Ver detalles</a></td>
-                                        </tr> 
-                                        {% endfor %}                               
-                                    </tbody>
-                                </table>
-                            </div>
+                            <div id="tabulator-pacientes"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/css/tabulator.min.css" integrity="sha512-HdUIebGeOK7s+At/fOnnbX8vsz6Cl1KTeiRlBiQABTMSqw7kZRCxGiUnuF9lr+1xz5y8pL7jkCR+NNtVVkEqKg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/js/tabulator.min.js" integrity="sha512-oU2NOn7vXb9igwNelYL+57+t+zb3liitNE8/NXg8QFJhBCSvH+dt9+s3H02aM41FUF7WYWx0kPeFV5yIkm1MVA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        var usersData = {{ pacientes_data | tojson | safe }};
+        var columns = [
+            { title: "Id", field: "id", headerFilter:true },
+            { title: "DNI", field: "identificador", headerFilter:true },
+            { title: "Nombre", field: "nombre", headerFilter:true },
+            { title: "Apellidos", field: "apellidos", headerFilter:true },
+            { title: "Centro", field: "centro", headerFilter:true },
+            { title: "Fecha registro", field: "fecha_registro", headerFilter:true },
+            {
+                title: "",
+                field: "id", // Replace with the appropriate field that holds the ID
+                headerSort: false,
+                formatter: function (cell) {
+                    return '<a href="/detalles_personales/' + cell.getValue() + '" class="label theme-bg text-white f-12 center">Ver detalles</a>';
+                }
+            }
+        ];
+
+        var table = new Tabulator("#tabulator-pacientes", {
+            data: usersData,
+            columns: columns,
+            layout:"fitColumns",
+            responsiveLayout:"hide",
+            pagination: "local",
+            paginationSize:10,
+            paginationCounter:"rows",
+            movableColumns:true,
+        });
+    </script>
 
 {% endblock %}

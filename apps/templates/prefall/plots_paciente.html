@@ -10,36 +10,6 @@
             <div class="main-body">
                 <div class="page-wrapper">
                     <div id="chartEvolucionProbCaida" class="chart"></div>
-                    <form method="POST">
-                        {{ form3DProbCaida.hidden_tag() }}
-                        {{ form3DProbCaida.selected_element.label }}
-                        {{ form3DProbCaida.selected_element }}
-                        <br>
-                        {{ form3DProbCaida.submit }}
-                    </form>
-                    <div id="chart3DProbCaida" class="chart"></div>
-                    <form method="POST">
-                        {{ formCompareTests.hidden_tag() }}
-                        {{ formCompareTests.test1.label }}
-                        {{ formCompareTests.test1(id='compareTestsTest1') }}
-                        {{ formCompareTests.test2.label }}
-                        {{ formCompareTests.test2(id='compareTestsTest2') }}
-                        {{ formCompareTests.metric.label }}
-                        {{ formCompareTests.metric }}
-                        <br>
-                        {{ formCompareTests.submit }}
-                    </form>
-                    <div id="graphCompareTests" class="chart"></div>
-                    <form method="POST">
-                        {{ formCompareFases.hidden_tag() }}
-                        {{ formCompareFases.test1.label }}
-                        {{ formCompareFases.test1(id='compareFasesTest1') }}
-                        {{ formCompareFases.test2.label }}
-                        {{ formCompareFases.test2(id='compareFasesTest2') }}
-                        <br>
-                        {{ formCompareFases.submit }}
-                    </form>
-                    <div id="graphCompareFases" class="chart"></div>
                 </div>
             </div>
             <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
@@ -48,31 +18,6 @@
                 var start_time = Date.now()
                 var graphs = {{graphEvolucionProbCaida | safe}};
                 Plotly.plot('chartEvolucionProbCaida',graphs,{});
-                console.log("Time plot= " + (Date.now() - start_time))
-            </script>
-            {% endif %}
-            {% if graph3DProbCaida %}
-            <script type='text/javascript'>
-                var start_time = Date.now()
-                var graphs = {{graph3DProbCaida | safe}};
-                Plotly.plot('chart3DProbCaida',graphs,{});
-                console.log("Time plot= " + (Date.now() - start_time))
-            </script>
-            {% endif %}
-            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-            {% if graphCompareTests %}
-            <script type='text/javascript'>
-                var start_time = Date.now()
-                var graphs = {{graphCompareTests | safe}};
-                Plotly.plot('graphCompareTests',graphs,{});
-                console.log("Time plot= " + (Date.now() - start_time))
-            </script>
-            {% endif %}
-            {% if graphCompareFases %}
-            <script type='text/javascript'>
-                var start_time = Date.now()
-                var graphs = {{graphCompareFases | safe}};
-                Plotly.plot('graphCompareFases',graphs,{});
                 console.log("Time plot= " + (Date.now() - start_time))
             </script>
             {% endif %}

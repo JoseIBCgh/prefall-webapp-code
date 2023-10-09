@@ -1073,24 +1073,18 @@ def pantalla_principal_auxiliar():
     userRole = Role.query.filter_by(name="paciente").first()
     center = current_user.centro
 
-    if formPacientes.submitFilterUser.data and formPacientes.validate():
-        identificador = formPacientes.identificador.data
-        nombre = formPacientes.nombre.data
-        centroFiltro = formPacientes.centro.data
-        pacientes = User.query.\
-            filter(User.roles.contains(userRole)).\
-                filter_by(centro = center).\
-                    filter(User.nombre.like('%'+nombre+'%')).\
-                        filter(User.identificador.like('%'+identificador+'%')).\
-                            filter(User.id_centro == Centro.id).\
-                                filter(Centro.nombreFiscal.like('%'+centroFiltro+'%')).all()
-    else:
-        pacientes = User.query.\
-            filter(User.roles.contains(userRole)).\
-                filter_by(centro = center).all()
+    pacientes = User.query.\
+        filter(User.roles.contains(userRole)).\
+            filter_by(centro = center).all()
+        
+    pacientes_data = [{"id": paciente.id, "apellidos": paciente.apellidos, 
+        "centro": paciente.centro.nombreFiscal, "nombre": paciente.nombre, 
+        "identificador": paciente.identificador, "fecha_registro":paciente.create_datetime,
+        } for paciente in pacientes]
 
     return render_template(
-        'prefall/pantalla_principal_auxiliar.html', pacientes=pacientes, formPacientes=formPacientes)
+        'prefall/pantalla_principal_auxiliar.html', pacientes=pacientes,
+        pacientes_data = pacientes_data, formPacientes=formPacientes)
 
 @blueprint.route('crear_paciente', methods=['GET', 'POST'])
 @roles_accepted("auxiliar")
@@ -1146,24 +1140,30 @@ def detalles_personales(id):
 
     rolMedico = Role.query.filter_by(name="medico").first()
     id_asociados = [ma.id for ma in medicos_asociados]
-    if searchDoctorForm.submitFilterUser.data and searchDoctorForm.validate():
-        identificador = searchDoctorForm.identificador.data
-        nombre = searchDoctorForm.nombre.data
-        medicos = User.query.\
-            filter(User.roles.contains(rolMedico)).\
-                filter(User.nombre.like('%'+nombre+'%')).\
-                    filter(User.identificador.like( '%'+ identificador +'%' ) ).\
-                        filter(db.not_(User.id.in_(id_asociados))).order_by(User.nombre).all()
-    else:
-        medicos = User.query.\
-            filter(User.roles.contains(rolMedico)).\
-                filter(db.not_(User.id.in_(id_asociados))).order_by(User.nombre).all()
+    
+    medicos = User.query.\
+        filter(User.roles.contains(rolMedico)).\
+            filter(db.not_(User.id.in_(id_asociados))).order_by(User.nombre).all()
 
-    tests = db.session.query(Test.num_test, Test.date).filter_by(id_paciente=id).all()
+    medicos_data = [{"id": medico.id, "apellidos": medico.apellidos, 
+        "centro": medico.centro.nombreFiscal, "nombre": medico.nombre, 
+        "identificador": medico.identificador, "fecha_registro":medico.create_datetime,
+        } for medico in medicos]
+
+    medicos_asociados_data = [{"id": medico.id, "apellidos": medico.apellidos, 
+        "centro": medico.centro.nombreFiscal, "nombre": medico.nombre, 
+        "identificador": medico.identificador, "fecha_registro":medico.create_datetime,
+        } for medico in medicos_asociados]
+
+    tests = Test.query.filter_by(id_paciente=id).all()
+
+    tests_data = [{"num_test": test.num_test, "date":test.date
+        } for test in tests]
 
     return render_template(
-        'prefall/detalles_personales.html', paciente=paciente, medicos_asociados = medicos_asociados, 
-        medicos= medicos, tests=tests, uploadTestForm=uploadTestForm, searchDoctorForm=searchDoctorForm)
+        'prefall/detalles_personales.html', paciente=paciente, tests_data=tests_data,
+        medicos_data=medicos_data, medicos_asociados_data=medicos_asociados_data,
+         tests=tests, uploadTestForm=uploadTestForm, searchDoctorForm=searchDoctorForm)
 
 
 @blueprint.route('editar_detalles_personales/<id>', methods=['GET', 'POST'])
@@ -1233,14 +1233,18 @@ def desasociar_medico(id, id_medico):
 @roles_accepted("paciente")
 def pantalla_principal_paciente():
     tests = current_user.tests
+    tests_data = [{"num_test": test.num_test, "date": test.date
+        } for test in tests]
 
-    return render_template('prefall/pantalla_principal_paciente.html', tests = tests)
+    return render_template('prefall/pantalla_principal_paciente.html',
+     tests = tests, tests_data=tests_data)
 
 @blueprint.route('ver_detalles_test/<id>/<num>', methods=['GET'])
 @patient_data_access()
 def ver_detalles_test(id, num):
     from apps import db
     test = Test.query.filter_by(id_paciente=id).filter_by(num_test=num).first()
+
     diagnosticos = db.session.query(Test, AccionesTestMedico, User).\
         join(Test, db.and_(AccionesTestMedico.num_test == Test.num_test, 
         AccionesTestMedico.id_paciente == Test.id_paciente)).\
@@ -1443,7 +1447,7 @@ def generate_plots_paciente(id):
         .filter(Test.probabilidad_caida.isnot(None)).all()
     
     x = [test.date for test in tests]
-    y = [test.probabilidad_caida for test in tests]
+    y = [test.probabilidad_caida * 100 for test in tests]
     
     fig = go.Figure()
     
@@ -1451,8 +1455,8 @@ def generate_plots_paciente(id):
 
     fig.add_trace(trace)
 
-    fig.update_xaxes(title_text='Date')
-    fig.update_yaxes(title_text='Probability of Falling', range=[0, 1])
+    fig.update_xaxes(title_text='Fecha')
+    fig.update_yaxes(title_text='Probabilidad de caída', range=[0, 100])
 
     graphEvolucionProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
@@ -2150,7 +2154,7 @@ def plots_paciente():
         .filter(Test.probabilidad_caida.isnot(None)).all()
     
     x = [test.date for test in tests]
-    y = [test.probabilidad_caida for test in tests]
+    y = [test.probabilidad_caida * 100 for test in tests]
     
     fig = go.Figure()
     
@@ -2158,8 +2162,8 @@ def plots_paciente():
 
     fig.add_trace(trace)
 
-    fig.update_xaxes(title_text='Date')
-    fig.update_yaxes(title_text='Probability of Falling', range=[0, 1])
+    fig.update_xaxes(title_text='Fecha')
+    fig.update_yaxes(title_text='Probabilidad de caída', range=[0, 100])
 
     graphEvolucionProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 
