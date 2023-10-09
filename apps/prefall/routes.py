@@ -1233,8 +1233,12 @@ def desasociar_medico(id, id_medico):
 @roles_accepted("paciente")
 def pantalla_principal_paciente():
     tests = current_user.tests
-    tests_data = [{"num_test": test.num_test, "date": test.date
-        } for test in tests]
+    tests_data = [{"num_test": test.num_test, "date": test.date, 
+    "medico": test.medico.nombre + " " + test.medico.apellidos 
+    if test.medico and test.medico.apellidos else test.medico.nombre 
+    if test.medico else ""} 
+    for test in tests]
+
 
     return render_template('prefall/pantalla_principal_paciente.html',
      tests = tests, tests_data=tests_data)
