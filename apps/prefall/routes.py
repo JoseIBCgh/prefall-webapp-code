@@ -321,7 +321,7 @@ def pantalla_principal_medico():
             AccionesTestMedico.id_paciente == Test.id_paciente
         ))
         .filter(AccionesTestMedico.id_medico == current_user.id)
-        .filter(AccionesTestMedico.diagnostico == None)
+        .filter(AccionesTestMedico.diagnostico.is_(None))
         .group_by(User.id)
         .alias()
     )
@@ -338,7 +338,7 @@ def pantalla_principal_medico():
             AccionesTestMedico.id_paciente == Test.id_paciente
         ))
         .filter(AccionesTestMedico.id_medico == current_user.id)
-        .filter(Test.probabilidad_caida == None)
+        .filter(Test.probabilidad_caida.is_(None))
         .group_by(User.id)
         .alias()
     )

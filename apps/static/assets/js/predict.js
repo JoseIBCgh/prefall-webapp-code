@@ -36,6 +36,7 @@ function start_prediction() {
             }
         });
     });
+    alert("Analizando test");
 }
 function poll(task_id){
     console.log("poll")

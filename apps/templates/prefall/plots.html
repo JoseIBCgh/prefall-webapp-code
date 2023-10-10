@@ -49,7 +49,7 @@
                     button.style.width = '30px';
                     button.style.height = '30px';
                     button.addEventListener("click", function() {
-                        fetchAndPlotData(rowData.id);
+                        fetchAndPlotData(rowData);
                     });
                     return button;
                 },
@@ -154,8 +154,8 @@
             }
         }
 
-        function fetchAndPlotData(id){
-            fetch(`/plots/generar_paciente/${id}`, {
+        function fetchAndPlotData(paciente){
+            fetch(`/plots/generar_paciente/${paciente.id}`, {
                 method: 'GET', 
             })
             .then(response => {
@@ -188,6 +188,7 @@
             .catch(error => {
                 console.error('Error en la solicitud al backend:', error);
             });
+            alert("Generando informes del paciente " + paciente.nombre);
         }
         function fetchTestAndDisplay(paciente) {
             fetch(`/get_tests/${paciente.id}`, {
@@ -201,16 +202,17 @@
                 }
             })
             .then(testData => {
+                alert("Seleccionado paciente " + paciente.nombre);
                 var title = document.getElementById("test-paciente");
                 title.textContent = paciente.nombre + " " + paciente.apellidos + " " + paciente.identificador;
-                displayTestsInTabulator(testData);
+                displayTestsInTabulator(paciente, testData);
             })
             .catch(error => {
                 console.error('Error fetching test data:', error);
             });
         }
 
-        function displayTestsInTabulator(testData) {
+        function displayTestsInTabulator(paciente, testData) {
             
             var testTable = new Tabulator("#test-table", {
                 data: testData, 
@@ -229,6 +231,7 @@
                             button.style.height = '30px';
                             button.addEventListener("click", function() {
                                 fetchAndPlotDataTest(rowData.id_paciente, rowData.num_test);
+                                alert("Añadiendo informes del test " + cell.getRow().getData().num_test + " del paciente " + paciente.nombre);
                             });
                             return button;
                         },
