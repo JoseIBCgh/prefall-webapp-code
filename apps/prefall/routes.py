@@ -1318,18 +1318,34 @@ def add_df_to_sql(df, id_centro, filename):
         date = date_obj, id_centro=id_centro, id_medico= current_user.id)
     db.session.add(test)
 
+    test_units = []
+
     for index, row in df.iterrows():
-        testUnit = TestUnit(
-            item = row.at["item"],
-            num_test = row.at["num_test"], id_paciente= row.at["id_paciente"], time= row.at["time"],
-            acc_x = row.at["acc_x"], acc_y = row.at["acc_y"], acc_z = row.at["acc_z"],
-            gyr_x = row.at["gyr_x"], gyr_y = row.at["gyr_y"], gyr_z = row.at["gyr_z"],
-            mag_x = row.at["mag_x"], mag_y = row.at["mag_y"], mag_z = row.at["mag_z"],
-            lacc_x = row.at["lacc_x"], lacc_y = row.at["lacc_y"], lacc_z = row.at["lacc_z"],
-            quat_x = row.at["quat_x"], quat_y = row.at["quat_y"], quat_z = row.at["quat_z"],
-            quat_w = row.at["quat_w"],
-        )
-        db.session.add(testUnit)
+        test_unit_data = {
+            'item': row.at['item'],
+            'num_test': row.at['num_test'],
+            'id_paciente': row.at['id_paciente'],
+            'time': row.at['time'],
+            'acc_x': row.at['acc_x'],
+            'acc_y': row.at['acc_y'],
+            'acc_z': row.at['acc_z'],
+            'gyr_x': row.at['gyr_x'],
+            'gyr_y': row.at['gyr_y'],
+            'gyr_z': row.at['gyr_z'],
+            'mag_x': row.at['mag_x'],
+            'mag_y': row.at['mag_y'],
+            'mag_z': row.at['mag_z'],
+            'lacc_x': row.at['lacc_x'],
+            'lacc_y': row.at['lacc_y'],
+            'lacc_z': row.at['lacc_z'],
+            'quat_x': row.at['quat_x'],
+            'quat_y': row.at['quat_y'],
+            'quat_z': row.at['quat_z'],
+            'quat_w': row.at['quat_w'],
+        }
+        test_units.append(test_unit_data)
+
+    db.session.bulk_insert_mappings(TestUnit, test_units)
     
     db.session.commit()
 
