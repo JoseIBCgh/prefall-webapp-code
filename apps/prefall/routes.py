@@ -541,6 +541,11 @@ def detalles_test(id, num, editing):
         editing = False
     elif editing:
         form.diagnostico.data = test.diagnostico
+
+    test_data = {
+            "num_test": test.num_test,
+            "id_paciente": test.id_paciente,
+        }
     '''
     if test.bow is not None:
         from apps.authentication.models import GraphJson
@@ -567,7 +572,7 @@ def detalles_test(id, num, editing):
         )
     '''
     return render_template(
-        'prefall/detalles_test.html', form = form, test = test, editing = editing
+        'prefall/detalles_test.html', form = form, test = test, editing = editing, test_data = test_data
     )
 
 def Average(lst):
@@ -1093,6 +1098,20 @@ def plot_data(num_test, id_paciente):
         "acc_z_train": df_train["acc_z"].to_list(),
     }
     return jsonify(data)
+
+
+@blueprint.route('/borrar_test/<num_test>/<id_paciente>', methods=['POST'])
+@clinical_data_access()
+def borrar_test(num_test, id_paciente):
+    from apps import db
+    test = Test.query.filter_by(num_test=num_test, id_paciente=id_paciente).first()
+
+    if test:
+        db.session.delete(test)
+        db.session.commit()
+        return jsonify({'message': 'Test deleted successfully'}), 200
+    else:
+        return jsonify({'message': 'Test not found'}), 404
 
 ### END MEDICO ###
 ### BEGIN AUXILIAR ###

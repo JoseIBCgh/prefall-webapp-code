@@ -97,6 +97,7 @@
                     {% endif %}
                     <a href="{{url_for('prefall_blueprint.get_test', paciente=test['id_paciente'], test=test['num_test'])}}" class="label theme-bg text-white f-12 btn-rounded">Descargar</a>
                     <button id="analize-btn" class="label theme-bg text-white f-12 btn-rounded" onclick="start_prediction();">Analizar</button>
+                    <button id="delete-btn" class="label theme-bg text-white f-12 btn-rounded">Borrar test</button>
                     <br>
                     <br>
                     {% if test["probabilidad_caida"] is not none %}
@@ -202,6 +203,25 @@
                         console.log("Time plot= " + (Date.now() - start_time))
                     </script>
                     {% endif %}
+                    <script>
+                        document.getElementById('delete-btn').addEventListener('click', function() {
+                            var test = {{ test_data | tojson | safe }};
+                            const confirmed = confirm("Estas seguro de querer borrar este test?");
+                            if (confirmed) {
+                                fetch('/borrar_test/' + test.num_test + '/' + test.id_paciente, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        confirmation: 'confirmed'
+                                    }),
+                                }).then(response => {
+                                    window.location.href = '/';
+                                });
+                            }
+                        });
+                    </script>
                 </div>
             </div>
         </div>
