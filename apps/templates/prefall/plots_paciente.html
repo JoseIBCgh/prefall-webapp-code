@@ -99,6 +99,8 @@
         const indexFases = 4;
         tests = []
         function AddTest(num_test){
+            var divCharts = document.getElementById("tabulator-charts");
+            divCharts.style.display = "none";
             tests.push(num_test);
             var url = `/plots/generar_tests/` + pacienteId;
             var requestData = {
@@ -115,11 +117,7 @@
                 chartTable.updateData([{ id: indexGyr, chartData: responseData.plotGyr }]);
                 chartTable.updateData([{ id: indexMag, chartData: responseData.plotMag }]);
                 chartTable.updateData([{ id: indexFases, chartData: responseData.plotFases }]);
-                chartTable.getRows().forEach(function(row) {
-                    if (row.getData().plotlyChart) {
-                        Plotly.redraw(row.getData().plotlyChart);
-                    }
-                });
+                divCharts.style.display = "block";
             })
             .catch(error => {
                 console.error('Error:', error);

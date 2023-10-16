@@ -988,7 +988,7 @@ def guardar_analisis(num_test, id_paciente):
     result = data['result']
     probability = result['probability']
     model_id = result['model_id']
-    df = pd.DataFrame(result['datos'])
+    df = pd.DataFrame([result['datos']])
     df_bytes = pickle.dumps(df)
 
     if db.session.query(Model.id).filter_by(id=model_id).first() is None: 

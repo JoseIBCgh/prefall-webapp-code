@@ -461,6 +461,10 @@
         const indexMagIndividual = 3;
         const indexProbCaidaIndividual = 0;
         function fetchAndPlotData(paciente){
+            var divIndividual = document.getElementById("plots-individual");
+            divIndividual.style.display = "none";
+            var divComparativa = document.getElementById("plots-comparativa");
+            divComparativa.style.display = "none";
             fetch(`/plots/generar_paciente/${paciente.id}`, {
                 method: 'GET', 
             })
@@ -477,6 +481,7 @@
                 chartTableIndividual.updateData([{ id: indexGyrIndividual, chartData: responseData.giroscopio }]);
                 chartTableIndividual.updateData([{ id: indexMagIndividual, chartData: responseData.magnetometro }]);
                 chartTableIndividual.updateData([{ id: indexProbCaidaIndividual, chartData: responseData.prob_caida }]);
+                divIndividual.style.display = "block";
             })
             .catch(error => {
                 console.error('Error en la solicitud al backend:', error);
