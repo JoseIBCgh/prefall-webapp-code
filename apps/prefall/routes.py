@@ -1602,7 +1602,7 @@ def generate_plots_paciente(id):
         mean_mag_y.append(mean_values[7])
         mean_mag_z.append(mean_values[8])
 
-        probs_caida.append(test.probabilidad_caida)
+        probs_caida.append(test.probabilidad_caida * 100)
 
 
     print("after loop data extraction")
@@ -1863,7 +1863,7 @@ def obtener_centros():
 
     return jsonify({"centros": centros_list})
 
-@blueprint.route('/plots/generar_tests/<id>', methods=['GET','POST'])
+@blueprint.route('/plots/generar_tests/<id>', methods=['POST'])
 @patient_data_access()
 def generar_tests(id):
     from apps import db
@@ -1965,7 +1965,59 @@ def generar_tests(id):
     plotMag = figMag.to_dict()
     plotFases = figFases.to_dict()
     return jsonify({"plotAcc": plotAcc, "plotGyr": plotGyr, "plotMag": plotMag, "plotFases": plotFases})
-    '''
+
+
+@blueprint.route('/plots/generar_tests_medico/', methods=['POST'])
+@roles_accepted("medico")
+def generar_tests_medico():
+    from apps import db
+    import pickle
+    import numpy as np
+    import plotly
+    import plotly.graph_objs as go
+    from sqlalchemy.orm import joinedload
+    data = request.get_json()
+    tests_data = data.get('tests')
+    tests = []
+    for test in tests_data:
+        id_paciente = test.get('paciente')
+        num_test = test.get('test')
+        specific_test = db.session.query(Test) \
+            .filter(Test.num_test == num_test, Test.id_paciente == id_paciente) \
+            .options(joinedload(Test.paciente)) \
+            .first()
+        tests.append(specific_test)
+
+    acc_data = []
+    gyr_data = []
+    mag_data = []
+    dates_data = []
+    fases_data = []
+    dates_fases_data = []
+
+    graphDataAcc = []
+    layout = go.Layout(
+        barmode='group',
+        title='Comparación de la aceleración',
+        xaxis=dict(title='Eje'),
+        yaxis=dict(title='Aceleración media')
+    )
+    figAcc = go.Figure()
+    figAcc.update_layout(
+        title="Comparación del acelerómetro",
+    )
+    figGyr = go.Figure()
+    figGyr.update_layout(
+        title="Comparación del giroscopio",
+    )
+    figMag = go.Figure()
+    figMag.update_layout(
+        title="Comparación del magnetómetro",
+    )
+    figFases = go.Figure()
+    figFases.update_layout(
+        title="Duración de las fases de la marcha",
+    )
     for test in tests:
         fases = None
         blob_data = test.data  
@@ -1977,8 +2029,12 @@ def generar_tests(id):
                 'fase3': df['duracion_f3'].values[0],
                 'fase4': df['duracion_f4'].values[0]
             }
-            fases_data.append([fases['fase1'], fases['fase2'], fases['fase3'], fases['fase4']])
-            dates_fases_data.append(test.date)
+            trace_fases = go.Bar(
+                x=["Fase 1", "Fase 2", "Fase 3", "Fase 4"],
+                y=[fases['fase1'], fases['fase2'], fases['fase3'], fases['fase4']],
+                name=test.paciente.nombre + " " + test.paciente.apellidos + " " + test.date.strftime("%Y-%m-%d %H:%M:%S")
+            )
+            figFases.add_trace(trace_fases)
         test_data = db.session.query(
                 TestUnit.acc_x, TestUnit.acc_y, TestUnit.acc_z,
                 TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
@@ -1990,13 +2046,33 @@ def generar_tests(id):
         acc = {"x": mean_values[0], "y": mean_values[1], "z":mean_values[2]}
         gyr = {"x": mean_values[3], "y": mean_values[4], "z":mean_values[5]}
         mag = {"x": mean_values[6], "y": mean_values[7], "z":mean_values[8]}
+        trace_acc = go.Bar(
+            x=["Aceleracion X", "Aceleracion Y", "Aceleracion Z"],
+            y=[acc['x'], acc['y'], acc['z']],
+            name=test.paciente.nombre + " " + test.paciente.apellidos + " " + test.date.strftime("%Y-%m-%d %H:%M:%S")
+        )
+        figAcc.add_trace(trace_acc)
+        trace_gyr = go.Bar(
+            x=["Giroscopio X", "Giroscopio Y", "Giroscopio Z"],
+            y=[gyr['x'], gyr['y'], gyr['z']],
+            name=test.paciente.nombre + " " + test.paciente.apellidos + " " + test.date.strftime("%Y-%m-%d %H:%M:%S")
+        )
+        figGyr.add_trace(trace_gyr)
+        trace_mag = go.Bar(
+            x=["Magnetometro X", "Magnetometro Y", "Magnetometro Z"],
+            y=[mag['x'], mag['y'], mag['z']],
+            name=test.paciente.nombre + " " + test.paciente.apellidos + " " + test.date.strftime("%Y-%m-%d %H:%M:%S")
+        )
+        figMag.add_trace(trace_mag)
 
+    
+    #plotAcc = json.dumps(figAcc, cls=plotly.utils.PlotlyJSONEncoder)
+    plotAcc = figAcc.to_dict()
+    plotGyr = figGyr.to_dict()
+    plotMag = figMag.to_dict()
+    plotFases = figFases.to_dict()
+    return jsonify({"plotAcc": plotAcc, "plotGyr": plotGyr, "plotMag": plotMag, "plotFases": plotFases})
 
-        acc_data.append([acc['x'], acc['y'], acc['z']])
-        gyr_data.append([gyr['x'], gyr['y'], gyr['z']])
-        mag_data.append([mag['x'], mag['y'], mag['z'])
-        dates_data.append(test.date)
-    '''
     
 
         

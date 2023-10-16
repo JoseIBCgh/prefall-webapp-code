@@ -86,21 +86,6 @@
         });
     </script>
     <script>
-        lastGraph = null
-        function plotGraph(graphDivId, graphData) {
-            var start_time = Date.now()
-            Plotly.plot(graphDivId, graphData, {});
-            console.log("Time plot= " + (Date.now() - start_time))
-        }
-        function showDiv(divId) {
-            document.querySelectorAll('.chart').forEach(function(chartDiv) {
-                chartDiv.style.display = 'none';
-            });
-
-            var selectedDiv = document.getElementById(divId);
-            selectedDiv.style.display = 'block';
-
-        }
         const popup = document.getElementById('test-popup');
         function showPopup() {
             popup.style.display = 'block';
@@ -109,52 +94,7 @@
             popup.style.display = 'none';
         }
 
-        var paginationDataPaciente = [
-            { label: '1', id: 'prob_caida' },
-            { label: '2', id: 'acelerometro' },
-            { label: '3', id: 'giroscopio' },
-            { label: '4', id: 'magnetometro' }
-        ];
-
-        var paginationDataTest = [
-            { label: '1', id: 'fases' },
-            { label: '2', id: 'acelerometro' },
-            { label: '3', id: 'giroscopio' },
-            { label: '4', id: 'magnetometro' }
-        ];
-
-        function generateGraphDivs(paginationData) {
-            var paginationContainer = document.getElementById('pagination');
-            var chartsContainer = document.getElementById('chartContainer');
-
-            paginationData.forEach(function(item) {
-                var button = document.createElement('button');
-                button.textContent = item.label;
-                button.onclick = function() {
-                    showDiv(item.id);
-                };
-                paginationContainer.appendChild(button);
-
-                var chartDiv = document.createElement('div');
-                chartDiv.id = item.id;
-                chartDiv.className = 'chart';
-                chartDiv.style.display = 'none';
-                chartsContainer.appendChild(chartDiv);
-            });
-        }
-
-        function clearGraphDivs() {
-            var paginationContainer = document.getElementById('pagination');
-            var chartsContainer = document.getElementById('chartContainer');
-
-            while (paginationContainer.firstChild) {
-                paginationContainer.removeChild(paginationContainer.firstChild);
-            }
-
-            while (chartsContainer.firstChild) {
-                chartsContainer.removeChild(chartsContainer.firstChild);
-            }
-        }
+        
         function fetchTestAndDisplay(paciente) {
             fetch(`/get_tests/${paciente.id}`, {
                 method: 'GET', 
@@ -195,7 +135,7 @@
                             button.style.width = '30px';
                             button.style.height = '30px';
                             button.addEventListener("click", function() {
-                                fetchAndPlotDataTest(rowData.id_paciente, rowData.num_test);
+                                addTest(rowData.id_paciente, rowData.num_test);
                                 alert("Añadiendo informes del test " + cell.getRow().getData().num_test + " del paciente " + paciente.nombre);
                             });
                             return button;
@@ -218,112 +158,6 @@
                 closePopup();
             }
         });
-
-        function fetchAndPlotDataTest(id_paciente, num_test){
-            fetch(`/plots/get_test_data/${id_paciente}/${num_test}`, {
-                method: 'GET', 
-            })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    console.error('Error en la solicitud al backend');
-                }
-            })
-            .then(data => {
-                if (data) {
-                    if(lastGraph !== 'test'){
-                        clearGraphDivs();
-                        generateGraphDivs(paginationDataTest);
-                        lastGraph = 'test';
-                    }
-                    
-                    const acc = data.acc;
-                    const gyr = data.gyr;
-                    const mag = data.mag;
-
-                    if(data.fases != null){
-
-                        const fases = data.fases;
-
-                        var traceFases = {
-                            x: ["Fase 1", "Fase 2", "Fase 3", "Fase 4"],
-                            y: [fases.fase1, fases.fase2, fases.fase3, fases.fase4],
-                            name: data.full_name + " " + data.date,
-                            type: 'bar',
-                        };
-
-                        var graphDataFases = [traceFases];
-
-                        var layout = {
-                            barmode: 'group',
-                            title: 'Comparación de la duración',
-                            xaxis: { title: 'Número de fase' },
-                            yaxis: { title: 'Duracion fase' },
-                        };
-
-                        plotGraph('fases', graphDataFases, layout);
-                    }
-
-                    var traceAcc = {
-                        x: ["Aceleracion X", "Aceleracion Y", "Aceleracion Z"],
-                        y: [acc.x, acc.y, acc.z],
-                        name: data.full_name + " " + data.date,
-                        type: 'bar',
-                    };
-
-                    var graphDataAcc = [traceAcc];
-
-                    var layout = {
-                        barmode: 'group',
-                        title: 'Comparación de la aceleración',
-                        xaxis: { title: 'Eje' },
-                        yaxis: { title: 'Aceleración media' },
-                    };
-
-                    plotGraph('acelerometro', graphDataAcc, layout);
-
-                    var traceGyr = {
-                        x: ["Giroscopio X", "Giroscopio Y", "Giroscopio Z"],
-                        y: [gyr.x, gyr.y, gyr.z],
-                        name: data.full_name + " " + data.date,
-                        type: 'bar',
-                    };
-
-                    var graphDataGyr = [traceGyr];
-
-                    var layout = {
-                        barmode: 'group',
-                        title: 'Comparación del gyroscopio',
-                        xaxis: { title: 'Eje' },
-                        yaxis: { title: 'Giroscopio medio' },
-                    };
-
-                    plotGraph('giroscopio', graphDataGyr, layout);
-
-                    var traceMag = {
-                        x: ["Magnetometro X", "Magnetometro Y", "Magnetometro Z"],
-                        y: [mag.x, mag.y, mag.z],
-                        name: data.full_name + " " + data.date,
-                        type: 'bar',
-                    };
-
-                    var graphDataMag = [traceMag];
-
-                    var layout = {
-                        barmode: 'group',
-                        title: 'Comparación del magnetometro',
-                        xaxis: { title: 'Eje' },
-                        yaxis: { title: 'Magnetometro medio' },
-                    };
-
-                    plotGraph('magnetometro', graphDataMag, layout);
-                }
-            })
-            .catch(error => {
-                console.error('Error en la solicitud al backend:', error);
-            });
-        }
 
         function exportChartsToPDF() {
             var chartContainer = document.getElementById('chartContainer');
@@ -423,10 +257,6 @@
             { id: 3, chartData: {
                 data: [],
                 layout: {}
-            }},
-            { id: 4, chartData: {
-                data: [],
-                layout: {}
             }}
         ];
         var chartTableComparativa = new Tabulator("#plots-comparativa",{
@@ -487,6 +317,41 @@
                 console.error('Error en la solicitud al backend:', error);
             });
             alert("Generando informes del paciente " + paciente.nombre);
+        }
+    </script>
+    <script>
+        const indexAcc = 0;
+        const indexGyr = 1;
+        const indexMag = 2;
+        const indexFases = 3;
+        tests = []
+        function addTest(id_paciente, num_test){
+            var divIndividual = document.getElementById("plots-individual");
+            divIndividual.style.display = "none";
+            var divComparativa = document.getElementById("plots-comparativa");
+            divComparativa.style.display = "none";
+            obj = {paciente: id_paciente, test: num_test};
+            tests.push(obj);
+            var url = `/plots/generar_tests_medico/`;
+            var requestData = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ tests: tests }),
+            };
+            fetch(url, requestData)
+            .then(response => response.json()) // Parse the JSON response
+            .then(responseData => {
+                chartTableComparativa.updateData([{ id: indexAcc, chartData: responseData.plotAcc }]);
+                chartTableComparativa.updateData([{ id: indexGyr, chartData: responseData.plotGyr }]);
+                chartTableComparativa.updateData([{ id: indexMag, chartData: responseData.plotMag }]);
+                chartTableComparativa.updateData([{ id: indexFases, chartData: responseData.plotFases }]);
+                divComparativa.style.display = "block";
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
     </script>
 
