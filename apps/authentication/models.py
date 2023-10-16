@@ -338,6 +338,40 @@ def create_data():
     
     db.session.commit()
 
+def create_data_prod():
+    from apps import user_datastore
+    user_datastore.find_or_create_role(
+        name="admin",
+        permissions={"datos-personales-pacientes-centro", "datos-personales-personal-centro"},
+    )
+
+    user_datastore.find_or_create_role(
+        name="admin-centro",
+        permissions={"datos-personales-pacientes-centro", "datos-personales-personal-centro"},
+    )
+    
+    user_datastore.find_or_create_role(
+        name="medico",
+        permissions={"datos-personales-pacientes-asociados", "datos-clinicos-pacientes-asociados"},
+    )
+    user_datastore.find_or_create_role(
+        name="auxiliar",
+        permissions={"datos-personales-pacientes-centro"},
+    )
+    user_datastore.find_or_create_role(
+        name="paciente",
+        permissions={},
+    )
+    
+    if not user_datastore.find_user(username="admin"):
+        user_datastore.create_user(
+            identificador="46954321F",username="admin", email="admin@kruay.com", 
+            password=hash_password("admin"), roles=["admin"]
+        )
+    
+    db.session.commit()
+    
+
 def asociar_pacientes():
     from apps import user_datastore
     medico = user_datastore.find_user(username="medico")

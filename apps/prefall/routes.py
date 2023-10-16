@@ -134,12 +134,18 @@ def crear_admin_centro(id):
     centro = Centro.query.filter_by(id=id).first()
     form = CreateCenterAdminForm()
     if form.validate_on_submit():
-        username = form["username"].data
-        password = form["password"].data
-        email = form["email"].data
+        identificador = form['identificador'].data
+        nombre = form['nombre'].data
+        apellidos = form['apellidos'].data
+        fecha = form['fecha'].data
+        sexo = form['sexo'].data
+        password = form['password'].data
+        username = form['username'].data
+        email = form['email'].data
         from apps import user_datastore, db
         user_datastore.create_user(
-            username= username, id_centro = id,
+            identificador=identificador, nombre=nombre, apellidos=apellidos, fecha_nacimiento=fecha, 
+            sexo=sexo, id_centro = id, username=username,
             password=hash_password(password), email=email, roles=["admin-centro"]
         )
         user_created = User.query.filter_by(email=email).first()
@@ -482,6 +488,7 @@ def crear_paciente_medico():
         # read form data
         identificador = request.form['identificador']
         nombre = request.form['nombre']
+        apellidos = request.form['apellidos']
         fecha = request.form['fecha']
         sexo = request.form['sexo']
         altura = request.form['altura']
@@ -493,7 +500,8 @@ def crear_paciente_medico():
 
         from apps import user_datastore, db
         user_datastore.create_user(
-            identificador=identificador, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
+            identificador=identificador, nombre=nombre, apellidos=apellidos, 
+            fecha_nacimiento=fecha, sexo=sexo, altura=altura,
             peso=peso, antecedentes_clinicos=antecedentes, id_centro = current_user.id_centro,
             password=hash_password(password), email=email, roles=["paciente"], username=username
         )
@@ -1153,6 +1161,7 @@ def crear_paciente_auxiliar():
         # read form data
         identificador = request.form['identificador']
         nombre = request.form['nombre']
+        apellidos = request.form['apellidos']
         fecha = request.form['fecha']
         sexo = request.form['sexo']
         altura = request.form['altura']
@@ -1163,7 +1172,8 @@ def crear_paciente_auxiliar():
 
         from apps import user_datastore, db
         user_datastore.create_user(
-            identificador=identificador, nombre=nombre, fecha_nacimiento=fecha, sexo=sexo, altura=altura,
+            identificador=identificador, nombre=nombre, apellidos=apellidos,
+            fecha_nacimiento=fecha, sexo=sexo, altura=altura,
             peso=peso, id_centro = current_user.id_centro, username=username,
             password=hash_password(password), email=email, roles=["paciente"]
         )
