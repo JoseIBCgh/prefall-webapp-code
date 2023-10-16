@@ -115,6 +115,11 @@
                 chartTable.updateData([{ id: indexGyr, chartData: responseData.plotGyr }]);
                 chartTable.updateData([{ id: indexMag, chartData: responseData.plotMag }]);
                 chartTable.updateData([{ id: indexFases, chartData: responseData.plotFases }]);
+                chartTable.getRows().forEach(function(row) {
+                    if (row.getData().plotlyChart) {
+                        Plotly.redraw(row.getData().plotlyChart);
+                    }
+                });
             })
             .catch(error => {
                 console.error('Error:', error);

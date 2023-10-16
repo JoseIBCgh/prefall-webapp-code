@@ -21,6 +21,8 @@
                     <img src="/static/assets/images/icons/exportar_pdf.png" style="width: 50px; height: 50px;"/>
                 </button>
             </div>
+            <div id="plots-individual"></div>
+            <div id="plots-comparativa"></div>
         </div>
     </div>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/css/tabulator.min.css" integrity="sha512-HdUIebGeOK7s+At/fOnnbX8vsz6Cl1KTeiRlBiQABTMSqw7kZRCxGiUnuF9lr+1xz5y8pL7jkCR+NNtVVkEqKg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -152,43 +154,6 @@
             while (chartsContainer.firstChild) {
                 chartsContainer.removeChild(chartsContainer.firstChild);
             }
-        }
-
-        function fetchAndPlotData(paciente){
-            fetch(`/plots/generar_paciente/${paciente.id}`, {
-                method: 'GET', 
-            })
-            .then(response => {
-                if (response.ok) {
-                    return response.json();
-                } else {
-                    console.error('Error en la solicitud al backend');
-                }
-            })
-            .then(data => {
-                if (data) {
-                    clearGraphDivs();
-                    generateGraphDivs(paginationDataPaciente);
-                    if(lastGraph !== 'paciente'){
-                        lastGraph = 'paciente';
-                    }
-                    
-                    const graphProbCaida = data.prob_caida;
-                    const graphDataAcc = data.acelerometro;
-                    const graphDataGyr = data.giroscopio;
-                    const graphDataMag = data.magnetometro;
-
-
-                    plotGraph('prob_caida', JSON.parse(graphProbCaida));
-                    plotGraph('acelerometro', JSON.parse(graphDataAcc));
-                    plotGraph('giroscopio', JSON.parse(graphDataGyr));
-                    plotGraph('magnetometro', JSON.parse(graphDataMag));
-                }
-            })
-            .catch(error => {
-                console.error('Error en la solicitud al backend:', error);
-            });
-            alert("Generando informes del paciente " + paciente.nombre);
         }
         function fetchTestAndDisplay(paciente) {
             fetch(`/get_tests/${paciente.id}`, {
@@ -396,6 +361,128 @@
         clearButton.addEventListener('click', function(){
             clearGraphDivs();
         });
+    </script>
+    <script>
+        var graphDataIndividual = [
+            { id: 0, chartData: {
+                data: [],
+                layout: {}
+            }},
+            { id: 1, chartData: {
+                data: [],
+                layout: {}
+            }},
+            { id: 2, chartData: {
+                data: [],
+                layout: {}
+            }},
+            { id: 3, chartData: {
+                data: [],
+                layout: {}
+            }}
+        ];
+        var chartTableIndividual = new Tabulator("#plots-individual",{
+            data: graphDataIndividual,
+            columns: [
+                {
+                    title: "",
+                    formatter: function(cell, formatterParams, onRendered) {
+                        var chartID = cell.getRow().getData().chartID;
+                        var chartData = cell.getRow().getData().chartData;
+
+                        var divElement = document.createElement("div");
+                        divElement.className = "chart";
+
+                        Plotly.newPlot(divElement, chartData, {});
+
+                        return divElement;
+                    }
+                }
+            ],
+            layout:"fitColumns",
+            responsiveLayout:"hide",
+            pagination: "local",
+            paginationSize:1,
+            paginationCounter:"rows",
+            movableColumns:false,
+        });
+
+        var graphDataComparativa = [
+            { id: 0, chartData: {
+                data: [],
+                layout: {}
+            }},
+            { id: 1, chartData: {
+                data: [],
+                layout: {}
+            }},
+            { id: 2, chartData: {
+                data: [],
+                layout: {}
+            }},
+            { id: 3, chartData: {
+                data: [],
+                layout: {}
+            }},
+            { id: 4, chartData: {
+                data: [],
+                layout: {}
+            }}
+        ];
+        var chartTableComparativa = new Tabulator("#plots-comparativa",{
+            data: graphDataComparativa,
+            columns: [
+                {
+                    title: "",
+                    formatter: function(cell, formatterParams, onRendered) {
+                        var chartID = cell.getRow().getData().chartID;
+                        var chartData = cell.getRow().getData().chartData;
+
+                        var divElement = document.createElement("div");
+                        divElement.className = "chart";
+
+                        Plotly.newPlot(divElement, chartData, {});
+
+                        return divElement;
+                    }
+                }
+            ],
+            layout:"fitColumns",
+            responsiveLayout:"hide",
+            pagination: "local",
+            paginationSize:1,
+            paginationCounter:"rows",
+            movableColumns:false,
+        });
+    </script>
+    <script>
+        const indexAccIndividual = 1;
+        const indexGyrIndividual = 2;
+        const indexMagIndividual = 3;
+        const indexProbCaidaIndividual = 0;
+        function fetchAndPlotData(paciente){
+            fetch(`/plots/generar_paciente/${paciente.id}`, {
+                method: 'GET', 
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    console.error('Error en la solicitud al backend');
+                }
+            })
+            .then(responseData => {
+                console.log("plotting individual");
+                chartTableIndividual.updateData([{ id: indexAccIndividual, chartData: responseData.acelerometro }]);
+                chartTableIndividual.updateData([{ id: indexGyrIndividual, chartData: responseData.giroscopio }]);
+                chartTableIndividual.updateData([{ id: indexMagIndividual, chartData: responseData.magnetometro }]);
+                chartTableIndividual.updateData([{ id: indexProbCaidaIndividual, chartData: responseData.prob_caida }]);
+            })
+            .catch(error => {
+                console.error('Error en la solicitud al backend:', error);
+            });
+            alert("Generando informes del paciente " + paciente.nombre);
+        }
     </script>
 
 {% endblock %}
