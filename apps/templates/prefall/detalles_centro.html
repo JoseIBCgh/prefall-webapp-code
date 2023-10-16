@@ -134,29 +134,34 @@
                 headerSort: false,
                 formatter: function (cell) {
                     const postId = cell.getValue(); 
-                    
+                    const nombre = cell.getRow().getData().nombre;
+
                     const button = document.createElement("button");
                     button.textContent = "Borrar";
                     button.addEventListener("click", function () {
-                    fetch("/borrar_usuario/" + postId, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        }
-                    })
-                        .then(response => {
-                        if (response.ok) {
-                            response.json().then(data => {
-                                console.log("Received data:", data);
+                        const confirmed = window.confirm("Seguro que quieres borrar " + nombre + "?");
+                        if(confirmed){
+                            fetch("/borrar_usuario/" + postId, {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                }
+                            })
+                            .then(response => {
+                            if (response.ok) {
+                                response.json().then(data => {
+                                    console.log("Received data:", data);
+                                    window.location.reload();
+                                });
+                            } else {
+                                console.error("Error getting data");
+                            }
+                            })
+                            .catch(error => {
+                            console.error("Error:", error);
                             });
-                        } else {
-                            console.error("Error getting data");
                         }
-                        })
-                        .catch(error => {
-                        console.error("Error:", error);
                         });
-                    });
 
                     // Return the button element
                     return button;
