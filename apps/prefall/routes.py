@@ -99,9 +99,15 @@ def lista_centros():
     from apps.authentication.models import Centro
 
     centros = Centro.query.order_by(Centro.nombreFiscal).all()
+
+    centros_data = [
+        {"id": centro.id, "nombreFiscal": centro.nombreFiscal
+        }for centro in centros]
     
 
-    return render_template('prefall/center_list.html', centros=centros)
+    return render_template(
+        'prefall/center_list.html', centros=centros, 
+        centros_data=centros_data)
 
 
 @blueprint.route('detalles_centro_admin/<id>', methods=['GET', 'POST'])
@@ -193,6 +199,20 @@ def borrar_usuario(id):
         return jsonify({"message": "User deleted successfully"})
     return jsonify({"error": "User not found"}), 404
 
+
+@blueprint.route('borrar_centro/<id>', methods=['POST'])
+@admin_centro_access_user()
+def borrar_centro(id):
+    from apps import db
+    centro = Centro.query.get(id)
+    if centro:
+        if len(centro.usuarios) == 0:
+            db.session.delete(centro)
+            db.session.commit()
+            return jsonify({"message": "Centro deleted successfully"})
+        else:
+            return jsonify({"error": "El centro no esta vacio. Debes eliminar primero todos sus usuarios"}), 404
+    return jsonify({"error": "Centro not found"}), 404
 
 ### END ADMIN ###
 

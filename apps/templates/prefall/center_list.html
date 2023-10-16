@@ -19,32 +19,81 @@
                         <div class="card-header">
                             <h5>Centros</h5>
                         </div>
-                        <div class="card-block px-0 py-3">
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th class="center">Nombre fiscal</th>
-                                            <th class="text-right center"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for centro in centros %}
-                                        <tr class="unread">
-                                            <td>
-                                                <h6 class="text-muted center">{{centro["nombreFiscal"]}}</h6>
-                                            </td>
-                                            <td class="center"><a href="{{url_for('prefall_blueprint.detalles_centro', id_centro=centro['id'])}}" class="label theme-bg text-white f-12">Ver detalles</a></td>
-                                        </tr> 
-                                        {% endfor %}                               
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <div id="tabulator"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/css/tabulator.min.css" integrity="sha512-HdUIebGeOK7s+At/fOnnbX8vsz6Cl1KTeiRlBiQABTMSqw7kZRCxGiUnuF9lr+1xz5y8pL7jkCR+NNtVVkEqKg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/js/tabulator.min.js" integrity="sha512-oU2NOn7vXb9igwNelYL+57+t+zb3liitNE8/NXg8QFJhBCSvH+dt9+s3H02aM41FUF7WYWx0kPeFV5yIkm1MVA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        var centrosData = {{centros_data | tojson | safe}};
+        var columns = [
+            { title: "Nombre fiscal", field: "nombreFiscal", headerFilter:true },
+            {
+                title: "",
+                field: "id", // Replace with the appropriate field that holds the ID
+                headerSort: false,
+                formatter: function (cell) {
+                    return '<a href="/detalles_centro/' + cell.getValue() + '" class="label theme-bg text-white f-12 center">Ver detalles</a>';
+                }
+            },
+            {
+                title: "",
+                field: "id", // Replace with the appropriate field that holds the ID
+                headerSort: false,
+                formatter: function (cell) {
+                    const postId = cell.getValue(); 
+                    const nombre = cell.getRow().getData().nombreFiscal;
+
+                    const button = document.createElement("button");
+                    button.textContent = "Borrar";
+                    button.addEventListener("click", function () {
+                        const confirmed = window.confirm("Seguro que quieres borrar " + nombre + "?");
+                        if(confirmed){
+                            fetch("/borrar_centro/" + postId, {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                }
+                            })
+                            .then(response => {
+                            if (response.ok) {
+                                response.json().then(data => {
+                                    console.log("Received data:", data);
+                                    window.location.reload();
+                                });
+                            } else {
+                                response.json().then(errorData => {
+                                    console.error("Error:", errorData.error);
+                                    
+                                    alert(errorData.error);
+                                });
+                            }
+                            })
+                            .catch(error => {
+                            console.error("Error:", error);
+                            });
+                        }
+                        });
+
+                    // Return the button element
+                    return button;
+                }
+            },
+        ];
+
+        var table = new Tabulator("#tabulator", {
+            data: centrosData,
+            columns: columns,
+            layout:"fitColumns",
+            responsiveLayout:"hide",
+            pagination: "local",
+            paginationSize:10,
+            paginationCounter:"rows",
+            movableColumns:true,
+        });
+    </script>
 
 {% endblock %}

@@ -154,7 +154,11 @@
                                     window.location.reload();
                                 });
                             } else {
-                                console.error("Error getting data");
+                                response.json().then(errorData => {
+                                    console.error("Error:", errorData.error);
+                                    
+                                    alert(errorData.error);
+                                });
                             }
                             })
                             .catch(error => {
