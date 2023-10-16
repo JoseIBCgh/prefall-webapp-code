@@ -931,8 +931,15 @@ def detalles_clinicos(id):
     #graphJSON = generatePlotPaciente(id)
     graphJSON = null
 
+    print(tests)
+
+    tests_data = [{"num_test": test.num_test, "date": test.date, 
+    "medico": test.medico.nombre + " " + test.medico.apellidos if test.medico else "", 
+    "prob_caida": test.probabilidad_caida, "diagnostico": acciones_test_medico.diagnostico, 
+    } for test, acciones_test_medico in tests]
+
     return render_template('prefall/detalles_clinicos.html', paciente=paciente, tests=tests,
-    formTest=formTest, graphJSON=graphJSON,
+    formTest=formTest, graphJSON=graphJSON, tests_data = tests_data,
     total_pages=total_pages, current_page=page)
 
 
