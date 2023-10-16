@@ -18,8 +18,8 @@ fsqla.FsModels.set_db_info(db, user_table_name="users", role_table_name="roles")
 
 class PacienteAsociado(db.Model):
     __tablename__ = 'pacientes_asociados'
-    id_paciente = db.Column(db.Integer,db.ForeignKey('users.id'), primary_key=True)
-    id_medico = db.Column(db.Integer,db.ForeignKey('users.id'), primary_key=True)
+    id_paciente = db.Column(db.Integer,db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    id_medico = db.Column(db.Integer,db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
 
 class User(db.Model, fsqla.FsUserMixin):
 
@@ -69,7 +69,7 @@ class Centro(db.Model):
 class Test(db.Model):
     __tablename__ = 'test'
     num_test = db.Column(db.Integer, primary_key = True)
-    id_paciente = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    id_paciente = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
     id_centro = db.Column(db.Integer, db.ForeignKey('centros.id', ondelete='SET NULL'))
     id_medico = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'))
     date = db.Column(db.DateTime)
@@ -115,7 +115,8 @@ class TestUnit(db.Model):
     num_test = db.Column(db.Integer, primary_key=True)
     id_paciente = db.Column(db.Integer, primary_key=True)
     __table_args__ = (ForeignKeyConstraint([num_test, id_paciente],
-                                           [Test.num_test, Test.id_paciente]),
+                                           [Test.num_test, Test.id_paciente],
+                                           ondelete='CASCADE'),
                       {})
     item = db.Column(db.Integer)
     time = db.Column(db.Float(precision=32), primary_key=True)
@@ -141,9 +142,10 @@ class AccionesTestMedico(db.Model):
     num_test = db.Column(db.Integer, primary_key = True)
     id_paciente = db.Column(db.Integer, primary_key=True)
     __table_args__ = (ForeignKeyConstraint([num_test, id_paciente],
-                                           [Test.num_test, Test.id_paciente]),
+                                           [Test.num_test, Test.id_paciente],
+                                           ondelete='CASCADE'),
                       {})
-    id_medico = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
+    id_medico = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
     visto = db.Column(db.Boolean, default = False, nullable=False)
     diagnostico = db.Column(db.Text, nullable=True)
 

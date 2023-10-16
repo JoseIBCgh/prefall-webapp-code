@@ -182,6 +182,18 @@ def editar_detalles_usuario(id):
         'prefall/editar_detalles_personales.html', 
         form=form, paciente=paciente)
 
+@blueprint.route('borrar_usuario/<id>', methods=['POST'])
+@admin_centro_access_user()
+def borrar_usuario(id):
+    from apps import db
+    user = User.query.get(id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({"message": "User deleted successfully"})
+    return jsonify({"error": "User not found"}), 404
+
+
 ### END ADMIN ###
 
 ### BEGIN ADMIN CENTRO ###
@@ -205,9 +217,9 @@ def detalles_centro(id_centro):
         'prefall/detalles_centro.html', centro=centro, users_data=users_data)
 
 
-@blueprint.route('borrar_usuario/<id_centro>/<id_user>', methods=['GET','POST'])
+@blueprint.route('borrar_admin/<id_centro>/<id_user>', methods=['GET','POST'])
 @admin_centro_access()
-def borrar_usuario(id_centro, id_user):
+def borrar_admin(id_centro, id_user):
     from apps import db, user_datastore
     user = User.query.filter_by(id=id_user).filter_by(id_centro=id_centro).first()
     if user.has_role("admin_centro") and current_user.has_role("admin_centro"):

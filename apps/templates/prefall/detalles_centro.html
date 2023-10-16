@@ -128,6 +128,40 @@
             { title: "Nombre", field: "nombre", headerFilter:true },
             { title: "Apellidos", field: "apellidos", headerFilter:true },
             { title: "DNI", field: "identificador", headerFilter:true },
+            {
+                title: "",
+                field: "id", // Replace with the appropriate field that holds the ID
+                headerSort: false,
+                formatter: function (cell) {
+                    const postId = cell.getValue(); 
+                    
+                    const button = document.createElement("button");
+                    button.textContent = "Borrar";
+                    button.addEventListener("click", function () {
+                    fetch("/borrar_usuario/" + postId, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        }
+                    })
+                        .then(response => {
+                        if (response.ok) {
+                            response.json().then(data => {
+                                console.log("Received data:", data);
+                            });
+                        } else {
+                            console.error("Error getting data");
+                        }
+                        })
+                        .catch(error => {
+                        console.error("Error:", error);
+                        });
+                    });
+
+                    // Return the button element
+                    return button;
+                }
+            },
         ];
 
         var table = new Tabulator("#tabulator-users", {
