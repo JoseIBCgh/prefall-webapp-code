@@ -2168,6 +2168,14 @@ def plots_paciente():
     import plotly
     import plotly.graph_objs as go
     from apps import db
+
+    tests = db.session.query(
+        Test.num_test, Test.date)\
+        .filter_by(id_paciente=current_user.id).all()
+    tests_data = [{"num_test": test.num_test,
+     "date": test.date} for test in tests]
+
+
     tests = db.session.query(
         Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
         .filter_by(id_paciente=current_user.id)\
@@ -2426,6 +2434,7 @@ def plots_paciente():
 
     return render_template(
         'prefall/plots_paciente.html', 
+        tests_data=tests_data,
         graphEvolucionProbCaida=graphEvolucionProbCaida,
         form3DProbCaida=form3DProbCaida, graph3DProbCaida=graph3DProbCaida,
         formCompareTests=formCompareTests, graphCompareTests=graphCompareTests,
@@ -2439,3 +2448,141 @@ def obtener_centros():
     centros_list = [{"id": centro.id, "nombre": centro.nombreFiscal} for centro in centers]
 
     return jsonify({"centros": centros_list})
+
+@blueprint.route('/plots/generar_tests/<id>', methods=['GET','POST'])
+@patient_data_access()
+def generar_tests(id):
+    from apps import db
+    import pickle
+    import numpy as np
+    import plotly
+    import plotly.graph_objs as go
+    data = request.get_json()
+    test_nums = data.get('tests')
+    paciente = db.session.query(
+        User.nombre, User.apellidos)\
+        .filter_by(id=id).first()
+    tests = db.session.query(
+        Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+        .filter_by(id_paciente=id)\
+        .filter(Test.num_test.in_(test_nums)).all()
+
+    acc_data = []
+    gyr_data = []
+    mag_data = []
+    dates_data = []
+    fases_data = []
+    dates_fases_data = []
+
+    graphDataAcc = []
+    layout = go.Layout(
+        barmode='group',
+        title='Comparación de la aceleración',
+        xaxis=dict(title='Eje'),
+        yaxis=dict(title='Aceleración media')
+    )
+    figAcc = go.Figure()
+    figAcc.update_layout(
+        title="Comparación del acelerómetro",
+    )
+    figGyr = go.Figure()
+    figGyr.update_layout(
+        title="Comparación del giroscopio",
+    )
+    figMag = go.Figure()
+    figMag.update_layout(
+        title="Comparación del magnetómetro",
+    )
+    figFases = go.Figure()
+    figFases.update_layout(
+        title="Duración de las fases de la marcha",
+    )
+    for test in tests:
+        fases = None
+        blob_data = test.data  
+        if blob_data:
+            df = pickle.loads(blob_data)
+            fases = {
+                'fase1': df['duracion_f1'].values[0],
+                'fase2': df['duracion_f2'].values[0],
+                'fase3': df['duracion_f3'].values[0],
+                'fase4': df['duracion_f4'].values[0]
+            }
+            trace_fases = go.Bar(
+                x=["Fase 1", "Fase 2", "Fase 3", "Fase 4"],
+                y=[fases['fase1'], fases['fase2'], fases['fase3'], fases['fase4']],
+                name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
+            )
+            figFases.add_trace(trace_fases)
+        test_data = db.session.query(
+                TestUnit.acc_x, TestUnit.acc_y, TestUnit.acc_z,
+                TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
+                TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z,
+            ).filter_by(num_test=test.num_test).all()
+        
+        mean_values = np.mean(test_data, axis=0)
+
+        acc = {"x": mean_values[0], "y": mean_values[1], "z":mean_values[2]}
+        gyr = {"x": mean_values[3], "y": mean_values[4], "z":mean_values[5]}
+        mag = {"x": mean_values[6], "y": mean_values[7], "z":mean_values[8]}
+        trace_acc = go.Bar(
+            x=["Aceleracion X", "Aceleracion Y", "Aceleracion Z"],
+            y=[acc['x'], acc['y'], acc['z']],
+            name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
+        )
+        figAcc.add_trace(trace_acc)
+        trace_gyr = go.Bar(
+            x=["Giroscopio X", "Giroscopio Y", "Giroscopio Z"],
+            y=[gyr['x'], gyr['y'], gyr['z']],
+            name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
+        )
+        figGyr.add_trace(trace_gyr)
+        trace_mag = go.Bar(
+            x=["Magnetometro X", "Magnetometro Y", "Magnetometro Z"],
+            y=[mag['x'], mag['y'], mag['z']],
+            name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
+        )
+        figMag.add_trace(trace_mag)
+
+    
+    #plotAcc = json.dumps(figAcc, cls=plotly.utils.PlotlyJSONEncoder)
+    plotAcc = figAcc.to_dict()
+    plotGyr = figGyr.to_dict()
+    plotMag = figMag.to_dict()
+    plotFases = figFases.to_dict()
+    return jsonify({"plotAcc": plotAcc, "plotGyr": plotGyr, "plotMag": plotMag, "plotFases": plotFases})
+    '''
+    for test in tests:
+        fases = None
+        blob_data = test.data  
+        if blob_data:
+            df = pickle.loads(blob_data)
+            fases = {
+                'fase1': df['duracion_f1'].values[0],
+                'fase2': df['duracion_f2'].values[0],
+                'fase3': df['duracion_f3'].values[0],
+                'fase4': df['duracion_f4'].values[0]
+            }
+            fases_data.append([fases['fase1'], fases['fase2'], fases['fase3'], fases['fase4']])
+            dates_fases_data.append(test.date)
+        test_data = db.session.query(
+                TestUnit.acc_x, TestUnit.acc_y, TestUnit.acc_z,
+                TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
+                TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z,
+            ).filter_by(num_test=test.num_test).all()
+        
+        mean_values = np.mean(test_data, axis=0)
+
+        acc = {"x": mean_values[0], "y": mean_values[1], "z":mean_values[2]}
+        gyr = {"x": mean_values[3], "y": mean_values[4], "z":mean_values[5]}
+        mag = {"x": mean_values[6], "y": mean_values[7], "z":mean_values[8]}
+
+
+        acc_data.append([acc['x'], acc['y'], acc['z']])
+        gyr_data.append([gyr['x'], gyr['y'], gyr['z']])
+        mag_data.append([mag['x'], mag['y'], mag['z'])
+        dates_data.append(test.date)
+    '''
+    
+
+        

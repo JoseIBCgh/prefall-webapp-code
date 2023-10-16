@@ -4,24 +4,122 @@
 
     <div class="pcoded-content">
         <div class="pcoded-inner-content">
-            <!-- [ breadcrumb ] start -->
-
-            <!-- [ breadcrumb ] end -->
-            <div class="main-body">
-                <div class="page-wrapper">
-                    <div id="chartEvolucionProbCaida" class="chart"></div>
-                </div>
-            </div>
-            <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-            {% if graphEvolucionProbCaida %}
-            <script type='text/javascript'>
-                var start_time = Date.now()
-                var graphs = {{graphEvolucionProbCaida | safe}};
-                Plotly.plot('chartEvolucionProbCaida',graphs,{});
-                console.log("Time plot= " + (Date.now() - start_time))
-            </script>
-            {% endif %}
+            <div id="tabulator"></div>
+            <div id="tabulator-charts"></div>
+            <script src="https://cdn.plot.ly/plotly-latest.min.js"></script> 
         </div>
     </div>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/css/tabulator.min.css" integrity="sha512-HdUIebGeOK7s+At/fOnnbX8vsz6Cl1KTeiRlBiQABTMSqw7kZRCxGiUnuF9lr+1xz5y8pL7jkCR+NNtVVkEqKg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/js/tabulator.min.js" integrity="sha512-oU2NOn7vXb9igwNelYL+57+t+zb3liitNE8/NXg8QFJhBCSvH+dt9+s3H02aM41FUF7WYWx0kPeFV5yIkm1MVA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        var testData = {{ tests_data | tojson | safe }};
+        var testTable = new Tabulator("#tabulator", {
+            data: testData, 
+            columns: [
+                { title: "Num Test", field: "num_test" },
+                { title: "Fecha", field: "date" },
+                {
+                    title: "Añadir gráfico",
+                    formatter: function(cell, formatterParams, onRendered) {
+                        var rowData = cell.getRow().getData();
+                        var button = document.createElement("button");
+                        button.style.backgroundImage = 'url("/static/assets/images/icons/añadir.jpeg")';
+                        button.style.backgroundSize = 'contain';
+                        button.style.backgroundRepeat = 'no-repeat';
+                        button.style.width = '30px';
+                        button.style.height = '30px';
+                        button.addEventListener("click", function() {
+                            AddTest(rowData.num_test);
+                            alert("Añadiendo informes del test " + cell.getRow().getData().num_test);
+                        });
+                        return button;
+                    },
+                },
+            ],
+            layout:"fitColumns",
+            responsiveLayout:"hide",
+            pagination: "local",
+            paginationSize:5,
+            paginationCounter:"rows",
+            movableColumns:true,
+        });
+    </script>
+    <script>
+        var chartEvolucionProbCaida = {{ graphEvolucionProbCaida | safe }};
+        var graphData = [
+            { id: 0, chartData:  chartEvolucionProbCaida},
+            { id: 1, chartData: {
+                data: [],
+                layout: {}
+            }},
+            { id: 2, chartData: {
+                data: [],
+                layout: {}
+            }},
+            { id: 3, chartData: {
+                data: [],
+                layout: {}
+            }},
+            { id: 4, chartData: {
+                data: [],
+                layout: {}
+            }}
+        ];
+        var chartTable = new Tabulator("#tabulator-charts",{
+            data: graphData,
+            columns: [
+                {
+                    title: "",
+                    formatter: function(cell, formatterParams, onRendered) {
+                        var chartID = cell.getRow().getData().chartID;
+                        var chartData = cell.getRow().getData().chartData;
+
+                        var divElement = document.createElement("div");
+                        divElement.className = "chart";
+
+                        Plotly.newPlot(divElement, chartData, {});
+
+                        return divElement;
+                    }
+                }
+            ],
+            layout:"fitColumns",
+            responsiveLayout:"hide",
+            pagination: "local",
+            paginationSize:1,
+            paginationCounter:"rows",
+            movableColumns:false,
+        });
+    </script>
+    <script>
+        var pacienteId = {{ current_user.id }}; 
+        const indexAcc = 1;
+        const indexGyr = 2;
+        const indexMag = 3;
+        const indexFases = 4;
+        tests = []
+        function AddTest(num_test){
+            tests.push(num_test);
+            var url = `/plots/generar_tests/` + pacienteId;
+            var requestData = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ tests: tests }),
+            };
+            fetch(url, requestData)
+            .then(response => response.json()) // Parse the JSON response
+            .then(responseData => {
+                chartTable.updateData([{ id: indexAcc, chartData: responseData.plotAcc }]);
+                chartTable.updateData([{ id: indexGyr, chartData: responseData.plotGyr }]);
+                chartTable.updateData([{ id: indexMag, chartData: responseData.plotMag }]);
+                chartTable.updateData([{ id: indexFases, chartData: responseData.plotFases }]);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    </script>
 
 {% endblock %}
