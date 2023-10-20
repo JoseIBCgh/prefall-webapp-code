@@ -5,6 +5,14 @@
     <div class="pcoded-content">
         <div class="pcoded-inner-content">
             <div id="tabulator"></div>
+            <div class="row" style="margin-left: 5px;">
+                <button id="clearButton">
+                    <img src="/static/assets/images/icons/limpiar.png" style="width: 50px; height: 50px;"/>
+                </button>
+                <button id="exportButton">
+                    <img src="/static/assets/images/icons/exportar_pdf.png" style="width: 50px; height: 50px;"/>
+                </button>
+            </div>
             <div id="tabulator-charts"></div>
             <script src="https://cdn.plot.ly/plotly-latest.min.js"></script> 
         </div>
@@ -92,6 +100,40 @@
         });
     </script>
     <script>
+        last_plots = [];
+
+        var exportButton = document.getElementById('exportButton');
+        exportButton.addEventListener('click', function() {
+            var chartEvolucionProbCaida = {{ graphEvolucionProbCaida | safe }};
+            const plots = [chartEvolucionProbCaida, ...last_plots];
+            var plotData = JSON.stringify(plots);
+            fetch('/plots/generar_informes/', {
+                method: 'POST',
+                body: plotData,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+
+                window.open(url, '_blank');
+
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+        var clearButton = document.getElementById('clearButton');
+        clearButton.addEventListener('click', function(){
+            tests = [];
+            var divCharts = document.getElementById("tabulator-charts");
+            divCharts.style.display = "none";
+        });
+    </script>
+    <script>
         var pacienteId = {{ current_user.id }}; 
         const indexAcc = 1;
         const indexGyr = 2;
@@ -113,6 +155,12 @@
             fetch(url, requestData)
             .then(response => response.json()) // Parse the JSON response
             .then(responseData => {
+                last_plots = [
+                    responseData.plotAcc,
+                    responseData.plotGyr,
+                    responseData.plotMag,
+                    responseData.plotFases
+                ];
                 chartTable.updateData([{ id: indexAcc, chartData: responseData.plotAcc }]);
                 chartTable.updateData([{ id: indexGyr, chartData: responseData.plotGyr }]);
                 chartTable.updateData([{ id: indexMag, chartData: responseData.plotMag }]);

@@ -13,7 +13,7 @@
             </div>
             <div id="chartContainer"></div>
             <div id="pagination" class="pagination"></div>
-            <div class="row">
+            <div class="row" style="margin-left: 5px;">
                 <button id="clearButton">
                     <img src="/static/assets/images/icons/limpiar.png" style="width: 50px; height: 50px;"/>
                 </button>
@@ -23,6 +23,7 @@
             </div>
             <div id="plots-individual"></div>
             <div id="plots-comparativa"></div>
+            <div id="pdf-container"></div>
         </div>
     </div>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/css/tabulator.min.css" integrity="sha512-HdUIebGeOK7s+At/fOnnbX8vsz6Cl1KTeiRlBiQABTMSqw7kZRCxGiUnuF9lr+1xz5y8pL7jkCR+NNtVVkEqKg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -186,15 +187,38 @@
             });
         }
 
-        var exportButton = document.getElementById('exportButton');
+        last_plots = [];
 
+        var exportButton = document.getElementById('exportButton');
         exportButton.addEventListener('click', function() {
-            exportChartsToPDF();
+            var plotData = JSON.stringify(last_plots);
+            fetch('/plots/generar_informes/', {
+                method: 'POST',
+                body: plotData,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+
+                window.open(url, '_blank');
+
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         });
 
         var clearButton = document.getElementById('clearButton');
         clearButton.addEventListener('click', function(){
-            clearGraphDivs();
+            tests = [];
+            var divIndividual = document.getElementById("plots-individual");
+            divIndividual.style.display = "none";
+            var divComparativa = document.getElementById("plots-comparativa");
+            divComparativa.style.display = "none";
         });
     </script>
     <script>
@@ -307,7 +331,12 @@
                 }
             })
             .then(responseData => {
-                console.log("plotting individual");
+                last_plots = [
+                    responseData.acelerometro,
+                    responseData.giroscopio,
+                    responseData.magnetometro,
+                    responseData.prob_caida
+                ];
                 chartTableIndividual.updateData([{ id: indexAccIndividual, chartData: responseData.acelerometro }]);
                 chartTableIndividual.updateData([{ id: indexGyrIndividual, chartData: responseData.giroscopio }]);
                 chartTableIndividual.updateData([{ id: indexMagIndividual, chartData: responseData.magnetometro }]);
@@ -344,6 +373,12 @@
             fetch(url, requestData)
             .then(response => response.json()) // Parse the JSON response
             .then(responseData => {
+                last_plots = [
+                    responseData.plotAcc,
+                    responseData.plotGyr,
+                    responseData.plotMag,
+                    responseData.plotFases
+                ];
                 chartTableComparativa.updateData([{ id: indexAcc, chartData: responseData.plotAcc }]);
                 chartTableComparativa.updateData([{ id: indexGyr, chartData: responseData.plotGyr }]);
                 chartTableComparativa.updateData([{ id: indexMag, chartData: responseData.plotMag }]);

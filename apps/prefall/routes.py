@@ -1858,6 +1858,9 @@ def plots_paciente():
     y = [test.probabilidad_caida * 100 for test in tests]
     
     fig = go.Figure()
+    fig.update_layout(
+        title="Evolución de la probabilidad de caída",
+    )
     
     trace = go.Scatter(x=x, y=y, mode='lines+markers')
 
@@ -2014,13 +2017,6 @@ def generar_tests_medico():
     fases_data = []
     dates_fases_data = []
 
-    graphDataAcc = []
-    layout = go.Layout(
-        barmode='group',
-        title='Comparación de la aceleración',
-        xaxis=dict(title='Eje'),
-        yaxis=dict(title='Aceleración media')
-    )
     figAcc = go.Figure()
     figAcc.update_layout(
         title="Comparación del acelerómetro",
@@ -2093,5 +2089,41 @@ def generar_tests_medico():
     return jsonify({"plotAcc": plotAcc, "plotGyr": plotGyr, "plotMag": plotMag, "plotFases": plotFases})
 
     
+@blueprint.route('/plots/generar_informes/', methods=['POST'])
+def generar_informes():
+    import json
+    import plotly.io as pio
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    from PIL import Image
+    import io
+    import tempfile
 
-        
+
+    plotly_plots = request.get_json()
+    print(len(plotly_plots))
+
+    # Create a temporary file to store the PDF
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as pdf_file:
+        c = canvas.Canvas(pdf_file.name, pagesize=letter)
+
+        for plot_json in plotly_plots:
+            fig = pio.from_json(json.dumps(plot_json))
+
+            img_bytes = pio.to_image(fig, format="png")
+
+            # Save the image to a temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_image_file:
+                temp_image_file.write(img_bytes)
+
+            # Open the image using Pillow (PIL)
+            image = Image.open(temp_image_file.name)
+
+            # Draw the image on the PDF
+            c.drawImage(temp_image_file.name, x=100, y=100, width=400, height=300)
+            c.showPage()
+
+        c.save()
+
+    # Return the generated PDF as a file response
+    return send_file(pdf_file.name, as_attachment=True, download_name="informe.pdf")
