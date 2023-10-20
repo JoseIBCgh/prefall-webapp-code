@@ -1,4 +1,4 @@
-from sqlite3 import IntegrityError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import null, desc, create_engine, exc, cast
 import sqlalchemy
 
@@ -80,13 +80,20 @@ def crear_centro():
         pais = request.form['pais']
 
         from apps import db
-        centro = Centro(
-            cif = cif, nombreFiscal = nombre, direccion=direccion, CP=CP, ciudad=ciudad,
-            provincia=provincia, pais=pais)
-        db.session.add(centro)
-        db.session.commit()
+        try:
+            centro = Centro(
+                cif = cif, nombreFiscal = nombre, direccion=direccion, CP=CP, ciudad=ciudad,
+                provincia=provincia, pais=pais)
+            db.session.add(centro)
+            db.session.commit()
 
-        return redirect(url_for('home_blueprint.index'))
+            return redirect(url_for('home_blueprint.index'))
+        except IntegrityError as e:
+            db.session.rollback() 
+            existing_record = db.session.query(Centro).filter_by(cif=cif).first()
+            if existing_record is not None:
+                form.cif.errors.append("Ya hay otro centro con este cif")
+
 
 
     return render_template('prefall/create_center.html', form=form)
@@ -143,17 +150,30 @@ def crear_admin_centro(id):
         username = form['username'].data
         email = form['email'].data
         from apps import user_datastore, db
-        user_datastore.create_user(
-            identificador=identificador, nombre=nombre, apellidos=apellidos, fecha_nacimiento=fecha, 
-            sexo=sexo, id_centro = id, username=username,
-            password=hash_password(password), email=email, roles=["admin-centro"]
-        )
-        user_created = User.query.filter_by(email=email).first()
-        centro.id_admin = user_created.id
-        db.session.add(centro)
-        db.session.commit()
+        try:
+            user_datastore.create_user(
+                identificador=identificador, nombre=nombre, apellidos=apellidos, fecha_nacimiento=fecha, 
+                sexo=sexo, id_centro = id, username=username,
+                password=hash_password(password), email=email, roles=["admin-centro"]
+            )
+            user_created = User.query.filter_by(email=email).first()
+            centro.id_admin = user_created.id
+            db.session.add(centro)
+            db.session.commit()
 
-        return redirect(url_for('prefall_blueprint.detalles_centro', id_centro=id))
+            return redirect(url_for('prefall_blueprint.detalles_centro', id_centro=id))
+
+        except IntegrityError as e:
+            db.session.rollback() 
+            existing_record = db.session.query(User).filter_by(identificador=identificador).first()
+            if existing_record is not None:
+                form.identificador.errors.append("Ya hay otro usuario con este dni")
+            existing_record = db.session.query(User).filter_by(username=username).first()
+            if existing_record is not None:
+                form.username.errors.append("Ya hay otro usuario con este username")
+            existing_record = db.session.query(User).filter_by(email=email).first()
+            if existing_record is not None:
+                form.email.errors.append("Ya hay otro usuario con este email")
 
     return render_template(
         'prefall/create_admin_center.html', centro= centro, form=form
@@ -301,6 +321,7 @@ def editar_detalles_centro(id_centro):
 @blueprint.route('crear_user', methods=['GET', 'POST'])
 @roles_accepted("admin-centro")
 def crear_user():
+    from apps import user_datastore, db
     create_user_form = CreateUserForm(request.form)
     if 'create_user' in request.form and create_user_form.validate():
 
@@ -322,15 +343,28 @@ def crear_user():
             altura = None
             peso = None
 
-        from apps import user_datastore, db
-        user_datastore.create_user(
-            identificador=identificador, nombre=nombre, apellidos=apellidos, fecha_nacimiento=fecha, 
-            sexo=sexo, altura=altura, peso=peso, id_centro = current_user.id_centro, username=username,
-            password=hash_password(password), email=email, roles=[role]
-        )
-        db.session.commit()
+        try:
+            user_datastore.create_user(
+                identificador=identificador, nombre=nombre, apellidos=apellidos, fecha_nacimiento=fecha, 
+                sexo=sexo, altura=altura, peso=peso, id_centro = current_user.id_centro, username=username,
+                password=hash_password(password), email=email, roles=[role]
+            )
+            db.session.commit()
 
-        return redirect(url_for('home_blueprint.index'))
+            return redirect(url_for('home_blueprint.index'))
+
+        except IntegrityError as e:
+            db.session.rollback() 
+            existing_record = db.session.query(User).filter_by(identificador=identificador).first()
+            if existing_record is not None:
+                create_user_form.identificador.errors.append("Ya hay otro usuario con este dni")
+            existing_record = db.session.query(User).filter_by(username=username).first()
+            if existing_record is not None:
+                create_user_form.username.errors.append("Ya hay otro usuario con este username")
+            existing_record = db.session.query(User).filter_by(email=email).first()
+            if existing_record is not None:
+                create_user_form.email.errors.append("Ya hay otro usuario con este email")
+
 
 
     return render_template('prefall/create_user.html', form=create_user_form)
@@ -502,18 +536,31 @@ def crear_paciente_medico():
         email = request.form['email']
 
         from apps import user_datastore, db
-        user_datastore.create_user(
-            identificador=identificador, nombre=nombre, apellidos=apellidos, 
-            fecha_nacimiento=fecha, sexo=sexo, altura=altura,
-            peso=peso, antecedentes_clinicos=antecedentes, id_centro = current_user.id_centro,
-            password=hash_password(password), email=email, roles=["paciente"], username=username
-        )
-        user_created = User.query.filter_by(identificador=identificador).first()
-        asociacion = PacienteAsociado(id_paciente= user_created.id, id_medico=current_user.id)
-        db.session.add(asociacion)
-        db.session.commit()
+        try:
+            user_datastore.create_user(
+                identificador=identificador, nombre=nombre, apellidos=apellidos, 
+                fecha_nacimiento=fecha, sexo=sexo, altura=altura,
+                peso=peso, antecedentes_clinicos=antecedentes, id_centro = current_user.id_centro,
+                password=hash_password(password), email=email, roles=["paciente"], username=username
+            )
+            user_created = User.query.filter_by(identificador=identificador).first()
+            asociacion = PacienteAsociado(id_paciente= user_created.id, id_medico=current_user.id)
+            db.session.add(asociacion)
+            db.session.commit()
 
-        return redirect(url_for('home_blueprint.index'))
+            return redirect(url_for('home_blueprint.index'))
+        except IntegrityError as e:
+            db.session.rollback() 
+            existing_record = db.session.query(User).filter_by(identificador=identificador).first()
+            if existing_record is not None:
+                create_patient_form.identificador.errors.append("Ya hay otro usuario con este dni")
+            existing_record = db.session.query(User).filter_by(username=username).first()
+            if existing_record is not None:
+                create_patient_form.username.errors.append("Ya hay otro usuario con este username")
+            existing_record = db.session.query(User).filter_by(email=email).first()
+            if existing_record is not None:
+                create_patient_form.email.errors.append("Ya hay otro usuario con este email")
+
 
 
     return render_template('prefall/create_patient_clinical.html', form=create_patient_form)
@@ -1177,15 +1224,28 @@ def crear_paciente_auxiliar():
         email = request.form['email']
 
         from apps import user_datastore, db
-        user_datastore.create_user(
-            identificador=identificador, nombre=nombre, apellidos=apellidos,
-            fecha_nacimiento=fecha, sexo=sexo, altura=altura,
-            peso=peso, id_centro = current_user.id_centro, username=username,
-            password=hash_password(password), email=email, roles=["paciente"]
-        )
-        db.session.commit()
+        try:
+            user_datastore.create_user(
+                identificador=identificador, nombre=nombre, apellidos=apellidos,
+                fecha_nacimiento=fecha, sexo=sexo, altura=altura,
+                peso=peso, id_centro = current_user.id_centro, username=username,
+                password=hash_password(password), email=email, roles=["paciente"]
+            )
+            db.session.commit()
 
-        return redirect(url_for('home_blueprint.index'))
+            return redirect(url_for('home_blueprint.index'))
+        except IntegrityError as e:
+            db.session.rollback() 
+            existing_record = db.session.query(User).filter_by(identificador=identificador).first()
+            if existing_record is not None:
+                create_patient_form.identificador.errors.append("Ya hay otro usuario con este dni")
+            existing_record = db.session.query(User).filter_by(username=username).first()
+            if existing_record is not None:
+                create_patient_form.username.errors.append("Ya hay otro usuario con este username")
+            existing_record = db.session.query(User).filter_by(email=email).first()
+            if existing_record is not None:
+                create_patient_form.email.errors.append("Ya hay otro usuario con este email")
+
 
 
     return render_template('prefall/create_patient_personal.html', form=create_patient_form)
@@ -1549,6 +1609,9 @@ def generate_plots_paciente(id):
     y = [test.probabilidad_caida * 100 for test in tests]
     
     fig = go.Figure()
+    fig.update_layout(
+        title="Evolución de la probabilidad de caída",
+    )
     
     trace = go.Scatter(x=x, y=y, mode='lines+markers')
 
@@ -1575,34 +1638,6 @@ def generate_plots_paciente(id):
     probs_caida = []
 
     for test in tests:
-        """
-        rows = TestUnit.query.filter_by(num_test=test.num_test).all()
-
-        
-        acc_x_values = [row.acc_x for row in rows]
-        acc_y_values = [row.acc_y for row in rows]
-        acc_z_values = [row.acc_z for row in rows]
-
-        gyr_x_values = [row.gyr_x for row in rows]
-        gyr_y_values = [row.gyr_y for row in rows]
-        gyr_z_values = [row.gyr_z for row in rows]
-
-        mag_x_values = [row.mag_x for row in rows]
-        mag_y_values = [row.mag_y for row in rows]
-        mag_z_values = [row.mag_z for row in rows]
-
-        mean_acc_x.append(np.mean(acc_x_values))
-        mean_acc_y.append(np.mean(acc_y_values))
-        mean_acc_z.append(np.mean(acc_z_values))
-
-        mean_gyr_x.append(np.mean(gyr_x_values))
-        mean_gyr_y.append(np.mean(gyr_y_values))
-        mean_gyr_z.append(np.mean(gyr_z_values))
-
-        mean_mag_x.append(np.mean(mag_x_values))
-        mean_mag_y.append(np.mean(mag_y_values))
-        mean_mag_z.append(np.mean(mag_z_values))
-        """
         data_query = db.session.query(
             TestUnit.acc_x, TestUnit.acc_y, TestUnit.acc_z,
             TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
@@ -1627,6 +1662,9 @@ def generate_plots_paciente(id):
     print("after loop data extraction")
     
     fig = go.Figure()
+    fig.update_layout(
+        title="Distribucion de la aceleración según la probabilidad de caída",
+    )
 
     trace = go.Scatter3d(
         x=mean_acc_x,
@@ -1666,6 +1704,9 @@ def generate_plots_paciente(id):
     graph3DProbCaidaAcc = fig.to_dict()
 
     fig = go.Figure()
+    fig.update_layout(
+        title="Distribucion del giroscopio según la probabilidad de caída",
+    )
 
     trace = go.Scatter3d(
         x=mean_gyr_x,
@@ -1682,6 +1723,7 @@ def generate_plots_paciente(id):
     )
 
     fig.add_trace(trace)
+
 
     fig.update_scenes(xaxis_title='Gyroscopio X', yaxis_title='Gyroscopio Y', zaxis_title='Gyroscopio Z')
     
@@ -1705,6 +1747,9 @@ def generate_plots_paciente(id):
     graph3DProbCaidaGyr = fig.to_dict()
 
     fig = go.Figure()
+    fig.update_layout(
+        title="Distribucion del magnetómetro según la probabilidad de caída",
+    )
 
     trace = go.Scatter3d(
         x=mean_mag_x,
@@ -1771,46 +1816,6 @@ def get_tests(id_paciente):
     tests_data = [{"num_test": test.Test.num_test, "id_paciente":test.Test.id_paciente,
      "date": test.Test.date} for test in tests]
     return jsonify(tests_data)
-
-@blueprint.route('/plots/get_test_data/<id_paciente>/<num_test>', methods=['GET'])
-@clinical_data_access()
-def get_data(id_paciente, num_test):
-    from apps import db
-    import pickle
-    import numpy as np
-    paciente = db.session.query(
-        User.nombre, User.apellidos)\
-        .filter_by(id=id_paciente).first()
-    test = db.session.query(
-        Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
-        .filter_by(id_paciente=id_paciente)\
-        .filter(Test.num_test==num_test).first()
-    fases = None
-    blob_data = test.data  
-    if blob_data:
-        df = pickle.loads(blob_data)
-        fases = {
-            'fase1': df['duracion_f1'].values[0],
-            'fase2': df['duracion_f2'].values[0],
-            'fase3': df['duracion_f3'].values[0],
-            'fase4': df['duracion_f4'].values[0]
-        }
-    test_data = db.session.query(
-            TestUnit.acc_x, TestUnit.acc_y, TestUnit.acc_z,
-            TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
-            TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z,
-        ).filter_by(num_test=test.num_test).all()
-    
-    mean_values = np.mean(test_data, axis=0)
-
-    acc = {"x": mean_values[0], "y": mean_values[1], "z":mean_values[2]}
-    gyr = {"x": mean_values[3], "y": mean_values[4], "z":mean_values[5]}
-    mag = {"x": mean_values[6], "y": mean_values[7], "z":mean_values[8]}
-
-    full_name = paciente.nombre + (" " + paciente.apellidos if paciente.apellidos else "")
-    data = {"fases": fases, "acc": acc, "gyr": gyr, "mag": mag,
-    "full_name":full_name, "date": test.date}
-    return jsonify(data)
 
 
 @blueprint.route('/get_paciente_tests', methods=['POST'])
