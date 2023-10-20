@@ -167,6 +167,7 @@ def editar_detalles_usuario(id):
     if 'editar_detalles_personales' in request.form and form.validate():
         identificador = request.form['identificador']
         nombre = request.form['nombre']
+        apellidos = request.form['apellidos']
         fecha = request.form['fecha']
         sexo = request.form['sexo']
         altura = request.form['altura']
@@ -176,6 +177,8 @@ def editar_detalles_usuario(id):
             paciente.identificador = identificador
         if nombre != "":
             paciente.nombre = nombre
+        if apellidos != "":
+            paciente.apellidos = apellidos
         if fecha != "":
             paciente.fecha_nacimiento = fecha
         if sexo != "":
@@ -942,7 +945,7 @@ def detalles_clinicos(id):
     print(tests)
 
     tests_data = [{"num_test": test.num_test, "date": test.date, 
-    "medico": test.medico.nombre + " " + test.medico.apellidos if test.medico else "", 
+    "medico": (test.medico.nombre + " " + test.medico.apellidos) if (test.medico and test.medico.apellidos is not None) else test.medico.nombre if test.medico else "", 
     "prob_caida": test.probabilidad_caida, "diagnostico": acciones_test_medico.diagnostico, 
     } for test, acciones_test_medico in tests]
 
@@ -997,6 +1000,7 @@ def editar_detalles_clinicos(id):
     if 'editar_detalles_clinicos' in request.form and form.validate():
         identificador = request.form['identificador']
         nombre = request.form['nombre']
+        apellidos = request.form['apellidos']
         fecha = request.form['fecha']
         sexo = request.form['sexo']
         altura = request.form['altura']
@@ -1006,6 +1010,8 @@ def editar_detalles_clinicos(id):
             paciente.identificador = identificador
         if nombre != "":
             paciente.nombre = nombre
+        if apellidos != "":
+            paciente.apellidos = apellidos
         if fecha != "":
             paciente.fecha_nacimiento = fecha
         if sexo != "":
@@ -1242,6 +1248,7 @@ def editar_detalles_personales(id):
     if 'editar_detalles_personales' in request.form and form.validate():
         identificador = request.form['identificador']
         nombre = request.form['nombre']
+        apellidos = request.form['apellidos']
         fecha = request.form['fecha']
         sexo = request.form['sexo']
         altura = request.form['altura']
@@ -1251,6 +1258,8 @@ def editar_detalles_personales(id):
             paciente.identificador = identificador
         if nombre != "":
             paciente.nombre = nombre
+        if apellidos != "":
+            paciente.apellidos = apellidos
         if fecha != "":
             paciente.fecha_nacimiento = fecha
         if sexo != "":

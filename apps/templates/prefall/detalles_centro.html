@@ -171,6 +171,14 @@
                     return button;
                 }
             },
+            {
+                title: "",
+                field: "id", // Replace with the appropriate field that holds the ID
+                headerSort: false,
+                formatter: function (cell) {
+                    return '<a href="/editar_detalles_usuario/' + cell.getValue() + '" class="label theme-bg text-white f-12 center">Editar</a>';
+                }
+            }
         ];
 
         var table = new Tabulator("#tabulator-users", {

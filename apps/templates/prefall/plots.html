@@ -107,10 +107,11 @@
                 }
             })
             .then(testData => {
-                alert("Seleccionado paciente " + paciente.nombre);
+                alert("Seleccionado paciente " + paciente.nombre + " para comparativas");
                 var title = document.getElementById("test-paciente");
                 title.textContent = paciente.nombre + " " + paciente.apellidos + " " + paciente.identificador;
                 displayTestsInTabulator(paciente, testData);
+                alert("Selecciona los tests a comparar");
             })
             .catch(error => {
                 console.error('Error fetching test data:', error);

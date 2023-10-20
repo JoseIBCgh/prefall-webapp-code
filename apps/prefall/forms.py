@@ -64,17 +64,19 @@ class CreateCenterAdminForm(FlaskForm):
 class EditPersonalDataForm(FlaskForm):
     identificador = StringField('Identificador',id='id_edit_personal_data', validators=[Optional()])
     nombre = StringField('Nombre', id='name_edit_personal_data', validators=[Optional()])
+    apellidos = StringField('Apellidos', id='apellidos_edit_personal_data', validators=[Optional()])
     password = PasswordField('Contraseña', id='password_edit_personal_data', validators=[Optional()])
     fecha = DateField('Fecha de nacimiento', id='date_edit_personal_data', validators=[Optional()])
-    sexo = StringField('Sexo', id='sex_edit_personal_data', validators=[Optional(), AnyOf(values=["V", "M"], message="Introduce V o M")])
+    sexo = SelectField('Sexo', id='sex_edit_personal_data', choices=[('V', 'V'), ('M', 'M')], validators=[Optional()])
     altura = DecimalField('Altura', id='height_edit_personal_data', validators=[Optional()])
     peso = DecimalField('Peso', id='weight_edit_personal_data', validators=[Optional()])
 
 class EditClinicalDataForm(FlaskForm):
     identificador = StringField('Identificador',id='id_edit_clinical_data', validators=[Optional()])
     nombre = StringField('Nombre', id='name_edit_personal_data', validators=[Optional()])
+    apellidos = StringField('Apellidos', id='apellidos_edit_personal_data', validators=[Optional()])
     fecha = DateField('Fecha de nacimiento', id='date_edit_personal_data', validators=[Optional()])
-    sexo = StringField('Sexo', id='sex_edit_personal_data', validators=[Optional(), AnyOf(values=["V", "M"], message="Introduce V o M")])
+    sexo = SelectField('Sexo', id='sex_edit_personal_data', choices=[('V', 'V'), ('M', 'M')], validators=[Optional()])
     altura = DecimalField('Altura', id='height_edit_personal_data', validators=[Optional()])
     peso = DecimalField('Peso', id='weight_edit_personal_data', validators=[Optional()])
     antecedentes = TextAreaField('Antecedentes clínicos', id='antecedentes_edit_personal_data', validators=[Optional()])
