@@ -611,13 +611,13 @@ def genera_metricas_port(elementos):
         fila = {}
         fila.update({
                 'duracion_total_medicion': elementos['TIME'].iloc[-1]+500 * 0.01, 'duracion_real_analizada': elementos['TIME'].iloc[-1]-500 * 0.01,
-                'n_pasos_totales': elementos['Paso'].iloc[-1], 'n_pasos_minuto': elementos['Paso'].iloc[-1]/(elementos['TIME'].iloc[-1]/6000),
+                'n_pasos_totales': elementos['Paso'].iloc[-1], 'n_pasos_minuto': elementos['Paso'].iloc[-1]/(elementos['TIME'].iloc[-1]),
             })
         for i, (fase, grupo) in enumerate(fases, start=1):
             # Calcula la duración de la fase
             duracion = len(grupo['TIME'])
             duracion_porcentaje=duracion/len(elementos.dropna(subset=['estado']))
-
+            duracion /= 100 #porque hay 100 paquetes por segundo
             #acelerometro
             ax_mean = grupo['ax'].mean()
             ay_mean = grupo['ay'].mean()

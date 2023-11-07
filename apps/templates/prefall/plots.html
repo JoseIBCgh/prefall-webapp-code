@@ -23,6 +23,8 @@
             </div>
             <div id="plots-individual"></div>
             <div id="plots-comparativa"></div>
+            <div id="metricas-generales"></div>
+            <div id="metricas"></div>
             <div id="pdf-container"></div>
         </div>
     </div>
@@ -32,6 +34,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/canvg/1.5/canvg.js" integrity="sha512-n64ECd9pzrV9TwEhl/VV/MOLO6hiIYlzvpT0lx0CAjIUBXWHj8PoVstxzFoQ/5pI97kyBLL4U3PNMAJX+7F6vA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link href="https://cdn.webdatarocks.com/latest/webdatarocks.min.css" rel="stylesheet"/>
+    <script src="https://cdn.webdatarocks.com/latest/webdatarocks.toolbar.min.js"></script>
+    <script src="https://cdn.webdatarocks.com/latest/webdatarocks.js"></script>
     <script>
         var pacientesData = {{ pacientes | tojson | safe }};
 
@@ -324,6 +329,10 @@
             divIndividual.style.display = "none";
             var divComparativa = document.getElementById("plots-comparativa");
             divComparativa.style.display = "none";
+            var divMetricasGenerales = document.getElementById("metricas-generales");
+            divMetricasGenerales.style.display = "none";
+            var divMetricas = document.getElementById("metricas");
+            divMetricas.style.display = "none";
             fetch(`/plots/generar_paciente/${paciente.id}`, {
                 method: 'GET', 
             })
@@ -365,6 +374,10 @@
             divIndividual.style.display = "none";
             var divComparativa = document.getElementById("plots-comparativa");
             divComparativa.style.display = "none";
+            var divMetricasGenerales = document.getElementById("metricas-generales");
+            divMetricasGenerales.style.display = "none";
+            var divMetricas = document.getElementById("metricas");
+            divMetricas.style.display = "none";
             obj = {paciente: id_paciente, test: num_test};
             tests.push(obj);
             var url = `/plots/generar_tests_medico/`;
@@ -383,15 +396,101 @@
                     responseData.plotGyr,
                     responseData.plotMag,
                     responseData.plotFases,
-                    responseData.plotFasesFinal //Descomentar esto cuando se arregle el ultimo plot
+                    //responseData.plotFasesFinal //Descomentar esto cuando se arregle el ultimo plot
                 ];
                 chartTableComparativa.updateData([{ id: indexAcc, chartData: responseData.plotAcc }]);
                 chartTableComparativa.updateData([{ id: indexGyr, chartData: responseData.plotGyr }]);
                 chartTableComparativa.updateData([{ id: indexMag, chartData: responseData.plotMag }]);
                 chartTableComparativa.updateData([{ id: indexFases, chartData: responseData.plotFases }]);
                 // Descomentar esto cuando se arregle el ultimo plot
-                chartTableComparativa.updateData([{ id: indexFasesFinal, chartData: responseData.plotFasesFinal }]);
+                //chartTableComparativa.updateData([{ id: indexFasesFinal, chartData: responseData.plotFasesFinal }]);
                 divComparativa.style.display = "block";
+
+                var metricasParsed = JSON.parse(responseData.metricas);
+                var metricas = metricasParsed[0];
+
+                console.log(metricas);
+
+                var data = [
+                    { "Fase": "Fase 1", "Metrica": "Duracion porcentaje", "Value": parseFloat((metricas["duracion_porcentaje_f1"] * 100).toFixed(2)) },
+                    { "Fase": "Fase 1", "Metrica": "Duracion total", "Value": parseFloat(metricas["duracion_total_f1"].toFixed(2)) },
+                    { "Fase": "Fase 1", "Metrica": "Aceleración lineal Y media", "Value": parseFloat(metricas["lay_mean_f1"].toFixed(2)) },
+                    { "Fase": "Fase 1", "Metrica": "Aceleración lineal Y desviación", "Value": parseFloat(metricas["lay_std_f1"].toFixed(2)) },
+                    { "Fase": "Fase 2", "Metrica": "Duracion porcentaje", "Value": parseFloat((metricas["duracion_porcentaje_f2"] * 100).toFixed(2)) },
+                    { "Fase": "Fase 2", "Metrica": "Duracion total", "Value": parseFloat(metricas["duracion_total_f2"].toFixed(2)) },
+                    { "Fase": "Fase 2", "Metrica": "Aceleración lineal Y media", "Value": parseFloat(metricas["lay_mean_f2"].toFixed(2)) },
+                    { "Fase": "Fase 2", "Metrica": "Aceleración lineal Y desviación", "Value": parseFloat(metricas["lay_std_f2"].toFixed(2)) },
+                    { "Fase": "Fase 3", "Metrica": "Duracion porcentaje", "Value": parseFloat((metricas["duracion_porcentaje_f3"] * 100).toFixed(2)) },
+                    { "Fase": "Fase 3", "Metrica": "Duracion total", "Value": parseFloat(metricas["duracion_total_f3"].toFixed(2)) },
+                    { "Fase": "Fase 3", "Metrica": "Aceleración lineal Y media", "Value": parseFloat(metricas["lay_mean_f3"].toFixed(2)) },
+                    { "Fase": "Fase 3", "Metrica": "Aceleración lineal Y desviación", "Value": parseFloat(metricas["lay_std_f3"].toFixed(2)) },
+                    { "Fase": "Fase 4", "Metrica": "Duracion porcentaje", "Value": parseFloat((metricas["duracion_porcentaje_f4"] * 100).toFixed(2)) },
+                    { "Fase": "Fase 4", "Metrica": "Duracion total", "Value": parseFloat(metricas["duracion_total_f4"].toFixed(2)) },
+                    { "Fase": "Fase 4", "Metrica": "Aceleración lineal Y media", "Value": parseFloat(metricas["lay_mean_f4"].toFixed(2)) },
+                    { "Fase": "Fase 4", "Metrica": "Aceleración lineal Y desviación", "Value": parseFloat(metricas["lay_std_f4"].toFixed(2)) },
+                ];
+                
+                var pivot = new WebDataRocks({
+                    container: "#metricas",
+                    toolbar: false, 
+                    report: {
+                        dataSource: {
+                            data: data
+                        },
+                        slice: {
+                            rows: [
+                                { uniqueName: "Fase" }
+                            ],
+                            columns: [
+                                { uniqueName: "Metrica" }
+                            ],
+                            measures: [
+                                { uniqueName: "Value", aggregation: "sum" }
+                            ],
+                        },      
+                        options: {
+                            grid: {
+                                showGrandTotals: "off",
+                                showHeaders: false
+                            },
+                        }
+                    },
+                });
+                // codigo para quitar columnas sobrantes, no funciona
+                /*
+                webdatarocks.on("reportchange", 'redraw');
+                webdatarocks.on("reportcomplete", 'redraw');
+
+                function redraw() {
+                    let col = 0, row = 0;
+                    webdatarocks.customizeCell(function(cellBuilder, cellData) {
+                        if (cellData.columnIndex > col) col = cellData.columnIndex;
+                        if (cellData.rowIndex > row) row = cellData.rowIndex;
+                    });
+                    webdatarocks.on("aftergriddraw", function() {
+                        webdatarocks.off("aftergriddraw");
+                        document.querySelector("#metricas").style.width = 100 * (col + 2) + 'px';
+                        document.querySelector("#metricas").style.height = 30 * ++row + 27 + 'px';
+                    });
+                }
+                */
+                var tableData = [
+                    { duracion_total_medicion: parseFloat(metricas["duracion_total_medicion"].toFixed(2)), duracion_real_analizada: parseFloat(metricas["duracion_real_analizada"].toFixed(2)), n_pasos_totales: parseFloat(metricas["n_pasos_totales"].toFixed(2)), n_pasos_minuto: parseFloat(metricas["n_pasos_minuto"].toFixed(2)) },
+                ];
+                var tableColumns = [
+                    { title: "Duracion Total Medicion", field: "duracion_total_medicion" },
+                    { title: "Duracion Real Analizada", field: "duracion_real_analizada" },
+                    { title: "N Pasos Totales", field: "n_pasos_totales" },
+                    { title: "N Pasos Minuto", field: "n_pasos_minuto" },
+                ];
+                var table = new Tabulator("#metricas-generales", {
+                    data: tableData,
+                    columns: tableColumns,
+                    layout: "fitColumns",
+                });
+
+                divMetricasGenerales.style.display = "block";
+                divMetricas.style.display = "block";
             })
             .catch(error => {
                 console.error('Error:', error);
