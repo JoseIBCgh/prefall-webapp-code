@@ -2059,7 +2059,7 @@ def generar_tests_medico():
                 TestUnit.acc_x, TestUnit.acc_y, TestUnit.acc_z,
                 TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
                 TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z,
-            ).filter_by(num_test=test.num_test).all()
+            ).filter(TestUnit.num_test==test.num_test, TestUnit.id_paciente==id_paciente).all()
         
         mean_values = np.mean(test_data, axis=0)
 
@@ -2085,12 +2085,38 @@ def generar_tests_medico():
         )
         figMag.add_trace(trace_mag)
 
+    test = tests[-1]
+    query = db.session.query(
+        TestUnit.item, Test.num_test, Test.id_paciente, Test.date, TestUnit.time, TestUnit.acc_x,
+        TestUnit.acc_y, TestUnit.acc_z, TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
+        TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z,
+        TestUnit.lacc_x, TestUnit.lacc_y, TestUnit.lacc_z,
+        TestUnit.quat_x, TestUnit.quat_y, TestUnit.quat_z, TestUnit.quat_w).\
+                        filter(Test.id_paciente == TestUnit.id_paciente).\
+                            filter(Test.num_test == TestUnit.num_test).\
+                                filter(Test.id_paciente==id_paciente).\
+                                    filter(Test.num_test==test.num_test)
+    df = pd.read_sql(query.statement, db.session.bind)
+
+    from apps.prefall.libraries import genera_grafica_fases_port, genera_metricas_port
+
+    #da error depende del rango y test
+    #figFasesFinal = genera_grafica_fases_port(df, [1000, 5000])
+    #plotFasesFinal = figFasesFinal.to_dict()
+
     
-    #plotAcc = json.dumps(figAcc, cls=plotly.utils.PlotlyJSONEncoder)
     plotAcc = figAcc.to_dict()
     plotGyr = figGyr.to_dict()
     plotMag = figMag.to_dict()
     plotFases = figFases.to_dict()
+    
+
+    metricas = genera_metricas_port(df)
+    pd.set_option('display.max_columns', None)
+    print(metricas)
+    print(df.head())
+
+    #enviar aqui tambien plotFasesLast
     return jsonify({"plotAcc": plotAcc, "plotGyr": plotGyr, "plotMag": plotMag, "plotFases": plotFases})
 
     

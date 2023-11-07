@@ -282,6 +282,10 @@
             { id: 3, chartData: {
                 data: [],
                 layout: {}
+            }},
+            { id: 4, chartData: { //Para el nuevo plot
+                data: [],
+                layout: {}
             }}
         ];
         var chartTableComparativa = new Tabulator("#plots-comparativa",{
@@ -354,6 +358,7 @@
         const indexGyr = 1;
         const indexMag = 2;
         const indexFases = 3;
+        const indexFasesFinal = 4;
         tests = []
         function addTest(id_paciente, num_test){
             var divIndividual = document.getElementById("plots-individual");
@@ -377,12 +382,15 @@
                     responseData.plotAcc,
                     responseData.plotGyr,
                     responseData.plotMag,
-                    responseData.plotFases
+                    responseData.plotFases,
+                    responseData.plotFasesFinal //Descomentar esto cuando se arregle el ultimo plot
                 ];
                 chartTableComparativa.updateData([{ id: indexAcc, chartData: responseData.plotAcc }]);
                 chartTableComparativa.updateData([{ id: indexGyr, chartData: responseData.plotGyr }]);
                 chartTableComparativa.updateData([{ id: indexMag, chartData: responseData.plotMag }]);
                 chartTableComparativa.updateData([{ id: indexFases, chartData: responseData.plotFases }]);
+                // Descomentar esto cuando se arregle el ultimo plot
+                chartTableComparativa.updateData([{ id: indexFasesFinal, chartData: responseData.plotFasesFinal }]);
                 divComparativa.style.display = "block";
             })
             .catch(error => {
