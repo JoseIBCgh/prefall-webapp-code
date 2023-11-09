@@ -396,14 +396,14 @@
                     responseData.plotGyr,
                     responseData.plotMag,
                     responseData.plotFases,
-                    //responseData.plotFasesFinal //Descomentar esto cuando se arregle el ultimo plot
+                    responseData.plotFasesFinal //Descomentar esto cuando se arregle el ultimo plot
                 ];
                 chartTableComparativa.updateData([{ id: indexAcc, chartData: responseData.plotAcc }]);
                 chartTableComparativa.updateData([{ id: indexGyr, chartData: responseData.plotGyr }]);
                 chartTableComparativa.updateData([{ id: indexMag, chartData: responseData.plotMag }]);
                 chartTableComparativa.updateData([{ id: indexFases, chartData: responseData.plotFases }]);
                 // Descomentar esto cuando se arregle el ultimo plot
-                //chartTableComparativa.updateData([{ id: indexFasesFinal, chartData: responseData.plotFasesFinal }]);
+                chartTableComparativa.updateData([{ id: indexFasesFinal, chartData: responseData.plotFasesFinal }]);
                 divComparativa.style.display = "block";
 
                 var metricasParsed = JSON.parse(responseData.metricas);

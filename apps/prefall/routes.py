@@ -604,331 +604,13 @@ def detalles_test(id, num, editing):
             "num_test": test.num_test,
             "id_paciente": test.id_paciente,
         }
-    '''
-    if test.bow is not None:
-        from apps.authentication.models import GraphJson
-        import time
-        startTime = time.time()
-        SERIALIZE_GRAPH = False
-        if SERIALIZE_GRAPH:
-            graphJSON = db.session.query(GraphJson.graph).filter_by(num_test=num).filter_by(id_paciente=id).first()[0]
-            if graphJSON is None:
-                graphJSON = generatePlot(id, num)
-                graphDB = GraphJson(id_paciente=id, num_test=num, graph=graphJSON)
-                db.session.add(graphDB)
-                db.session.commit()
-        else:
-            graphJSON = generatePlot(id, num)
-        import sys
-        print(time.time() - startTime, file=sys.stderr)
-        return render_template(
-            'prefall/detalles_test.html', form = form, test = test, editing = editing, graphJSON=graphJSON
-        )
-    else:
-        return render_template(
-            'prefall/detalles_test.html', form = form, test = test, editing = editing
-        )
-    '''
+
     return render_template(
         'prefall/detalles_test.html', form = form, test = test, editing = editing, test_data = test_data
     )
 
 def Average(lst):
     return sum(lst) / len(lst)
-
-
-def generatePlotPaciente(id_paciente):
-    from apps import db
-    import plotly
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
-    import pickle
-    import math
-    import numpy as np
-    tests = db.session.query(
-        Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
-        .filter_by(id_paciente=id_paciente)\
-        .filter(Test.probabilidad_caida.isnot(None)).all()
-
-    dataframes = []
-
-    for test in tests:
-        blob_data = test.data  
-        if blob_data:
-            df = pickle.loads(blob_data)
-            dataframes.append(df)
-    
-    x = [test.date for test in tests]
-    y = [test.probabilidad_caida for test in tests]
-    
-    fig = make_subplots(
-        rows=3, cols=1,
-        specs=[[{'type': 'scatter'}], [{'type': 'scatter3d'}], [{'type': 'bar'}]],
-        subplot_titles=('Probability of Fall Over Time', 'Probability of Fall depending on lacc', 'Comparasion lacc'),
-        row_heights=[600, 1000, 600],
-    )
-    
-    trace = go.Scatter(x=x, y=y, mode='lines+markers')
-
-    fig.add_trace(trace, row=1, col=1)
-
-    fig.update_xaxes(title_text='Date', row=1, col=1)
-    fig.update_yaxes(title_text='Probability of Falling', range=[0, 1], row=1, col=1)
-
-
-    x = []
-    for df in dataframes:
-        mean = (df['lax_mean_f1'] * df['duracion_f1']\
-        + df['lax_mean_f2'] * df['duracion_f2']\
-        + df['lax_mean_f3'] * df['duracion_f3']\
-        + df['lax_mean_f4'] * df['duracion_f4'])\
-        / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
-        x.append(mean.values[0])
-
-    y = []
-    for df in dataframes:
-        mean = (df['lay_mean_f1'] * df['duracion_f1']\
-        + df['lay_mean_f2'] * df['duracion_f2']\
-        + df['lay_mean_f3'] * df['duracion_f3']\
-        + df['lay_mean_f4'] * df['duracion_f4'])\
-        / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
-        y.append(mean.values[0])
-
-    z = []
-    for df in dataframes:
-        mean = (df['laz_mean_f1'] * df['duracion_f1']\
-        + df['laz_mean_f2'] * df['duracion_f2']\
-        + df['laz_mean_f3'] * df['duracion_f3']\
-        + df['laz_mean_f4'] * df['duracion_f4'])\
-        / (df['duracion_f1'] + df['duracion_f2'] + df['duracion_f3'] + df['duracion_f4'])
-        z.append(mean.values[0])
-
-    c = [test.probabilidad_caida for test in tests]
-
-    trace = go.Scatter3d(
-        x=x,
-        y=y,
-        z=z,
-        mode='markers',
-        marker=dict(
-            size=5, 
-            color=c, 
-            colorscale='Viridis', 
-            colorbar=dict(len=0.3, y=0.35, yanchor='bottom'),  
-            opacity=1, 
-        )
-    )
-
-    fig.add_trace(trace, row=2, col=1)
-
-    fig.update_scenes(xaxis_title='Linear Acc X', yaxis_title='Linear Acc Y', zaxis_title='Linear Acc Z', row=2, col=1)
-    
-    x_floor = math.floor(min(x))
-    x_ceil = math.ceil(max(x))
-
-    y_floor = math.floor(min(y))
-    y_ceil = math.ceil(max(y))
-
-    z_floor = math.floor(min(z))
-    z_ceil = math.ceil(max(z))
-
-    fig.update_layout(scene=dict(
-        xaxis=dict(range=[x_floor, x_ceil]),
-        yaxis=dict(range=[y_floor, y_ceil]),
-        zaxis=dict(range=[z_floor, z_ceil]),
-    ))
-
-    if len(x) >= 2:
-        labels = ["Linear Acc X", "Linear Acc Y", "Linear Acc Z"]
-        bars1 = [x[0], y[0], z[0]]
-        bars2 = [x[1], y[1], z[1]]
-        trace_group1 = go.Bar(x=labels, y=bars1, name='Paciente 1', text=bars1, textposition='outside')
-        trace_group2 = go.Bar(x=labels, y=bars2, name='Paciente 2', text=bars2, textposition='outside')
-
-        fig.add_trace(trace_group1, row=3, col=1)
-        fig.add_trace(trace_group2, row=3, col=1)
-
-        fig.update_traces(texttemplate='%{text:.2f}', textposition='outside', selector=dict(type='bar'))
-
-
-    fig.update_layout(
-        autosize=False,
-        height=2400,  # Adjust the height as needed
-        margin=dict(l=50, r=50, b=50, t=50),
-    )
-
-
-    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-
-    return graphJSON
-
-
-
-def generatePlot(id_paciente, num_test):
-    from apps import db
-    query_boundary = db.session.query(
-        Boundary.intercept, Boundary.coef0, Boundary.coef1,Boundary.coef2).\
-        filter(Test.num_test == num_test).\
-        filter(Test.id_paciente == id_paciente).\
-        filter(Test.model == Boundary.model)
-    df_boundary = pd.read_sql(query_boundary.statement, db.session.bind)
-    query_train = db.session.query(
-        TrainingPoint.clase, TrainingPoint.acc_x, TrainingPoint.acc_y,TrainingPoint.acc_z).\
-        filter(Test.num_test == num_test).\
-        filter(Test.id_paciente == id_paciente).\
-        filter(Test.model == TrainingPoint.model)
-    df_train = pd.read_sql(query_train.statement, db.session.bind)
-    query_test = db.session.query(
-        Test.num_test, Test.id_paciente, Test.date, TestUnit.item, TestUnit.time, TestUnit.acc_x,
-        TestUnit.acc_y, TestUnit.acc_z, TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
-        TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z).\
-                        filter(Test.id_paciente == TestUnit.id_paciente).\
-                            filter(Test.num_test == TestUnit.num_test).\
-                                filter(Test.id_paciente==id_paciente).\
-                                    filter(Test.num_test==num_test)
-    df_test = pd.read_sql(query_test.statement, db.session.bind)
-    import plotly
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
-    
-    test = Test.query.filter_by(num_test=num_test).filter_by(id_paciente=id_paciente).first()
-    probabilidades = [["Bow", test.bow, "Bow"], ["Fall-to-left", test.fall_to_left, "Fall to left"], 
-    ["Fall-to-right", test.fall_to_right, "Fall to right"], ["Falling-backward", test.falling_backward, "Falling backward"], 
-    ["Falling-forward", test.falling_forward, "Falling forward"], ["Idle", test.idle, "Idle"], 
-    ["Sitting", test.sitting, "Sitting"], ["Sleep", test.sleep, "Sleep"], ["Standing", test.standing, "Standing"]]
-    probabilidades_ordenadas = probabilidades.copy()
-    probabilidades_ordenadas.sort(key = lambda x: x[1], reverse=True)
-    for index, po in enumerate(probabilidades_ordenadas):
-        index2 = [i for i, p in enumerate(probabilidades) if po[0] == p[0]][0]
-        probabilidades_ordenadas[index].append(index2)
-    
-    fig = make_subplots(
-        rows=3, cols=3,
-        subplot_titles=[prob_ord[2] + " " + str(round(prob_ord[1] * 100, 2)) + "%" for prob_ord in probabilidades_ordenadas],
-        specs=[[{'type': 'surface'}, {'type': 'surface'}, {'type': 'surface'}],
-            [{'type': 'surface'}, {'type': 'surface'}, {'type': 'surface'}],
-            [{'type': 'surface'}, {'type': 'surface'}, {'type': 'surface'}]])
-
-    greyscale=[
-        [0, "rgb(0, 0, 0)"],
-        [0.1, "rgb(0, 0, 0)"],
-
-        [0.1, "rgb(20, 20, 20)"],
-        [0.2, "rgb(20, 20, 20)"],
-
-        [0.2, "rgb(40, 40, 40)"],
-        [0.3, "rgb(40, 40, 40)"],
-
-        [0.3, "rgb(60, 60, 60)"],
-        [0.4, "rgb(60, 60, 60)"],
-
-        [0.4, "rgb(80, 80, 80)"],
-        [0.5, "rgb(80, 80, 80)"],
-
-        [0.5, "rgb(100, 100, 100)"],
-        [0.6, "rgb(100, 100, 100)"],
-
-        [0.6, "rgb(120, 120, 120)"],
-        [0.7, "rgb(120, 120, 120)"],
-
-        [0.7, "rgb(140, 140, 140)"],
-        [0.8, "rgb(140, 140, 140)"],
-
-        [0.8, "rgb(160, 160, 160)"],
-        [0.9, "rgb(160, 160, 160)"],
-
-        [0.9, "rgb(180, 180, 180)"],
-        [1.0, "rgb(180, 180, 180)"]
-    ]
-    import numpy
-    x = numpy.linspace(-1, 1, 10)
-    y = numpy.linspace(-1, 1, 10)
-    xGrid, yGrid = numpy.meshgrid(x, y)
-    for i, po in enumerate(probabilidades_ordenadas):
-        index = po[3]
-        z = (-df_boundary["intercept"].iloc[index] - df_boundary["coef0"].iloc[index] * xGrid - df_boundary["coef1"].iloc[index] * yGrid) / df_boundary["coef2"].iloc[index]
-        fig.add_trace(go.Surface(name="Boundary" , x=x, y=y, z=z, colorscale=greyscale, showscale=False),row=i // 3 + 1, col=i % 3 + 1)
-
-        x_test = df_test["acc_x"] * 0.10197162129779
-        y_test = df_test["acc_y"] * 0.10197162129779
-        z_test = df_test["acc_z"] * 0.10197162129779
-
-        fig.add_trace(go.Scatter3d(name="Test points", showlegend=i==0,x=x_test, y=y_test, z=z_test, mode ='markers', 
-                                   marker = dict(
-                                     size = 2,
-                                     color ='rgb(230, 230, 0)',
-                                     opacity = 0.8
-                                   )), row=i // 3 + 1, col=i % 3 + 1)
-
-        df_train_class = df_train[df_train["clase"] == po[0]]
-        df_train_other_class = df_train[df_train["clase"] != po[0]]
-
-        x_train_class = df_train_class["acc_x"]
-        y_train_class = df_train_class["acc_y"]
-        z_train_class = df_train_class["acc_z"]
-
-        fig.add_trace(go.Scatter3d(name="Train points from class", showlegend=i==0, x=x_train_class, y=y_train_class, z=z_train_class, mode ='markers', 
-                                   marker = dict(
-                                     size = 2,
-                                     color ='rgb(0, 230, 0)',
-                                     opacity = 0.8
-                                   )), row=i // 3 + 1, col=i % 3 + 1)
-
-        x_train_other_class = df_train_other_class["acc_x"]
-        y_train_other_class = df_train_other_class["acc_y"]
-        z_train_other_class = df_train_other_class["acc_z"]
-
-        fig.add_trace(go.Scatter3d(name="Train points from other classes" ,  showlegend=i==0, x=x_train_other_class, y=y_train_other_class, z=z_train_other_class, mode ='markers', 
-                                   marker = dict(
-                                     size = 2,
-                                     color ='rgb(230, 0, 0)',
-                                     opacity = 0.8
-                                   )), row=i // 3 + 1, col=i % 3 + 1)
-
-        if i == 0:
-            scene_num = "scene"
-        else:
-            scene_num = "scene" + str(i + 1)
-        fig.layout[scene_num]["annotations"] = [
-            dict(
-                x = Average(x_test),
-                y = Average(y_test),
-                z = Average(z_test),
-                text = "Test data",
-                font=dict(
-                    color="black",
-                    size=8
-                ),
-            ),
-            dict(
-                x = Average(x_train_class),
-                y = Average(y_train_class),
-                z = Average(z_train_class),
-                text = "Train data from class",
-                font=dict(
-                    color="black",
-                    size=8
-                ),
-            ),
-            dict(
-                x = Average(x_train_other_class),
-                y = Average(y_train_other_class),
-                z = Average(z_train_other_class),
-                text = "Train data from other classes",
-                font=dict(
-                    color="black",
-                    size=8
-                ),
-            )
-        ]
-    fig.update_layout(
-        height=1600,
-        width=1600
-    )
-    print(fig.layout)
-
-    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-    return graphJSON
 
     
 
@@ -1107,65 +789,8 @@ def guardar_analisis(num_test, id_paciente):
     filter_by(id_paciente=id_paciente).update({"probabilidad_caida": probability, 
     "model":model_id, "data":df_bytes})
 
-    '''
-    if newModel:  
-        intercept = result['intercept']
-        coef = result['coef']
-        for i in range(len(intercept)):
-            boundary = Boundary(model_id = model_id, index=i,
-            intercept=intercept[i], coef0=coef[i][0], coef1=coef[i][1], coef2=coef[i][2])
-            db.session.add(boundary)
-        training_data = result['training_data']
-        for key, value in training_data.items():
-            import pandas
-            df = pandas.read_json(value)
-            for index, row in df.iterrows():
-                training_point = TrainingPoint(model_id = model_id, index = index, clase = key, acc_x=row["Ax"],
-                acc_y=row["Ay"], acc_z=row["Az"])
-                db.session.add(training_point)
-    '''
-
     db.session.commit()
     return json.dumps({'success':True}), 200, {'ContentType':'application/json'}
-
-@blueprint.route('plot_data/<num_test>/<id_paciente>', methods=['GET'])
-def plot_data(num_test, id_paciente):
-    from apps import db
-    query_boundary = db.session.query(
-        Boundary.intercept, Boundary.coef0, Boundary.coef1,Boundary.coef2).\
-        filter(Test.num_test == num_test).\
-        filter(Test.id_paciente == id_paciente).\
-        filter(Test.model == Boundary.model)
-    df_boundary = pd.read_sql(query_boundary.statement, db.session.bind)
-    query_train = db.session.query(
-        TrainingPoint.clase, TrainingPoint.acc_x, TrainingPoint.acc_y,TrainingPoint.acc_z).\
-        filter(Test.num_test == num_test).\
-        filter(Test.id_paciente == id_paciente).\
-        filter(Test.model == TrainingPoint.model)
-    df_train = pd.read_sql(query_train.statement, db.session.bind)
-    query_test = db.session.query(
-        Test.num_test, Test.id_paciente, Test.date, TestUnit.item, TestUnit.time, TestUnit.acc_x,
-        TestUnit.acc_y, TestUnit.acc_z, TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
-        TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z).\
-                        filter(Test.id_paciente == TestUnit.id_paciente).\
-                            filter(Test.num_test == TestUnit.num_test).\
-                                filter(Test.id_paciente==id_paciente).\
-                                    filter(Test.num_test==num_test)
-    df_test = pd.read_sql(query_test.statement, db.session.bind)
-    data = {
-        "intercept": df_boundary["intercept"].to_list(),
-        "coef0": df_boundary["coef0"].to_list(),
-        "coef1": df_boundary["coef1"].to_list(),
-        "coef2": df_boundary["coef2"].to_list(),
-        "acc_x_test": df_test["acc_x"].to_list(),
-        "acc_y_test": df_test["acc_y"].to_list(),
-        "acc_z_test": df_test["acc_z"].to_list(),
-        "class_train": df_train["clase"].to_list(),
-        "acc_x_train": df_train["acc_x"].to_list(),
-        "acc_y_train": df_train["acc_y"].to_list(),
-        "acc_z_train": df_train["acc_z"].to_list(),
-    }
-    return jsonify(data)
 
 
 @blueprint.route('/borrar_test/<num_test>/<id_paciente>', methods=['POST'])
@@ -1548,6 +1173,16 @@ def test_data(paciente, test):
     }
     return jsonify(data)
 
+# Devuelve los centros se usa en algunos templates
+@blueprint.route('/obtener_centros', methods=['GET'])
+def obtener_centros():
+    from apps import db
+    centers = Centro.query.order_by(Centro.nombreFiscal).all()
+
+    centros_list = [{"id": centro.id, "nombre": centro.nombreFiscal} for centro in centers]
+
+    return jsonify({"centros": centros_list})
+
 ## END COMON ##
 
 ## BEGIN FLASK CKEDITOR ##
@@ -1577,6 +1212,9 @@ def upload():
 
 ## BEGIN PLOTS ##
 
+## BEGIN ZONA MEDICO ##
+
+#pantalla principal de plots para el medico
 @blueprint.route('/plots',  methods=['GET','POST'])
 @roles_accepted("medico")
 def plots():
@@ -1590,6 +1228,29 @@ def plots():
         'prefall/plots.html', 
         pacientes=pacientes_data)
 
+# Devuelve todos los tests de un paciente, se usa para elegir el test en la pantalla de plots del medico
+@blueprint.route('/get_tests/<id_paciente>',  methods=['GET'])
+@clinical_data_access()
+def get_tests(id_paciente):
+    from apps import db
+    from sqlalchemy.orm import aliased
+
+    Paciente = aliased(User)
+    Medico = aliased(User)
+
+    tests = (
+        db.session.query(Test, Centro, Paciente, Medico)
+        .join(Centro, Test.id_centro == Centro.id)
+        .join(Paciente, Test.id_paciente == Paciente.id)
+        .outerjoin(Medico, Test.id_medico == Medico.id)
+        .filter(Test.id_paciente == id_paciente)
+        .all()
+    )
+    tests_data = [{"num_test": test.Test.num_test, "id_paciente":test.Test.id_paciente,
+     "date": test.Test.date} for test in tests]
+    return jsonify(tests_data)
+
+# Genera todos los plots de un paciente para un medico
 @blueprint.route('/plots/generar_paciente/<id>', methods=['GET'])
 @roles_accepted("medico")
 def generate_plots_paciente(id):
@@ -1795,205 +1456,7 @@ def generate_plots_paciente(id):
         "magnetometro": graph3DProbCaidaMag
     })
 
-
-@blueprint.route('/get_tests/<id_paciente>',  methods=['GET'])
-@clinical_data_access()
-def get_tests(id_paciente):
-    from apps import db
-    from sqlalchemy.orm import aliased
-
-    Paciente = aliased(User)
-    Medico = aliased(User)
-
-    tests = (
-        db.session.query(Test, Centro, Paciente, Medico)
-        .join(Centro, Test.id_centro == Centro.id)
-        .join(Paciente, Test.id_paciente == Paciente.id)
-        .outerjoin(Medico, Test.id_medico == Medico.id)
-        .filter(Test.id_paciente == id_paciente)
-        .all()
-    )
-    tests_data = [{"num_test": test.Test.num_test, "id_paciente":test.Test.id_paciente,
-     "date": test.Test.date} for test in tests]
-    return jsonify(tests_data)
-
-
-@blueprint.route('/get_paciente_tests', methods=['POST'])
-def get_paciente_tests():
-    from apps import db
-    id_paciente = request.form.get('id_paciente') 
-    
-    tests = db.session.query(Test.num_test, Test.date).\
-    filter_by(id_paciente=id_paciente).\
-    filter(Test.probabilidad_caida.isnot(None)).all()
-    
-    tests_data = []
-    for test in tests:
-        test_dict = {
-            'num_test': test.num_test,
-            'date': test.date,
-        }
-        tests_data.append(test_dict)
-
-    response_data = {'tests': tests_data}
-
-    return jsonify(response_data)
-
-
-@blueprint.route('/plots_paciente',  methods=['GET','POST'])
-@roles_accepted("paciente")
-def plots_paciente():
-    import plotly
-    import plotly.graph_objs as go
-    from apps import db
-
-    tests = db.session.query(
-        Test.num_test, Test.date)\
-        .filter_by(id_paciente=current_user.id).all()
-    tests_data = [{"num_test": test.num_test,
-     "date": test.date} for test in tests]
-
-
-    tests = db.session.query(
-        Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
-        .filter_by(id_paciente=current_user.id)\
-        .filter(Test.probabilidad_caida.isnot(None)).all()
-    
-    x = [test.date for test in tests]
-    y = [test.probabilidad_caida * 100 for test in tests]
-    
-    fig = go.Figure()
-    fig.update_layout(
-        title="Evolución de la probabilidad de caída",
-    )
-    
-    trace = go.Scatter(x=x, y=y, mode='lines+markers')
-
-    fig.add_trace(trace)
-
-    fig.update_xaxes(title_text='Fecha')
-    fig.update_yaxes(title_text='Probabilidad de caída', range=[0, 100])
-
-    graphEvolucionProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-
-    return render_template(
-        'prefall/plots_paciente.html', 
-        tests_data=tests_data,
-        graphEvolucionProbCaida=graphEvolucionProbCaida)
-
-@blueprint.route('/obtener_centros', methods=['GET'])
-def obtener_centros():
-    from apps import db
-    centers = Centro.query.order_by(Centro.nombreFiscal).all()
-
-    centros_list = [{"id": centro.id, "nombre": centro.nombreFiscal} for centro in centers]
-
-    return jsonify({"centros": centros_list})
-
-@blueprint.route('/plots/generar_tests/<id>', methods=['POST'])
-@patient_data_access()
-def generar_tests(id):
-    from apps import db
-    import pickle
-    import numpy as np
-    import plotly
-    import plotly.graph_objs as go
-    data = request.get_json()
-    test_nums = data.get('tests')
-    paciente = db.session.query(
-        User.nombre, User.apellidos)\
-        .filter_by(id=id).first()
-    tests = db.session.query(
-        Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
-        .filter_by(id_paciente=id)\
-        .filter(Test.num_test.in_(test_nums)).all()
-
-    acc_data = []
-    gyr_data = []
-    mag_data = []
-    dates_data = []
-    fases_data = []
-    dates_fases_data = []
-
-    graphDataAcc = []
-    layout = go.Layout(
-        barmode='group',
-        title='Comparación de la aceleración',
-        xaxis=dict(title='Eje'),
-        yaxis=dict(title='Aceleración media')
-    )
-    figAcc = go.Figure()
-    figAcc.update_layout(
-        title="Comparación del acelerómetro",
-    )
-    figGyr = go.Figure()
-    figGyr.update_layout(
-        title="Comparación del giroscopio",
-    )
-    figMag = go.Figure()
-    figMag.update_layout(
-        title="Comparación del magnetómetro",
-    )
-    figFases = go.Figure()
-    figFases.update_layout(
-        title="Duración de las fases de la marcha",
-    )
-    for test in tests:
-        fases = None
-        blob_data = test.data  
-        if blob_data:
-            df = pickle.loads(blob_data)
-            fases = {
-                'fase1': df['duracion_f1'].values[0],
-                'fase2': df['duracion_f2'].values[0],
-                'fase3': df['duracion_f3'].values[0],
-                'fase4': df['duracion_f4'].values[0]
-            }
-            trace_fases = go.Bar(
-                x=["Fase 1", "Fase 2", "Fase 3", "Fase 4"],
-                y=[fases['fase1'], fases['fase2'], fases['fase3'], fases['fase4']],
-                name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
-            )
-            figFases.add_trace(trace_fases)
-        test_data = db.session.query(
-                TestUnit.acc_x, TestUnit.acc_y, TestUnit.acc_z,
-                TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
-                TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z,
-            ).filter_by(num_test=test.num_test).all()
-        
-        mean_values = np.mean(test_data, axis=0)
-
-        acc = {"x": mean_values[0], "y": mean_values[1], "z":mean_values[2]}
-        gyr = {"x": mean_values[3], "y": mean_values[4], "z":mean_values[5]}
-        mag = {"x": mean_values[6], "y": mean_values[7], "z":mean_values[8]}
-        trace_acc = go.Bar(
-            x=["Aceleracion X", "Aceleracion Y", "Aceleracion Z"],
-            y=[acc['x'], acc['y'], acc['z']],
-            name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
-        )
-        figAcc.add_trace(trace_acc)
-        trace_gyr = go.Bar(
-            x=["Giroscopio X", "Giroscopio Y", "Giroscopio Z"],
-            y=[gyr['x'], gyr['y'], gyr['z']],
-            name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
-        )
-        figGyr.add_trace(trace_gyr)
-        trace_mag = go.Bar(
-            x=["Magnetometro X", "Magnetometro Y", "Magnetometro Z"],
-            y=[mag['x'], mag['y'], mag['z']],
-            name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
-        )
-        figMag.add_trace(trace_mag)
-
-    
-    #plotAcc = json.dumps(figAcc, cls=plotly.utils.PlotlyJSONEncoder)
-    plotAcc = figAcc.to_dict()
-    plotGyr = figGyr.to_dict()
-    plotMag = figMag.to_dict()
-    plotFases = figFases.to_dict()
-    return jsonify({"plotAcc": plotAcc, "plotGyr": plotGyr, "plotMag": plotMag, "plotFases": plotFases})
-
-
+# Genera los plots de un conjunto de tests para el medico (pueden ser de diferentes pacientes)
 @blueprint.route('/plots/generar_tests_medico/', methods=['POST'])
 @roles_accepted("medico")
 def generar_tests_medico():
@@ -2101,8 +1564,8 @@ def generar_tests_medico():
     from apps.prefall.libraries import genera_grafica_fases_port, genera_metricas_port
 
     #da error depende del rango y test
-    #figFasesFinal = genera_grafica_fases_port(df, [1000, 1500])
-    #plotFasesFinal = figFasesFinal.to_dict()
+    figFasesFinal = genera_grafica_fases_port(df, [1000, 1500])
+    plotFasesFinal = figFasesFinal.to_dict()
 
     
     plotAcc = figAcc.to_dict()
@@ -2118,9 +1581,9 @@ def generar_tests_medico():
     print(df.head())
 
     #enviar aqui tambien plotFasesFinal
-    return jsonify({"plotAcc": plotAcc, "plotGyr": plotGyr, "plotMag": plotMag, "plotFases": plotFases, "metricas": metricas_json})
+    return jsonify({"plotAcc": plotAcc, "plotGyr": plotGyr, "plotMag": plotMag, "plotFases": plotFases, "plotFasesFinal":plotFasesFinal, "metricas": metricas_json})
 
-    
+# Genera los informes del medico    
 @blueprint.route('/plots/generar_informes/', methods=['POST'])
 def generar_informes():
     import json
@@ -2159,3 +1622,151 @@ def generar_informes():
 
     # Return the generated PDF as a file response
     return send_file(pdf_file.name, as_attachment=True, download_name="informe.pdf")
+
+## BEGIN ZONA PACIENTE ##
+
+# Pantalla principal de plots de paciente
+@blueprint.route('/plots_paciente',  methods=['GET','POST'])
+@roles_accepted("paciente")
+def plots_paciente():
+    import plotly
+    import plotly.graph_objs as go
+    from apps import db
+
+    tests = db.session.query(
+        Test.num_test, Test.date)\
+        .filter_by(id_paciente=current_user.id).all()
+    tests_data = [{"num_test": test.num_test,
+     "date": test.date} for test in tests]
+
+
+    tests = db.session.query(
+        Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+        .filter_by(id_paciente=current_user.id)\
+        .filter(Test.probabilidad_caida.isnot(None)).all()
+    
+    x = [test.date for test in tests]
+    y = [test.probabilidad_caida * 100 for test in tests]
+    
+    fig = go.Figure()
+    fig.update_layout(
+        title="Evolución de la probabilidad de caída",
+    )
+    
+    trace = go.Scatter(x=x, y=y, mode='lines+markers')
+
+    fig.add_trace(trace)
+
+    fig.update_xaxes(title_text='Fecha')
+    fig.update_yaxes(title_text='Probabilidad de caída', range=[0, 100])
+
+    graphEvolucionProbCaida = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+
+    return render_template(
+        'prefall/plots_paciente.html', 
+        tests_data=tests_data,
+        graphEvolucionProbCaida=graphEvolucionProbCaida)
+
+# Añade plots de un conjunto de tests
+@blueprint.route('/plots/generar_tests/<id>', methods=['POST'])
+@patient_data_access()
+def generar_tests(id):
+    from apps import db
+    import pickle
+    import numpy as np
+    import plotly
+    import plotly.graph_objs as go
+    data = request.get_json()
+    test_nums = data.get('tests')
+    paciente = db.session.query(
+        User.nombre, User.apellidos)\
+        .filter_by(id=id).first()
+    tests = db.session.query(
+        Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
+        .filter_by(id_paciente=id)\
+        .filter(Test.num_test.in_(test_nums)).all()
+
+    acc_data = []
+    gyr_data = []
+    mag_data = []
+    dates_data = []
+    fases_data = []
+    dates_fases_data = []
+
+    graphDataAcc = []
+    layout = go.Layout(
+        barmode='group',
+        title='Comparación de la aceleración',
+        xaxis=dict(title='Eje'),
+        yaxis=dict(title='Aceleración media')
+    )
+    figAcc = go.Figure()
+    figAcc.update_layout(
+        title="Comparación del acelerómetro",
+    )
+    figGyr = go.Figure()
+    figGyr.update_layout(
+        title="Comparación del giroscopio",
+    )
+    figMag = go.Figure()
+    figMag.update_layout(
+        title="Comparación del magnetómetro",
+    )
+    figFases = go.Figure()
+    figFases.update_layout(
+        title="Duración de las fases de la marcha",
+    )
+    for test in tests:
+        fases = None
+        blob_data = test.data  
+        if blob_data:
+            df = pickle.loads(blob_data)
+            fases = {
+                'fase1': df['duracion_f1'].values[0],
+                'fase2': df['duracion_f2'].values[0],
+                'fase3': df['duracion_f3'].values[0],
+                'fase4': df['duracion_f4'].values[0]
+            }
+            trace_fases = go.Bar(
+                x=["Fase 1", "Fase 2", "Fase 3", "Fase 4"],
+                y=[fases['fase1'], fases['fase2'], fases['fase3'], fases['fase4']],
+                name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
+            )
+            figFases.add_trace(trace_fases)
+        test_data = db.session.query(
+                TestUnit.acc_x, TestUnit.acc_y, TestUnit.acc_z,
+                TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
+                TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z,
+            ).filter_by(num_test=test.num_test).all()
+        
+        mean_values = np.mean(test_data, axis=0)
+
+        acc = {"x": mean_values[0], "y": mean_values[1], "z":mean_values[2]}
+        gyr = {"x": mean_values[3], "y": mean_values[4], "z":mean_values[5]}
+        mag = {"x": mean_values[6], "y": mean_values[7], "z":mean_values[8]}
+        trace_acc = go.Bar(
+            x=["Aceleracion X", "Aceleracion Y", "Aceleracion Z"],
+            y=[acc['x'], acc['y'], acc['z']],
+            name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
+        )
+        figAcc.add_trace(trace_acc)
+        trace_gyr = go.Bar(
+            x=["Giroscopio X", "Giroscopio Y", "Giroscopio Z"],
+            y=[gyr['x'], gyr['y'], gyr['z']],
+            name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
+        )
+        figGyr.add_trace(trace_gyr)
+        trace_mag = go.Bar(
+            x=["Magnetometro X", "Magnetometro Y", "Magnetometro Z"],
+            y=[mag['x'], mag['y'], mag['z']],
+            name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
+        )
+        figMag.add_trace(trace_mag)
+
+    
+    #plotAcc = json.dumps(figAcc, cls=plotly.utils.PlotlyJSONEncoder)
+    plotAcc = figAcc.to_dict()
+    plotGyr = figGyr.to_dict()
+    plotMag = figMag.to_dict()
+    plotFases = figFases.to_dict()
+    return jsonify({"plotAcc": plotAcc, "plotGyr": plotGyr, "plotMag": plotMag, "plotFases": plotFases})

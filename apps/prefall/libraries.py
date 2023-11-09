@@ -532,7 +532,7 @@ def genera_grafica_fases_port(elementos, intervalo):
         3.0: 0.15,
         4.0: 0.45
     }
-
+    """
     #BEGIN parte original, quitar
     #Es para comprobar que tira error igual
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -547,6 +547,7 @@ def genera_grafica_fases_port(elementos, intervalo):
         ax.axvspan(i, i+1, facecolor=color_map[row['estado']], alpha=bri_map[row['estado']])
 
     # END parte original quitar
+    """
     # Create a Plotly figure
     fig = go.Figure()
 
@@ -557,17 +558,19 @@ def genera_grafica_fases_port(elementos, intervalo):
 
     # Add color bands based on the state
     for i, row in elementos.iterrows():
-        fig.add_shape(
-            type='rect',
-            x0=i,
-            x1=i + 1,
-            y0=-2,  # Adjust the y-coordinates as needed
-            y1=6,   # Adjust the y-coordinates as needed
-            fillcolor=color_map[row['estado']],
-            opacity=bri_map[row['estado']],
-            layer="below",
-        )
-
+        if not np.isnan(row['estado']):
+            fig.add_shape(
+                type='line',
+                x0=i,
+                x1=i,
+                y0=0, 
+                y1=1,
+                line=dict(color=color_map[row['estado']], width=1),
+                opacity=bri_map[row['estado']],
+                xref='x',
+                yref='paper',
+                layer="below",
+            )
     # Add legend
     fig.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01))
 

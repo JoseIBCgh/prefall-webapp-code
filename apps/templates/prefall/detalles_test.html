@@ -183,26 +183,12 @@
                             </svg>
                         </button>
                     </div>
-                    <div id="3d_plot" class="img-fluid" width="100%" height="100%"></div>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.5.0/d3.js"></script>
                     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
                     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
                     <script src="/static/assets/js/plot.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}}></script>
                     <script src="/static/assets/js/predict.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}}></script>
-                    {#
-                    <script src="/static/assets/js/plot-svm.js" paciente={{test["id_paciente"]}} num_test={{test["num_test"]}} probabilidad_caida={{probabilidad_caida}} bow={{test["bow"]}}
-                    fall_to_left={{test["fall_to_left"]}} fall_to_right={{test["fall_to_right"]}} falling_backward={{test["falling_backward"]}} falling_forward={{test["falling_forward"]}}
-                    idle={{test["idle"]}} sitting={{test["sitting"]}} sleep={{test["sleep"]}} standing={{test["standing"]}}></script>
-                    #}
-                    {% if graphJSON is defined %}
-                    <script type='text/javascript'>
-                        var start_time = Date.now()
-                        var graphs = {{graphJSON | safe}};
-                        Plotly.plot('svm-py',graphs,{});
-                        console.log("Time plot= " + (Date.now() - start_time))
-                    </script>
-                    {% endif %}
                     <script>
                         document.getElementById('delete-btn').addEventListener('click', function() {
                             var test = {{ test_data | tojson | safe }};
