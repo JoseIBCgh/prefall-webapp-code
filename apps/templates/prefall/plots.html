@@ -274,24 +274,24 @@
         var graphDataComparativa = [
             { id: 0, chartData: {
                 data: [],
-                layout: {}
-            }},
+                layout: {},
+            }, image: null},
             { id: 1, chartData: {
                 data: [],
-                layout: {}
-            }},
+                layout: {},
+            }, image: null},
             { id: 2, chartData: {
                 data: [],
-                layout: {}
-            }},
+                layout: {},
+            }, image: null},
             { id: 3, chartData: {
                 data: [],
-                layout: {}
-            }},
+                layout: {},
+            }, image: null},
             { id: 4, chartData: { //Para el nuevo plot
                 data: [],
-                layout: {}
-            }}
+                layout: {},
+            }, image: null}
         ];
         var chartTableComparativa = new Tabulator("#plots-comparativa",{
             data: graphDataComparativa,
@@ -299,15 +299,26 @@
                 {
                     title: "",
                     formatter: function(cell, formatterParams, onRendered) {
-                        var chartID = cell.getRow().getData().chartID;
-                        var chartData = cell.getRow().getData().chartData;
+                        var image = cell.getRow().getData().image;
+                        if(image == null){
+                            var chartID = cell.getRow().getData().chartID;
+                            var chartData = cell.getRow().getData().chartData;
 
-                        var divElement = document.createElement("div");
-                        divElement.className = "chart";
+                            var divElement = document.createElement("div");
+                            divElement.className = "chart";
 
-                        Plotly.newPlot(divElement, chartData, {});
+                            Plotly.newPlot(divElement, chartData, {});
 
-                        return divElement;
+                            return divElement;
+                        }
+                        else{
+                            var img = document.createElement('img');
+                            img.src = 'data:image/png;base64,' + image;
+                            img.style.width = "100%";
+                            img.style.height = "auto";
+                            img.style.maxWidth = "100%"; 
+                            return img;
+                        }
                     }
                 }
             ],
@@ -317,6 +328,9 @@
             paginationSize:1,
             paginationCounter:"rows",
             movableColumns:false,
+        });
+        window.addEventListener('resize', function() {
+            chartTableComparativa.redraw();  // Assuming "redraw" is the method to refresh the table in Tabulator
         });
     </script>
     <script>
@@ -396,14 +410,14 @@
                     responseData.plotGyr,
                     responseData.plotMag,
                     responseData.plotFases,
-                    responseData.plotFasesFinal //Descomentar esto cuando se arregle el ultimo plot
+                    //responseData.plotFasesFinal //Descomentar esto cuando se arregle el ultimo plot
                 ];
-                chartTableComparativa.updateData([{ id: indexAcc, chartData: responseData.plotAcc }]);
-                chartTableComparativa.updateData([{ id: indexGyr, chartData: responseData.plotGyr }]);
-                chartTableComparativa.updateData([{ id: indexMag, chartData: responseData.plotMag }]);
-                chartTableComparativa.updateData([{ id: indexFases, chartData: responseData.plotFases }]);
+                chartTableComparativa.updateData([{ id: indexAcc, chartData: responseData.plotAcc, image: null }]);
+                chartTableComparativa.updateData([{ id: indexGyr, chartData: responseData.plotGyr, image: null }]);
+                chartTableComparativa.updateData([{ id: indexMag, chartData: responseData.plotMag, image: null }]);
+                chartTableComparativa.updateData([{ id: indexFases, chartData: responseData.plotFases, image: null }]);
                 // Descomentar esto cuando se arregle el ultimo plot
-                chartTableComparativa.updateData([{ id: indexFasesFinal, chartData: responseData.plotFasesFinal }]);
+                chartTableComparativa.updateData([{ id: indexFasesFinal, chartData: [], image:responseData.plotFasesFinal }]);
                 divComparativa.style.display = "block";
 
                 var metricasParsed = JSON.parse(responseData.metricas);
@@ -453,9 +467,14 @@
                                 showGrandTotals: "off",
                                 showHeaders: false
                             },
+                            ignoreEmptyRows: true,
+                            ignoreEmptyColumns: true
                         }
                     },
                 });
+                var pivotContainer = document.getElementById("metricas");
+                //pivotContainer.style.maxHeight = "200px";
+                //pivotContainer.style.maxWidth = "720px";
                 // codigo para quitar columnas sobrantes, no funciona
                 /*
                 webdatarocks.on("reportchange", 'redraw');

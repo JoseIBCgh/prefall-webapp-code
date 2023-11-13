@@ -1564,8 +1564,7 @@ def generar_tests_medico():
     from apps.prefall.libraries import genera_grafica_fases_port, genera_metricas_port
 
     #da error depende del rango y test
-    figFasesFinal = genera_grafica_fases_port(df, [1000, 1500])
-    plotFasesFinal = figFasesFinal.to_dict()
+    plotFasesFinal = genera_grafica_fases_port(df, [1000, 1500])
 
     
     plotAcc = figAcc.to_dict()

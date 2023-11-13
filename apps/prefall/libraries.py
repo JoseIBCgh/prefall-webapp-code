@@ -10,6 +10,8 @@ import itertools
 import glob
 import io
 import warnings
+from io import BytesIO
+import base64
 
 import matplotlib.pyplot as plt
 
@@ -532,7 +534,7 @@ def genera_grafica_fases_port(elementos, intervalo):
         3.0: 0.15,
         4.0: 0.45
     }
-    """
+    
     #BEGIN parte original, quitar
     #Es para comprobar que tira error igual
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -544,9 +546,20 @@ def genera_grafica_fases_port(elementos, intervalo):
 
     # Agregar bandas de colores en función del estado
     for i, row in elementos.iterrows():
-        ax.axvspan(i, i+1, facecolor=color_map[row['estado']], alpha=bri_map[row['estado']])
+        if not np.isnan(row['estado']):
+            ax.axvspan(i, i+1, facecolor=color_map[row['estado']], alpha=bri_map[row['estado']])
+    
+    ax.legend()
 
-    # END parte original quitar
+    image_stream = BytesIO()
+    fig.savefig(image_stream, format='png')
+    image_stream.seek(0)
+    
+    plt.close(fig)
+
+    image_base64 = base64.b64encode(image_stream.read()).decode('utf-8')
+
+    return image_base64
     """
     # Create a Plotly figure
     fig = go.Figure()
@@ -573,8 +586,9 @@ def genera_grafica_fases_port(elementos, intervalo):
             )
     # Add legend
     fig.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01))
-
+    
     return fig
+    """
 
 def genera_metricas_port(elementos):
     elementos = elementos.reset_index()
