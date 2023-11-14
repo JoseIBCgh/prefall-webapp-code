@@ -13724,3 +13724,18 @@ p strong {
   visibility: visible;
   opacity: 1;
 }
+
+#metricas-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.prob-low-bg {
+  background: linear-gradient(-135deg, #1de9b6 0%, #1dc4e9 100%);
+}
+
+.prob-high-bg {
+  background: linear-gradient(-135deg, #DB7F67 0%, #C1292E 100%);
+}

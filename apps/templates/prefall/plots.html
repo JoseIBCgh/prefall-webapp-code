@@ -23,8 +23,10 @@
             </div>
             <div id="plots-individual"></div>
             <div id="plots-comparativa"></div>
-            <div id="metricas-generales"></div>
-            <div id="metricas"></div>
+            <div id="metricas-container">
+                <div id="metricas-generales"></div>
+                <div id="metricas"></div>
+            </div>
             <div id="pdf-container"></div>
         </div>
     </div>
@@ -427,21 +429,21 @@
 
                 var data = [
                     { "Fase": "Fase 1", "Metrica": "Duracion porcentaje", "Value": parseFloat((metricas["duracion_porcentaje_f1"] * 100).toFixed(2)) },
-                    { "Fase": "Fase 1", "Metrica": "Duracion total", "Value": parseFloat(metricas["duracion_total_f1"].toFixed(2)) },
-                    { "Fase": "Fase 1", "Metrica": "Aceleración lineal Y media", "Value": parseFloat(metricas["lay_mean_f1"].toFixed(2)) },
-                    { "Fase": "Fase 1", "Metrica": "Aceleración lineal Y desviación", "Value": parseFloat(metricas["lay_std_f1"].toFixed(2)) },
+                    { "Fase": "Fase 1", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f1"].toFixed(2)) },
+                    { "Fase": "Fase 1", "Metrica": "Aceleración Y media", "Value": parseFloat(metricas["ay_mean_f1"].toFixed(2)) },
+                    { "Fase": "Fase 1", "Metrica": "Aceleración Y desviación", "Value": parseFloat(metricas["ay_std_f1"].toFixed(2)) },
                     { "Fase": "Fase 2", "Metrica": "Duracion porcentaje", "Value": parseFloat((metricas["duracion_porcentaje_f2"] * 100).toFixed(2)) },
-                    { "Fase": "Fase 2", "Metrica": "Duracion total", "Value": parseFloat(metricas["duracion_total_f2"].toFixed(2)) },
-                    { "Fase": "Fase 2", "Metrica": "Aceleración lineal Y media", "Value": parseFloat(metricas["lay_mean_f2"].toFixed(2)) },
-                    { "Fase": "Fase 2", "Metrica": "Aceleración lineal Y desviación", "Value": parseFloat(metricas["lay_std_f2"].toFixed(2)) },
+                    { "Fase": "Fase 2", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f2"].toFixed(2)) },
+                    { "Fase": "Fase 2", "Metrica": "Aceleración Y media", "Value": parseFloat(metricas["ay_mean_f2"].toFixed(2)) },
+                    { "Fase": "Fase 2", "Metrica": "Aceleración Y desviación", "Value": parseFloat(metricas["ay_std_f2"].toFixed(2)) },
                     { "Fase": "Fase 3", "Metrica": "Duracion porcentaje", "Value": parseFloat((metricas["duracion_porcentaje_f3"] * 100).toFixed(2)) },
-                    { "Fase": "Fase 3", "Metrica": "Duracion total", "Value": parseFloat(metricas["duracion_total_f3"].toFixed(2)) },
-                    { "Fase": "Fase 3", "Metrica": "Aceleración lineal Y media", "Value": parseFloat(metricas["lay_mean_f3"].toFixed(2)) },
-                    { "Fase": "Fase 3", "Metrica": "Aceleración lineal Y desviación", "Value": parseFloat(metricas["lay_std_f3"].toFixed(2)) },
+                    { "Fase": "Fase 3", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f3"].toFixed(2)) },
+                    { "Fase": "Fase 3", "Metrica": "Aceleración Y media", "Value": parseFloat(metricas["ay_mean_f3"].toFixed(2)) },
+                    { "Fase": "Fase 3", "Metrica": "Aceleración Y desviación", "Value": parseFloat(metricas["ay_std_f3"].toFixed(2)) },
                     { "Fase": "Fase 4", "Metrica": "Duracion porcentaje", "Value": parseFloat((metricas["duracion_porcentaje_f4"] * 100).toFixed(2)) },
-                    { "Fase": "Fase 4", "Metrica": "Duracion total", "Value": parseFloat(metricas["duracion_total_f4"].toFixed(2)) },
-                    { "Fase": "Fase 4", "Metrica": "Aceleración lineal Y media", "Value": parseFloat(metricas["lay_mean_f4"].toFixed(2)) },
-                    { "Fase": "Fase 4", "Metrica": "Aceleración lineal Y desviación", "Value": parseFloat(metricas["lay_std_f4"].toFixed(2)) },
+                    { "Fase": "Fase 4", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f4"].toFixed(2)) },
+                    { "Fase": "Fase 4", "Metrica": "Aceleración Y media", "Value": parseFloat(metricas["ay_mean_f4"].toFixed(2)) },
+                    { "Fase": "Fase 4", "Metrica": "Aceleración Y desviación", "Value": parseFloat(metricas["ay_std_f4"].toFixed(2)) },
                 ];
                 
                 var pivot = new WebDataRocks({
@@ -456,7 +458,7 @@
                                 { uniqueName: "Fase" }
                             ],
                             columns: [
-                                { uniqueName: "Metrica" }
+                                { uniqueName: "Metrica", caption: "Métrica de las Fases" }
                             ],
                             measures: [
                                 { uniqueName: "Value", aggregation: "sum" }
@@ -473,8 +475,8 @@
                     },
                 });
                 var pivotContainer = document.getElementById("metricas");
-                //pivotContainer.style.maxHeight = "200px";
-                //pivotContainer.style.maxWidth = "720px";
+                pivotContainer.style.maxHeight = "200px";
+                pivotContainer.style.maxWidth = "660px";
                 // codigo para quitar columnas sobrantes, no funciona
                 /*
                 webdatarocks.on("reportchange", 'redraw');
@@ -497,10 +499,10 @@
                     { duracion_total_medicion: parseFloat(metricas["duracion_total_medicion"].toFixed(2)), duracion_real_analizada: parseFloat(metricas["duracion_real_analizada"].toFixed(2)), n_pasos_totales: parseFloat(metricas["n_pasos_totales"].toFixed(2)), n_pasos_minuto: parseFloat(metricas["n_pasos_minuto"].toFixed(2)) },
                 ];
                 var tableColumns = [
-                    { title: "Duracion Total Medicion", field: "duracion_total_medicion" },
-                    { title: "Duracion Real Analizada", field: "duracion_real_analizada" },
-                    { title: "N Pasos Totales", field: "n_pasos_totales" },
-                    { title: "N Pasos Minuto", field: "n_pasos_minuto" },
+                    { title: "Duración Total Medicion (s)", field: "duracion_total_medicion" },
+                    { title: "Duración Real Analizada (s)", field: "duracion_real_analizada" },
+                    { title: "Número de Pasos Totales", field: "n_pasos_totales" },
+                    { title: "Número de Pasos por Minuto", field: "n_pasos_minuto" },
                 ];
                 var table = new Tabulator("#metricas-generales", {
                     data: tableData,

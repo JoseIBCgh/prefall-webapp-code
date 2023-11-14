@@ -55,9 +55,15 @@
                                             <td>
                                                 <h6 class="text-muted">Probabilidad de caida</h6>
                                             </td>
+                                            {% if test["probabilidad_caida"] * 100 < 50 %}
                                             <td>
-                                                <h3 class="text-muted">{{test["probabilidad_caida"] * 100}}</h3>
+                                                <button class="label prob-low-bg text-white f-16 btn-rounded">{{test["probabilidad_caida"] * 100}}</button>
                                             </td>
+                                            {% else %}
+                                            <td>
+                                                <button class="label prob-high-bg text-white f-16 btn-rounded">{{test["probabilidad_caida"] * 100}}</button>
+                                            </td>
+                                            {% endif %}
                                         </tr>
                                         {% endif %}
                                     </tbody>
