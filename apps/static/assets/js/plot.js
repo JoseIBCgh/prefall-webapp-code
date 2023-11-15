@@ -298,21 +298,6 @@ function buildChart() {
         
         ];
         
-        
-        Plotly.newPlot('3d_plot', data, {});
-
-        var interval3d = setInterval(function(){
-            data[0].x = data[0].x.map(function(x){
-                return x + 0.01
-            })
-            data[1].y = data[1].y.map(function(x){
-                return x + 0.01
-            })
-            data[2].z = data[2].z.map(function(x){
-                return x + 0.01
-            })
-            Plotly.react('3d_plot', data, {});
-        }, 100)
     });
 }
 function get_initial_data(item, x, y, z, name){

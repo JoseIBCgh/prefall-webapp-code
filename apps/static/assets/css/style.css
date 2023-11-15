@@ -13732,10 +13732,32 @@ p strong {
   flex-direction: column;
 }
 
-.prob-low-bg {
-  background: linear-gradient(-135deg, #1de9b6 0%, #1dc4e9 100%);
+.bg-green {
+  background: linear-gradient(-135deg, #66CC33 0%, #66CC66 100%);
 }
 
-.prob-high-bg {
-  background: linear-gradient(-135deg, #DB7F67 0%, #C1292E 100%);
+.bg-yellow {
+  background: linear-gradient(-135deg, #FFCC33 0%, #FFCC00 100%);
+}
+
+.bg-red {
+  background: linear-gradient(-135deg, #FF0000 0%, #660000 100%);
+}
+
+.font-green {
+  color: #66CC33
+}
+
+.font-yellow {
+  color: #FFCC00
+}
+
+.font-red {
+  color: #FF0000
+}
+
+.horizontal-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }

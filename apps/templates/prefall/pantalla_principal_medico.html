@@ -65,14 +65,15 @@
     <script>
         var usersData = {{ pacientes_data | tojson | safe }};
         var columns = [
-            { title: "Id", field: "id", headerFilter:true },
-            { title: "DNI", field: "identificador", headerFilter:true },
-            { title: "Nombre", field: "nombre", headerFilter:true },
-            { title: "Apellidos", field: "apellidos", headerFilter:true },
-            { title: "Tests sin revisar", field: "tests_sin_revisar", headerFilter:true },
-            { title: "Tests sin diagnosticar", field: "tests_sin_diagnostigar", headerFilter:true },
-            { title: "Centro", field: "centro", headerFilter:true },
-            { title: "Fecha registro", field: "fecha_registro", headerFilter:true },
+            { title: "Num", field: "rownum", formatter: "rownum", hozAlign: "center", headerSort: false, width: 60 },
+            { title: "Id", field: "id", hozAlign: "center", headerFilter:true, width: 60 },
+            { title: "DNI", field: "identificador", hozAlign: "center", headerFilter:true },
+            { title: "Nombre", field: "nombre", hozAlign: "center", headerFilter:true },
+            { title: "Apellidos", field: "apellidos", hozAlign: "center", headerFilter:true },
+            { title: "Tests sin revisar", field: "tests_sin_revisar", hozAlign: "center", headerFilter:true },
+            { title: "Tests sin diagnosticar", field: "tests_sin_diagnostigar", hozAlign: "center", headerFilter:true },
+            { title: "Centro", field: "centro", hozAlign: "center", headerFilter:true },
+            { title: "Fecha registro", field: "fecha_registro", hozAlign: "center", headerFilter:true },
             {
                 title: "",
                 field: "id", // Replace with the appropriate field that holds the ID

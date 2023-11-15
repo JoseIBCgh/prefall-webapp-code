@@ -428,22 +428,22 @@
                 console.log(metricas);
 
                 var data = [
-                    { "Fase": "Fase 1", "Metrica": "Duracion porcentaje", "Value": parseFloat((metricas["duracion_porcentaje_f1"] * 100).toFixed(2)) },
+                    { "Fase": "Fase 1", "Metrica": "Duracion porcentaje (%)", "Value": parseFloat((metricas["duracion_porcentaje_f1"] * 100).toFixed(2)) },
                     { "Fase": "Fase 1", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f1"].toFixed(2)) },
-                    { "Fase": "Fase 1", "Metrica": "Aceleración Y media", "Value": parseFloat(metricas["ay_mean_f1"].toFixed(2)) },
-                    { "Fase": "Fase 1", "Metrica": "Aceleración Y desviación", "Value": parseFloat(metricas["ay_std_f1"].toFixed(2)) },
-                    { "Fase": "Fase 2", "Metrica": "Duracion porcentaje", "Value": parseFloat((metricas["duracion_porcentaje_f2"] * 100).toFixed(2)) },
+                    { "Fase": "Fase 1", "Metrica": "Aceleración Y media (m/s²)", "Value": parseFloat(metricas["ay_mean_f1"].toFixed(2)) },
+                    { "Fase": "Fase 1", "Metrica": "Aceleración Y desviación (m/s²)", "Value": parseFloat(metricas["ay_std_f1"].toFixed(2)) },
+                    { "Fase": "Fase 2", "Metrica": "Duracion porcentaje (%)", "Value": parseFloat((metricas["duracion_porcentaje_f2"] * 100).toFixed(2)) },
                     { "Fase": "Fase 2", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f2"].toFixed(2)) },
-                    { "Fase": "Fase 2", "Metrica": "Aceleración Y media", "Value": parseFloat(metricas["ay_mean_f2"].toFixed(2)) },
-                    { "Fase": "Fase 2", "Metrica": "Aceleración Y desviación", "Value": parseFloat(metricas["ay_std_f2"].toFixed(2)) },
-                    { "Fase": "Fase 3", "Metrica": "Duracion porcentaje", "Value": parseFloat((metricas["duracion_porcentaje_f3"] * 100).toFixed(2)) },
+                    { "Fase": "Fase 2", "Metrica": "Aceleración Y media (m/s²)", "Value": parseFloat(metricas["ay_mean_f2"].toFixed(2)) },
+                    { "Fase": "Fase 2", "Metrica": "Aceleración Y desviación (m/s²)", "Value": parseFloat(metricas["ay_std_f2"].toFixed(2)) },
+                    { "Fase": "Fase 3", "Metrica": "Duracion porcentaje (%)", "Value": parseFloat((metricas["duracion_porcentaje_f3"] * 100).toFixed(2)) },
                     { "Fase": "Fase 3", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f3"].toFixed(2)) },
-                    { "Fase": "Fase 3", "Metrica": "Aceleración Y media", "Value": parseFloat(metricas["ay_mean_f3"].toFixed(2)) },
-                    { "Fase": "Fase 3", "Metrica": "Aceleración Y desviación", "Value": parseFloat(metricas["ay_std_f3"].toFixed(2)) },
-                    { "Fase": "Fase 4", "Metrica": "Duracion porcentaje", "Value": parseFloat((metricas["duracion_porcentaje_f4"] * 100).toFixed(2)) },
+                    { "Fase": "Fase 3", "Metrica": "Aceleración Y media (m/s²)", "Value": parseFloat(metricas["ay_mean_f3"].toFixed(2)) },
+                    { "Fase": "Fase 3", "Metrica": "Aceleración Y desviación (m/s²)", "Value": parseFloat(metricas["ay_std_f3"].toFixed(2)) },
+                    { "Fase": "Fase 4", "Metrica": "Duracion porcentaje (%)", "Value": parseFloat((metricas["duracion_porcentaje_f4"] * 100).toFixed(2)) },
                     { "Fase": "Fase 4", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f4"].toFixed(2)) },
-                    { "Fase": "Fase 4", "Metrica": "Aceleración Y media", "Value": parseFloat(metricas["ay_mean_f4"].toFixed(2)) },
-                    { "Fase": "Fase 4", "Metrica": "Aceleración Y desviación", "Value": parseFloat(metricas["ay_std_f4"].toFixed(2)) },
+                    { "Fase": "Fase 4", "Metrica": "Aceleración Y media (m/s²)", "Value": parseFloat(metricas["ay_mean_f4"].toFixed(2)) },
+                    { "Fase": "Fase 4", "Metrica": "Aceleración Y desviación (m/s²)", "Value": parseFloat(metricas["ay_std_f4"].toFixed(2)) },
                 ];
                 
                 var pivot = new WebDataRocks({
@@ -476,7 +476,7 @@
                 });
                 var pivotContainer = document.getElementById("metricas");
                 pivotContainer.style.maxHeight = "200px";
-                pivotContainer.style.maxWidth = "660px";
+                pivotContainer.style.maxWidth = "750px";
                 // codigo para quitar columnas sobrantes, no funciona
                 /*
                 webdatarocks.on("reportchange", 'redraw');
@@ -502,12 +502,12 @@
                     { title: "Duración Total Medicion (s)", field: "duracion_total_medicion" },
                     { title: "Duración Real Analizada (s)", field: "duracion_real_analizada" },
                     { title: "Número de Pasos Totales", field: "n_pasos_totales" },
-                    { title: "Número de Pasos por Minuto", field: "n_pasos_minuto" },
+                    { title: "Pasos / Minuto", field: "n_pasos_minuto" },
                 ];
                 var table = new Tabulator("#metricas-generales", {
                     data: tableData,
                     columns: tableColumns,
-                    layout: "fitColumns",
+                    layout: "fitDataFill",
                 });
 
                 divMetricasGenerales.style.display = "block";
