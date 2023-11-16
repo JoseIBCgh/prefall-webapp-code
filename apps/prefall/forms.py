@@ -4,13 +4,16 @@ from wtforms import (
     StringField, IntegerField, DecimalField, DateField, 
     TextAreaField, SubmitField, PasswordField, EmailField, SelectField
 )
-from wtforms.validators import DataRequired, AnyOf, Optional
+from wtforms.validators import DataRequired, AnyOf, Optional, Length
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 
 from flask_ckeditor import CKEditorField
 
 class CreatePatientClinicalForm(FlaskForm):
-    identificador = StringField('Identificador',id='id_create_patient', validators=[DataRequired()])
+    identificador = StringField('Identificador',id='id_create_patient', validators=[
+        DataRequired(),
+        Length(max=10, message='Solo se permiten 10 caracteres como máximo')
+        ])
     nombre = StringField('Nombre', id='name_create_patient', validators=[DataRequired()])
     apellidos = StringField('Apellidos', id='apellidos_create_user', validators=[DataRequired()])
     email = StringField('Email', id='email_create_patient', validators=[DataRequired()])
@@ -23,7 +26,10 @@ class CreatePatientClinicalForm(FlaskForm):
     antecedentes = TextAreaField('Antecedentes clínicos', id='antecedentes_create_patient', validators=[Optional()])
 
 class CreatePatientPersonalForm(FlaskForm):
-    identificador = StringField('Identificador',id='id_create_patient', validators=[DataRequired()])
+    identificador = StringField('Identificador',id='id_create_patient', validators=[
+        DataRequired(),
+        Length(max=10, message='Solo se permiten 10 caracteres como máximo')
+        ])
     nombre = StringField('Nombre', id='name_create_patient', validators=[DataRequired()])
     apellidos = StringField('Apellidos', id='apellidos_create_user', validators=[DataRequired()])
     email = StringField('Email', id='email_create_patient', validators=[DataRequired()])
@@ -35,7 +41,10 @@ class CreatePatientPersonalForm(FlaskForm):
     peso = DecimalField('Peso', id='weight_create_patient', validators=[DataRequired()])
 
 class CreateUserForm(FlaskForm):
-    identificador = StringField('Identificador',id='id_create_user', validators=[DataRequired()])
+    identificador = StringField('Identificador',id='id_create_user', validators=[
+        DataRequired(),
+        Length(max=10, message='Solo se permiten 10 caracteres como máximo')
+        ])
     nombre = StringField('Nombre', id='name_create_user', validators=[DataRequired()])
     apellidos = StringField('Apellidos', id='apellidos_create_user', validators=[DataRequired()])
     email = StringField('Email', id='email_create_patient', validators=[DataRequired()])
@@ -52,7 +61,10 @@ class CreateUserForm(FlaskForm):
     ])
 
 class CreateCenterAdminForm(FlaskForm):
-    identificador = StringField('Identificador',id='id_create_user', validators=[DataRequired()])
+    identificador = StringField('Identificador',id='id_create_user', validators=[
+        DataRequired(),
+        Length(max=10, message='Solo se permiten 10 caracteres como máximo')
+        ])
     username = StringField('Usuario', id='username_admin', validators=[DataRequired()])
     nombre = StringField('Nombre', id='name_admin', validators=[DataRequired()])
     apellidos = StringField('Apellidos', id='apellidos_admin', validators=[DataRequired()])
@@ -62,7 +74,10 @@ class CreateCenterAdminForm(FlaskForm):
     sexo = SelectField('Sexo', id='sex_admin', choices=[('V', 'V'), ('M', 'M')], validators=[DataRequired()])
 
 class EditPersonalDataForm(FlaskForm):
-    identificador = StringField('Identificador',id='id_edit_personal_data', validators=[Optional()])
+    identificador = StringField('Identificador',id='id_edit_personal_data', validators=[
+        Optional(),
+        Length(max=10, message='Solo se permiten 10 caracteres como máximo')
+        ])
     nombre = StringField('Nombre', id='name_edit_personal_data', validators=[Optional()])
     apellidos = StringField('Apellidos', id='apellidos_edit_personal_data', validators=[Optional()])
     password = PasswordField('Contraseña', id='password_edit_personal_data', validators=[Optional()])
@@ -72,7 +87,10 @@ class EditPersonalDataForm(FlaskForm):
     peso = DecimalField('Peso', id='weight_edit_personal_data', validators=[Optional()])
 
 class EditClinicalDataForm(FlaskForm):
-    identificador = StringField('Identificador',id='id_edit_clinical_data', validators=[Optional()])
+    identificador = StringField('Identificador',id='id_edit_clinical_data', validators=[
+        Optional(),
+        Length(max=10, message='Solo se permiten 10 caracteres como máximo')
+    ])
     nombre = StringField('Nombre', id='name_edit_personal_data', validators=[Optional()])
     apellidos = StringField('Apellidos', id='apellidos_edit_personal_data', validators=[Optional()])
     fecha = DateField('Fecha de nacimiento', id='date_edit_personal_data', validators=[Optional()])

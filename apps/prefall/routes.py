@@ -622,8 +622,6 @@ def detalles_clinicos(id):
     from sqlalchemy import and_
     paciente = User.query.filter_by(id=id).first()
     formTest = UploadTestForm()
-    page = request.args.get('page', 1, type=int)
-    per_page = 10  # Number of items per page
 
     if formTest.submitUploadTest.data and formTest.validate():
         file = formTest.test.data
@@ -658,15 +656,7 @@ def detalles_clinicos(id):
         .filter(Test.id_paciente == id)
         .options(joinedload(Test.medico))
         .all()
-    )
-    total_records = len(tests)
-
-    total_pages = (total_records - 1) // per_page + 1
-
-    start_index = (page - 1) * per_page
-    end_index = min(start_index + per_page, total_records)
-
-    tests = tests[start_index:end_index]    
+    )    
 
     #graphJSON = generatePlotPaciente(id)
     graphJSON = null
@@ -679,8 +669,7 @@ def detalles_clinicos(id):
     } for test, acciones_test_medico in tests]
 
     return render_template('prefall/detalles_clinicos.html', paciente=paciente, tests=tests,
-    formTest=formTest, graphJSON=graphJSON, tests_data = tests_data,
-    total_pages=total_pages, current_page=page)
+    formTest=formTest, graphJSON=graphJSON, tests_data = tests_data)
 
 
 @blueprint.route('/editar_paciente/<int:id>', methods=['POST'])
