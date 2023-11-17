@@ -14,6 +14,7 @@ from io import BytesIO
 import base64
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 def filtro_acelerometro(datos):
     #
@@ -484,7 +485,7 @@ def assign_steps(s):
     return steps
 
 # Port de la funcion genera_grafica_fases para un dataframe
-def genera_grafica_fases_port(elementos, intervalo):
+def genera_grafica_fases_port(elementos, intervalo, title):
     elementos = elementos.reset_index()
 
     #Renombramos columnas para adaptarlo al script libraries
@@ -539,6 +540,10 @@ def genera_grafica_fases_port(elementos, intervalo):
     #Es para comprobar que tira error igual
     fig, ax = plt.subplots(figsize=(10, 6))
 
+    ax.set_title(title)
+    ax.set_xlabel('Frames')
+    ax.set_ylabel('m/s²')
+
     # Graficar ax, ay y az
     ax.plot(elementos['ax'], label='ax', color="black")
     ax.plot(elementos['ay'], label='ay', color="black",linestyle='dashdot')
@@ -549,7 +554,23 @@ def genera_grafica_fases_port(elementos, intervalo):
         if not np.isnan(row['estado']):
             ax.axvspan(i, i+1, facecolor=color_map[row['estado']], alpha=bri_map[row['estado']])
     
-    ax.legend()
+    handles, labels = ax.get_legend_handles_labels()
+
+    legend_patch1 = mpatches.Patch(color=color_map[1.0], alpha=bri_map[1.0], label='Fase 1')
+    handles.append(legend_patch1)
+    labels.append('Fase 1')
+    legend_patch2 = mpatches.Patch(color=color_map[2.0], alpha=bri_map[2.0], label='Fase 2')
+    handles.append(legend_patch2)
+    labels.append('Fase 2')
+    legend_patch3 = mpatches.Patch(color=color_map[3.0], alpha=bri_map[3.0], label='Fase 3')
+    handles.append(legend_patch3)
+    labels.append('Fase 3')
+    legend_patch4 = mpatches.Patch(color=color_map[4.0], alpha=bri_map[4.0], label='Fase 4')
+    handles.append(legend_patch4)
+    labels.append('Fase 4')
+
+
+    ax.legend(handles, labels)
 
     image_stream = BytesIO()
     fig.savefig(image_stream, format='png')

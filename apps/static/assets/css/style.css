@@ -13725,13 +13725,6 @@ p strong {
   opacity: 1;
 }
 
-#metricas-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-}
-
 .bg-green {
   background: linear-gradient(-135deg, #66CC33 0%, #66CC66 100%);
 }

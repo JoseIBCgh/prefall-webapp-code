@@ -1260,7 +1260,7 @@ def generate_plots_paciente(id):
     
     fig = go.Figure()
     fig.update_layout(
-        title="Evolución de la probabilidad de caída",
+        title="Evolución de la probabilidad de caída, Id:" + str(id),
     )
     
     trace = go.Scatter(x=x, y=y, mode='lines+markers')
@@ -1313,7 +1313,7 @@ def generate_plots_paciente(id):
     
     fig = go.Figure()
     fig.update_layout(
-        title="Distribucion de la aceleración según la probabilidad de caída",
+        title="Distribucion de la aceleración según la probabilidad de caída, Id:" + str(id),
     )
 
     trace = go.Scatter3d(
@@ -1355,7 +1355,7 @@ def generate_plots_paciente(id):
 
     fig = go.Figure()
     fig.update_layout(
-        title="Distribucion del giroscopio según la probabilidad de caída",
+        title="Distribucion del giroscopio según la probabilidad de caída, Id:" + str(id),
     )
 
     trace = go.Scatter3d(
@@ -1398,7 +1398,7 @@ def generate_plots_paciente(id):
 
     fig = go.Figure()
     fig.update_layout(
-        title="Distribucion del magnetómetro según la probabilidad de caída",
+        title="Distribucion del magnetómetro según la probabilidad de caída, Id:" + str(id),
     )
 
     trace = go.Scatter3d(
@@ -1477,22 +1477,27 @@ def generar_tests_medico():
     figAcc = go.Figure()
     figAcc.update_layout(
         title="Comparación del acelerómetro",
+        yaxis_title="m/s²"
     )
     figGyr = go.Figure()
     figGyr.update_layout(
         title="Comparación del giroscopio",
+        yaxis_title="m/s"
     )
     figMag = go.Figure()
     figMag.update_layout(
         title="Comparación del magnetómetro",
+        yaxis_title="microT"
     )
     figFases = go.Figure()
     figFases.update_layout(
         title="Duración de las fases de la marcha",
+        yaxis_title="Tiempo(s)"
     )
     for test in tests:
         fases = None
-        blob_data = test.data  
+        blob_data = test.data
+        title = "paciente " + str(test.id_paciente) + " , test " + str(test.num_test)  
         if blob_data:
             df = pickle.loads(blob_data)
             fases = {
@@ -1504,7 +1509,7 @@ def generar_tests_medico():
             trace_fases = go.Bar(
                 x=["Fase 1", "Fase 2", "Fase 3", "Fase 4"],
                 y=[fases['fase1'], fases['fase2'], fases['fase3'], fases['fase4']],
-                name=f"{test.paciente.nombre} {test.paciente.apellidos + ' ' if test.paciente.apellidos else ''}{test.date.strftime('%Y-%m-%d %H:%M:%S')}"
+                name=title
             )
             figFases.add_trace(trace_fases)
         test_data = db.session.query(
@@ -1521,19 +1526,19 @@ def generar_tests_medico():
         trace_acc = go.Bar(
             x=["Aceleracion X", "Aceleracion Y", "Aceleracion Z"],
             y=[acc['x'], acc['y'], acc['z']],
-            name=f"{test.paciente.nombre} {test.paciente.apellidos + ' ' if test.paciente.apellidos else ''}{test.date.strftime('%Y-%m-%d %H:%M:%S')}"
+            name=title
         )
         figAcc.add_trace(trace_acc)
         trace_gyr = go.Bar(
             x=["Giroscopio X", "Giroscopio Y", "Giroscopio Z"],
             y=[gyr['x'], gyr['y'], gyr['z']],
-            name=f"{test.paciente.nombre} {test.paciente.apellidos + ' ' if test.paciente.apellidos else ''}{test.date.strftime('%Y-%m-%d %H:%M:%S')}"
+            name=title
         )
         figGyr.add_trace(trace_gyr)
         trace_mag = go.Bar(
             x=["Magnetometro X", "Magnetometro Y", "Magnetometro Z"],
             y=[mag['x'], mag['y'], mag['z']],
-            name=f"{test.paciente.nombre} {test.paciente.apellidos + ' ' if test.paciente.apellidos else ''}{test.date.strftime('%Y-%m-%d %H:%M:%S')}"
+            name=title
         )
         figMag.add_trace(trace_mag)
 
@@ -1552,8 +1557,8 @@ def generar_tests_medico():
 
     from apps.prefall.libraries import genera_grafica_fases_port, genera_metricas_port
 
-    #da error depende del rango y test
-    plotFasesFinal = genera_grafica_fases_port(df, [1000, 1500])
+    title = "Valores del acelerometro en las 4 marchas del paciente " + str(test.id_paciente) + " , test " + str(test.num_test)
+    plotFasesFinal = genera_grafica_fases_port(df, [1000, 1500], title)
 
     
     plotAcc = figAcc.to_dict()

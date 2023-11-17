@@ -13,6 +13,11 @@
             </div>
             <div id="chartContainer"></div>
             <div id="pagination" class="pagination"></div>
+            <div id="plots-individual"></div>
+            <div id="plots-comparativa"></div>
+            <div id="plots-fases"></div>
+            <div id="metricas-table"></div>
+            <div id="pdf-container"></div>
             <div class="row" style="margin-left: 5px;">
                 <button id="clearButton">
                     <img src="/static/assets/images/icons/limpiar.png" style="width: 50px; height: 50px;"/>
@@ -21,13 +26,6 @@
                     <img src="/static/assets/images/icons/exportar_pdf.png" style="width: 50px; height: 50px;"/>
                 </button>
             </div>
-            <div id="plots-individual"></div>
-            <div id="plots-comparativa"></div>
-            <div id="metricas-container">
-                <div id="metricas-generales"></div>
-                <div id="metricas"></div>
-            </div>
-            <div id="pdf-container"></div>
         </div>
     </div>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/5.5.2/css/tabulator.min.css" integrity="sha512-HdUIebGeOK7s+At/fOnnbX8vsz6Cl1KTeiRlBiQABTMSqw7kZRCxGiUnuF9lr+1xz5y8pL7jkCR+NNtVVkEqKg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -218,15 +216,6 @@
                 console.error('Error:', error);
             });
         });
-
-        var clearButton = document.getElementById('clearButton');
-        clearButton.addEventListener('click', function(){
-            tests = [];
-            var divIndividual = document.getElementById("plots-individual");
-            divIndividual.style.display = "none";
-            var divComparativa = document.getElementById("plots-comparativa");
-            divComparativa.style.display = "none";
-        });
     </script>
     <script>
         var graphDataIndividual = [
@@ -277,23 +266,19 @@
             { id: 0, chartData: {
                 data: [],
                 layout: {},
-            }, image: null},
+            }},
             { id: 1, chartData: {
                 data: [],
                 layout: {},
-            }, image: null},
+            }},
             { id: 2, chartData: {
                 data: [],
                 layout: {},
-            }, image: null},
+            }},
             { id: 3, chartData: {
                 data: [],
                 layout: {},
-            }, image: null},
-            { id: 4, chartData: { //Para el nuevo plot
-                data: [],
-                layout: {},
-            }, image: null}
+            }}
         ];
         var chartTableComparativa = new Tabulator("#plots-comparativa",{
             data: graphDataComparativa,
@@ -301,26 +286,44 @@
                 {
                     title: "",
                     formatter: function(cell, formatterParams, onRendered) {
+                        
+                        var chartID = cell.getRow().getData().chartID;
+                        var chartData = cell.getRow().getData().chartData;
+
+                        var divElement = document.createElement("div");
+                        divElement.className = "chart";
+
+                        Plotly.newPlot(divElement, chartData, {});
+
+                        return divElement;
+                    }
+                }
+            ],
+            layout:"fitColumns",
+            responsiveLayout:"hide",
+            pagination: "local",
+            paginationSize:1,
+            paginationCounter:"rows",
+            movableColumns:false,
+        });
+        var chartTableFases = new Tabulator("#plots-fases",{
+            columns: [
+                {
+                    title: "",
+                    formatter: function(cell, formatterParams, onRendered) {
                         var image = cell.getRow().getData().image;
-                        if(image == null){
-                            var chartID = cell.getRow().getData().chartID;
-                            var chartData = cell.getRow().getData().chartData;
+                        
+                        var div = document.createElement('div');
+                        div.style.minHeight = "500px";
 
-                            var divElement = document.createElement("div");
-                            divElement.className = "chart";
+                        var img = document.createElement('img');
+                        img.src = 'data:image/png;base64,' + image;
+                        img.style.width = "100%";
+                        img.style.height = "auto";
+                        img.style.maxWidth = "100%"; 
 
-                            Plotly.newPlot(divElement, chartData, {});
-
-                            return divElement;
-                        }
-                        else{
-                            var img = document.createElement('img');
-                            img.src = 'data:image/png;base64,' + image;
-                            img.style.width = "100%";
-                            img.style.height = "auto";
-                            img.style.maxWidth = "100%"; 
-                            return img;
-                        }
+                        div.append(img);
+                        return div;
                     }
                 }
             ],
@@ -332,7 +335,7 @@
             movableColumns:false,
         });
         window.addEventListener('resize', function() {
-            chartTableComparativa.redraw();  // Assuming "redraw" is the method to refresh the table in Tabulator
+            chartTableComparativa.redraw(); 
         });
     </script>
     <script>
@@ -342,12 +345,12 @@
         const indexProbCaidaIndividual = 0;
         function fetchAndPlotData(paciente){
             var divIndividual = document.getElementById("plots-individual");
-            divIndividual.style.display = "none";
+            //divIndividual.style.display = "none";
             var divComparativa = document.getElementById("plots-comparativa");
             divComparativa.style.display = "none";
-            var divMetricasGenerales = document.getElementById("metricas-generales");
-            divMetricasGenerales.style.display = "none";
-            var divMetricas = document.getElementById("metricas");
+            var divFases = document.getElementById("plots-fases");
+            divFases.style.display = "none";
+            var divMetricas = document.getElementById("metricas-table");
             divMetricas.style.display = "none";
             fetch(`/plots/generar_paciente/${paciente.id}`, {
                 method: 'GET', 
@@ -379,6 +382,112 @@
         }
     </script>
     <script>
+        var metricasTable = new Tabulator("#metricas-table",{
+            columns: [
+                {
+                    title: "",
+                    formatter: function(cell, formatterParams, onRendered) {
+                        var title = cell.getRow().getData().title;
+                        var metricas = cell.getRow().getData().metricas;
+
+                        var container = document.createElement("div");
+                        container.style.display = 'flex';
+                        container.style.alignItems = 'center';
+                        container.style.justifyContent = 'center';
+                        container.style.flexDirection = 'column';
+
+                        var titleElem = document.createElement("h3");
+                        titleElem.textContent = title;
+
+                        container.append(titleElem);
+                        
+                        var divtab = document.createElement("div");
+                        
+                        var tableData = [
+                            { duracion_total_medicion: parseFloat(metricas["duracion_total_medicion"].toFixed(2)), duracion_real_analizada: parseFloat(metricas["duracion_real_analizada"].toFixed(2)), n_pasos_totales: parseFloat(metricas["n_pasos_totales"].toFixed(2)), n_pasos_minuto: parseFloat(metricas["n_pasos_minuto"].toFixed(2)) },
+                        ];
+                        var tableColumns = [
+                            { title: "Duración Total Medicion (s)", field: "duracion_total_medicion" },
+                            { title: "Duración Real Analizada (s)", field: "duracion_real_analizada" },
+                            { title: "Número de Pasos Totales", field: "n_pasos_totales" },
+                            { title: "Pasos / Minuto", field: "n_pasos_minuto" },
+                        ];
+                        var table = new Tabulator(divtab, {
+                            data: tableData,
+                            columns: tableColumns,
+                            layout: "fitDataFill",
+                        });
+
+                        divtab.style.display = "block";
+                        divtab.style.display = "block";
+
+                        container.append(divtab);
+
+                        var data = [
+                            { "Fase": "Fase 1", "Metrica": "Duracion porcentaje (%)", "Value": parseFloat((metricas["duracion_porcentaje_f1"] * 100).toFixed(2)) },
+                            { "Fase": "Fase 1", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f1"].toFixed(2)) },
+                            { "Fase": "Fase 1", "Metrica": "Aceleración Y media (m/s²)", "Value": parseFloat(metricas["ay_mean_f1"].toFixed(2)) },
+                            { "Fase": "Fase 1", "Metrica": "Aceleración Y desviación (m/s²)", "Value": parseFloat(metricas["ay_std_f1"].toFixed(2)) },
+                            { "Fase": "Fase 2", "Metrica": "Duracion porcentaje (%)", "Value": parseFloat((metricas["duracion_porcentaje_f2"] * 100).toFixed(2)) },
+                            { "Fase": "Fase 2", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f2"].toFixed(2)) },
+                            { "Fase": "Fase 2", "Metrica": "Aceleración Y media (m/s²)", "Value": parseFloat(metricas["ay_mean_f2"].toFixed(2)) },
+                            { "Fase": "Fase 2", "Metrica": "Aceleración Y desviación (m/s²)", "Value": parseFloat(metricas["ay_std_f2"].toFixed(2)) },
+                            { "Fase": "Fase 3", "Metrica": "Duracion porcentaje (%)", "Value": parseFloat((metricas["duracion_porcentaje_f3"] * 100).toFixed(2)) },
+                            { "Fase": "Fase 3", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f3"].toFixed(2)) },
+                            { "Fase": "Fase 3", "Metrica": "Aceleración Y media (m/s²)", "Value": parseFloat(metricas["ay_mean_f3"].toFixed(2)) },
+                            { "Fase": "Fase 3", "Metrica": "Aceleración Y desviación (m/s²)", "Value": parseFloat(metricas["ay_std_f3"].toFixed(2)) },
+                            { "Fase": "Fase 4", "Metrica": "Duracion porcentaje (%)", "Value": parseFloat((metricas["duracion_porcentaje_f4"] * 100).toFixed(2)) },
+                            { "Fase": "Fase 4", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f4"].toFixed(2)) },
+                            { "Fase": "Fase 4", "Metrica": "Aceleración Y media (m/s²)", "Value": parseFloat(metricas["ay_mean_f4"].toFixed(2)) },
+                            { "Fase": "Fase 4", "Metrica": "Aceleración Y desviación (m/s²)", "Value": parseFloat(metricas["ay_std_f4"].toFixed(2)) },
+                        ];
+                        var divwbr = document.createElement("div");
+                        var pivot = new WebDataRocks({
+                            container: divwbr,
+                            toolbar: false, 
+                            report: {
+                                dataSource: {
+                                    data: data
+                                },
+                                slice: {
+                                    rows: [
+                                        { uniqueName: "Fase" }
+                                    ],
+                                    columns: [
+                                        { uniqueName: "Metrica", caption: "Métrica de las Fases" }
+                                    ],
+                                    measures: [
+                                        { uniqueName: "Value", aggregation: "sum" }
+                                    ],
+                                },      
+                                options: {
+                                    grid: {
+                                        showGrandTotals: "off",
+                                        showHeaders: false
+                                    },
+                                    ignoreEmptyRows: true,
+                                    ignoreEmptyColumns: true
+                                }
+                            },
+                        });
+
+                        divwbr.style.maxHeight = "250px";
+                        divwbr.style.maxWidth = "750px";
+
+                        container.append(divwbr);
+                        return container;
+                    }
+                }
+            ],
+            layout:"fitColumns",
+            responsiveLayout:"hide",
+            pagination: "local",
+            paginationSize:1,
+            paginationCounter:"rows",
+            movableColumns:false,
+        });
+    </script>
+    <script>
         const indexAcc = 0;
         const indexGyr = 1;
         const indexMag = 2;
@@ -389,11 +498,11 @@
             var divIndividual = document.getElementById("plots-individual");
             divIndividual.style.display = "none";
             var divComparativa = document.getElementById("plots-comparativa");
-            divComparativa.style.display = "none";
-            var divMetricasGenerales = document.getElementById("metricas-generales");
-            divMetricasGenerales.style.display = "none";
-            var divMetricas = document.getElementById("metricas");
-            divMetricas.style.display = "none";
+            divComparativa.style.display = "none"; //Sino no se actualiza
+            var divFases = document.getElementById("plots-fases");
+            //divFases.style.display = "none";
+            var divMetricas = document.getElementById("metricas-table");
+            //divMetricas.style.display = "none";
             obj = {paciente: id_paciente, test: num_test};
             tests.push(obj);
             var url = `/plots/generar_tests_medico/`;
@@ -414,69 +523,23 @@
                     responseData.plotFases,
                     //responseData.plotFasesFinal //Descomentar esto cuando se arregle el ultimo plot
                 ];
-                chartTableComparativa.updateData([{ id: indexAcc, chartData: responseData.plotAcc, image: null }]);
-                chartTableComparativa.updateData([{ id: indexGyr, chartData: responseData.plotGyr, image: null }]);
-                chartTableComparativa.updateData([{ id: indexMag, chartData: responseData.plotMag, image: null }]);
-                chartTableComparativa.updateData([{ id: indexFases, chartData: responseData.plotFases, image: null }]);
-                // Descomentar esto cuando se arregle el ultimo plot
-                chartTableComparativa.updateData([{ id: indexFasesFinal, chartData: [], image:responseData.plotFasesFinal }]);
+                chartTableComparativa.updateData([{ id: indexAcc, chartData: responseData.plotAcc}]);
+                chartTableComparativa.updateData([{ id: indexGyr, chartData: responseData.plotGyr}]);
+                chartTableComparativa.updateData([{ id: indexMag, chartData: responseData.plotMag}]);
+                chartTableComparativa.updateData([{ id: indexFases, chartData: responseData.plotFases}]);
                 divComparativa.style.display = "block";
+                // Descomentar esto cuando se arregle el ultimo plot
+                chartTableFases.addData({ image:responseData.plotFasesFinal });
+                divFases.style.display = "block";
 
                 var metricasParsed = JSON.parse(responseData.metricas);
                 var metricas = metricasParsed[0];
 
-                console.log(metricas);
-
-                var data = [
-                    { "Fase": "Fase 1", "Metrica": "Duracion porcentaje (%)", "Value": parseFloat((metricas["duracion_porcentaje_f1"] * 100).toFixed(2)) },
-                    { "Fase": "Fase 1", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f1"].toFixed(2)) },
-                    { "Fase": "Fase 1", "Metrica": "Aceleración Y media (m/s²)", "Value": parseFloat(metricas["ay_mean_f1"].toFixed(2)) },
-                    { "Fase": "Fase 1", "Metrica": "Aceleración Y desviación (m/s²)", "Value": parseFloat(metricas["ay_std_f1"].toFixed(2)) },
-                    { "Fase": "Fase 2", "Metrica": "Duracion porcentaje (%)", "Value": parseFloat((metricas["duracion_porcentaje_f2"] * 100).toFixed(2)) },
-                    { "Fase": "Fase 2", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f2"].toFixed(2)) },
-                    { "Fase": "Fase 2", "Metrica": "Aceleración Y media (m/s²)", "Value": parseFloat(metricas["ay_mean_f2"].toFixed(2)) },
-                    { "Fase": "Fase 2", "Metrica": "Aceleración Y desviación (m/s²)", "Value": parseFloat(metricas["ay_std_f2"].toFixed(2)) },
-                    { "Fase": "Fase 3", "Metrica": "Duracion porcentaje (%)", "Value": parseFloat((metricas["duracion_porcentaje_f3"] * 100).toFixed(2)) },
-                    { "Fase": "Fase 3", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f3"].toFixed(2)) },
-                    { "Fase": "Fase 3", "Metrica": "Aceleración Y media (m/s²)", "Value": parseFloat(metricas["ay_mean_f3"].toFixed(2)) },
-                    { "Fase": "Fase 3", "Metrica": "Aceleración Y desviación (m/s²)", "Value": parseFloat(metricas["ay_std_f3"].toFixed(2)) },
-                    { "Fase": "Fase 4", "Metrica": "Duracion porcentaje (%)", "Value": parseFloat((metricas["duracion_porcentaje_f4"] * 100).toFixed(2)) },
-                    { "Fase": "Fase 4", "Metrica": "Duracion total (s)", "Value": parseFloat(metricas["duracion_total_f4"].toFixed(2)) },
-                    { "Fase": "Fase 4", "Metrica": "Aceleración Y media (m/s²)", "Value": parseFloat(metricas["ay_mean_f4"].toFixed(2)) },
-                    { "Fase": "Fase 4", "Metrica": "Aceleración Y desviación (m/s²)", "Value": parseFloat(metricas["ay_std_f4"].toFixed(2)) },
-                ];
+                var title = "paciente " + id_paciente + " , test " + num_test;
+                metricasTable.addData({title: title, metricas: metricas}, true);
+                divMetricas.style.display = "block";
                 
-                var pivot = new WebDataRocks({
-                    container: "#metricas",
-                    toolbar: false, 
-                    report: {
-                        dataSource: {
-                            data: data
-                        },
-                        slice: {
-                            rows: [
-                                { uniqueName: "Fase" }
-                            ],
-                            columns: [
-                                { uniqueName: "Metrica", caption: "Métrica de las Fases" }
-                            ],
-                            measures: [
-                                { uniqueName: "Value", aggregation: "sum" }
-                            ],
-                        },      
-                        options: {
-                            grid: {
-                                showGrandTotals: "off",
-                                showHeaders: false
-                            },
-                            ignoreEmptyRows: true,
-                            ignoreEmptyColumns: true
-                        }
-                    },
-                });
-                var pivotContainer = document.getElementById("metricas");
-                pivotContainer.style.maxHeight = "200px";
-                pivotContainer.style.maxWidth = "750px";
+                
                 // codigo para quitar columnas sobrantes, no funciona
                 /*
                 webdatarocks.on("reportchange", 'redraw');
@@ -495,28 +558,27 @@
                     });
                 }
                 */
-                var tableData = [
-                    { duracion_total_medicion: parseFloat(metricas["duracion_total_medicion"].toFixed(2)), duracion_real_analizada: parseFloat(metricas["duracion_real_analizada"].toFixed(2)), n_pasos_totales: parseFloat(metricas["n_pasos_totales"].toFixed(2)), n_pasos_minuto: parseFloat(metricas["n_pasos_minuto"].toFixed(2)) },
-                ];
-                var tableColumns = [
-                    { title: "Duración Total Medicion (s)", field: "duracion_total_medicion" },
-                    { title: "Duración Real Analizada (s)", field: "duracion_real_analizada" },
-                    { title: "Número de Pasos Totales", field: "n_pasos_totales" },
-                    { title: "Pasos / Minuto", field: "n_pasos_minuto" },
-                ];
-                var table = new Tabulator("#metricas-generales", {
-                    data: tableData,
-                    columns: tableColumns,
-                    layout: "fitDataFill",
-                });
-
-                divMetricasGenerales.style.display = "block";
-                divMetricas.style.display = "block";
             })
             .catch(error => {
                 console.error('Error:', error);
             });
         }
+    </script>
+    <script>
+        var clearButton = document.getElementById('clearButton');
+        clearButton.addEventListener('click', function(){
+            tests = [];
+            metricasTable.clearData();
+            chartTableFases.clearData();
+            var divIndividual = document.getElementById("plots-individual");
+            divIndividual.style.display = "none";
+            var divComparativa = document.getElementById("plots-comparativa");
+            divComparativa.style.display = "none";
+            var divFases = document.getElementById("plots-fases");
+            divFases.style.display = "none";
+            var divMetricas = document.getElementById("metricas-table");
+            divMetricas.style.display = "none";
+        });
     </script>
 
 {% endblock %}
