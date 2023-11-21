@@ -191,30 +191,98 @@
                 pdf.save('all_charts.pdf');
             });
         }
+        function generateWebDataRocksPDF(webDataRocksInstance) {
+            return new Promise((resolve, reject) => {
+                console.log('Attempting to generate PDF for WebDataRocks instance:', webDataRocksInstance);
+
+                // Handle the ready event to export the report as PDF
+                webDataRocksInstance.on("ready", function () {
+                    // Remove the event listener to avoid multiple triggers
+                    webDataRocksInstance.off("ready");
+
+                    // Set up a button to export the report as PDF
+                    webDataRocksInstance.on("beforetoolbarcreated", function () {
+                        webDataRocksInstance.off("beforetoolbarcreated");
+
+                        // Add a button to the toolbar to export the report as PDF
+                        webDataRocksInstance.toolbar.getTabs().push({
+                            id: "custom-tab",
+                            title: "Export to PDF",
+                            handler: function () {
+                                webDataRocksInstance.exportTo("pdf", {}, function (pdfContent) {
+                                    console.log('PDF generated for WebDataRocks instance:', webDataRocksInstance);
+                                    resolve(pdfContent);
+                                });
+                            }
+                        });
+                    });
+                });
+
+                // Refresh the WebDataRocks instance (to trigger the "ready" event)
+                webDataRocksInstance.refresh();
+            });
+        }
 
         last_plots = [];
+        plots_fases = [];
+        metric_tables_wdr = [];
+        ultimo_tipo = "";
+        ultimo_paciente_individual = -1;
 
         var exportButton = document.getElementById('exportButton');
         exportButton.addEventListener('click', function() {
-            var plotData = JSON.stringify(last_plots);
-            fetch('/plots/generar_informes/', {
-                method: 'POST',
-                body: plotData,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.blob())
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
+            if(ultimo_tipo == "individual"){
+                var plotData = JSON.stringify({
+                    plots: last_plots,
+                    paciente: ultimo_paciente_individual
+                });
+                fetch('/plots/generar_informes_individual/', {
+                    method: 'POST',
+                    body: plotData,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
 
-                window.open(url, '_blank');
+                    window.open(url, '_blank');
 
-                window.URL.revokeObjectURL(url);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+            else if(ultimo_tipo == "comparativa"){
+                //Promise.all(metric_tables_wdr.map(generateWebDataRocksPDF))
+                //.then(pdfs => {
+                    var plotData = JSON.stringify({
+                        plots: last_plots,
+                        fases: plots_fases,
+                        //metrics: pdfs
+                    });
+                    fetch('/plots/generar_informes_comparativa/', {
+                        method: 'POST',
+                        body: plotData,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const url = window.URL.createObjectURL(blob);
+
+                        window.open(url, '_blank');
+
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                //});
+            }
         });
     </script>
     <script>
@@ -345,7 +413,7 @@
         const indexProbCaidaIndividual = 0;
         function fetchAndPlotData(paciente){
             var divIndividual = document.getElementById("plots-individual");
-            //divIndividual.style.display = "none";
+            divIndividual.style.display = "none";
             var divComparativa = document.getElementById("plots-comparativa");
             divComparativa.style.display = "none";
             var divFases = document.getElementById("plots-fases");
@@ -374,6 +442,8 @@
                 chartTableIndividual.updateData([{ id: indexMagIndividual, chartData: responseData.magnetometro }]);
                 chartTableIndividual.updateData([{ id: indexProbCaidaIndividual, chartData: responseData.prob_caida }]);
                 divIndividual.style.display = "block";
+                ultimo_tipo = "individual";
+                ultimo_paciente_individual = paciente;
             })
             .catch(error => {
                 console.error('Error en la solicitud al backend:', error);
@@ -470,6 +540,7 @@
                                 }
                             },
                         });
+                        metric_tables_wdr.push(pivot);
 
                         divwbr.style.maxHeight = "250px";
                         divwbr.style.maxWidth = "750px";
@@ -521,8 +592,8 @@
                     responseData.plotGyr,
                     responseData.plotMag,
                     responseData.plotFases,
-                    //responseData.plotFasesFinal //Descomentar esto cuando se arregle el ultimo plot
                 ];
+                plots_fases.push(responseData.plotFasesFinal)
                 chartTableComparativa.updateData([{ id: indexAcc, chartData: responseData.plotAcc}]);
                 chartTableComparativa.updateData([{ id: indexGyr, chartData: responseData.plotGyr}]);
                 chartTableComparativa.updateData([{ id: indexMag, chartData: responseData.plotMag}]);
@@ -539,6 +610,7 @@
                 metricasTable.addData({title: title, metricas: metricas}, true);
                 divMetricas.style.display = "block";
                 
+                ultimo_tipo = "comparativa";
                 
                 // codigo para quitar columnas sobrantes, no funciona
                 /*
@@ -568,6 +640,9 @@
         var clearButton = document.getElementById('clearButton');
         clearButton.addEventListener('click', function(){
             tests = [];
+            last_plots = [];
+            plots_fases = [];
+            metric_tables_wdr = [];
             metricasTable.clearData();
             chartTableFases.clearData();
             var divIndividual = document.getElementById("plots-individual");

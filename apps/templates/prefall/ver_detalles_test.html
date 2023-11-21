@@ -52,9 +52,22 @@
                                             <td>
                                                 <h6 class="text-muted">Probabilidad de caida</h6>
                                             </td>
-                                            <td>
-                                                <h3 class="text-muted">{{"{:.2f}%".format(test["probabilidad_caida"] * 100)}}</h3>
+                                            {% if test["probabilidad_caida"] * 100 <= 50 %}
+                                            <td class="horizontal-container">
+                                                <button class="label bg-green text-white f-28 btn-rounded">{{ (test["probabilidad_caida"] * 100) | round | int }} %</button>
+                                                <h6 class="f-28 font-green">Riesgo Bajo</h6>
                                             </td>
+                                            {% elif test["probabilidad_caida"] * 100 < 75 %}
+                                            <td class="horizontal-container">
+                                                <button class="label bg-yellow text-white f-28 btn-rounded">{{ (test["probabilidad_caida"] * 100) | round | int }} %</button>
+                                                <h6 class="f-28 font-yellow">Riesgo Medio</h6>
+                                            </td>
+                                            {% else %}
+                                            <td class="horizontal-container">
+                                                <button class="label bg-red text-white f-28 btn-rounded">{{ (test["probabilidad_caida"] * 100) | round | int }} %</button>
+                                                <h6 class="f-28 font-red">Riesgo Alto</h6>      
+                                            </td>
+                                            {% endif %}
                                         </tr>
                                         {% endif %}
                                     </tbody>
@@ -100,6 +113,146 @@
                     <a href="{{url_for('prefall_blueprint.get_test', paciente=test['id_paciente'], test=test['num_test'])}}" class="label theme-bg text-white f-12 btn-rounded">Descargar</a>
                     <br>
                     <br>
+                    <div id="recomendations">
+                        {% if test["probabilidad_caida"] is not none %}
+                        <h3>Recomendaciones</h3>
+                        <ul>
+                            {% if test["probabilidad_caida"] * 100 <= 50 %}
+                            <li>Ejercicio Regular:
+                                <ul>
+                                    <li>Participación en programas de ejercicios adaptados y seguros para la edad, como caminar, nadar, o ejercicios acuáticos.</li>
+                                    <li>Incluir ejercicios de fortalecimiento muscular para mantener la masa muscular y prevenir la debilidad.</li>
+                                    <li>Incorporar ejercicios específicos de equilibrio, como pararse sobre un pie o caminar en línea recta, para mejorar la estabilidad.</li>
+                                </ul>
+                                Ejemplo de Plan:
+                                <ul>
+                                    <li>Caminatas diarias de 30 minutos en terreno plano.</li>
+                                    <li>Clases de tai Chi dos veces por semana para mejorar el equilibrio y la flexibilidad.</li>
+                                    <li>Ejercicios de fortalecimiento con bandas elásticas o pesas ligeras dos veces por semana.</li>
+                                </ul>
+                            </li>
+                            <li>Revisiones Periódicas:
+                                <ul>
+                                    <li>Realizar revisiones médicas anuales, que incluyan evaluación de la presión arterial, la vista y la audición.</li>
+                                    <li>Evaluar regularmente la medicación para asegurar que esté actualizada y no cause efectos secundarios adversos.</li>
+                                    <li>Realizar pruebas de densidad ósea y chequeos para enfermedades crónicas comunes en adultos mayores.</li>
+                                </ul>
+                                Ejemplo de Plan:
+                                <ul>
+                                    <li>Revisión anual con el médico para evaluar presión arterial, colesterol y ajuste de medicamentos.</li>
+                                    <li>Exámenes oculares y auditivos regulares.</li>
+                                    <li>Pruebas de densidad ósea cada dos años.</li>
+                                </ul>
+                            </li>
+                            <li>Educación sobre Seguridad en el Hogar:
+                                <ul>
+                                    <li>Proporcionar orientación sobre la importancia de mantener un hogar libre de obstáculos.</li>
+                                    <li>Asegurar que las áreas de paso sean seguras y estén bien iluminadas.</li>
+                                    <li>Instruir sobre la importancia de utilizar calzado adecuado y evitar suelos resbaladizos.</li>
+                                </ul>
+                                Ejemplo de Plan:
+                                <ul>
+                                    <li>Eliminación de alfombras sueltas o resbaladizas en el hogar.</li>
+                                    <li>Instalación de barras de apoyo en el baño.</li>
+                                    <li>Uso de calzado antideslizante en interiores y exteriores.</li>
+                                </ul>
+                            </li>
+                            {% elif test["probabilidad_caida"] * 100 < 75 %}
+                            <li>Evaluación Multifactorial:
+                                <ul>
+                                    <li>Realizar una evaluación más profunda de la salud, que incluya la función cognitiva, la visión y la audición.</li>
+                                    <li>Evaluar la medicación para detectar posibles interacciones y efectos secundarios que puedan afectar el equilibrio.</li>
+                                    <li>Realizar pruebas específicas de movilidad y fuerza muscular.</li>
+                                </ul>
+                                Ejemplo de Plan:
+                                <ul>
+                                    <li>Evaluación detallada con un fisioterapeuta geriátrico que incluye pruebas de equilibrio, fuerza y movilidad.</li>
+                                    <li>Evaluación cognitiva anual con un especialista.</li>
+                                    <li>Revisión mensual de la medicación con el médico.</li>
+                                </ul>
+                            </li>
+                            <li>Programas de Rehabilitación:
+                                <ul>
+                                    <li>Diseñar un programa de rehabilitación personalizado, que incluya ejercicios específicos para mejorar la fuerza y la coordinación.</li>
+                                    <li>Incorporar ejercicios de equilibrio más desafiantes, como pararse en una pierna con los ojos cerrados.</li>
+                                    <li>Fomentar la participación en clases grupales para promover la socialización y la motivación.</li>
+                                </ul>
+                                Ejemplo de Plan:
+                                <ul>
+                                    <li>Programa de ejercicios supervisado por un fisioterapeuta, incluyendo:
+                                        <ul>
+                                            <li>Ejercicios de sentadillas para fortalecimiento de piernas.</li>
+                                            <li>Ejercicios de marcha en línea recta con cambios de dirección.</li>
+                                            <li>Ejercicios de equilibrio en una pierna con apoyo.</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>Adaptaciones en el Hogar:
+                                <ul>
+                                    <li>Realizar modificaciones en el hogar, como la instalación de barandas adicionales y luces automáticas en pasillos.</li>
+                                    <li>Eliminar cualquier alfombra suelta y asegurar que los pisos estén libres de cables o cualquier objeto que pueda causar tropiezos.</li>
+                                </ul>
+                                Ejemplo de Plan:
+                                <ul>
+                                    <li>Modificación del hogar con:
+                                        <ul>
+                                            <li>Luces automáticas en áreas de paso.</li>
+                                            <li>Eliminación de obstáculos y cables.</li>
+                                            <li>Instalación de pasamanos adicionales en escaleras y baños.</li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            {% else %}
+                            <li>Intervenciones Especializadas:
+                                <ul>
+                                    <li>Derivar a un fisioterapeuta especializado en geriatría para un programa de rehabilitación intensivo y personalizado.</li>
+                                    <li>Considerar la evaluación de un geriatra para abordar de manera integral las necesidades médicas y de salud mental.</li>
+                                </ul>
+                                Ejemplo de Plan:
+                                <ul>
+                                    <li>Programa de rehabilitación intensivo con un fisioterapeuta especializado, que incluye ejercicios específicos para mejorar la coordinación y la fuerza.</li>
+                                    <li>Consultas mensuales con un geriatra para una gestión integral de la salud.</li>
+                                </ul>
+                            </li>
+                            <li>Revisión de Medicación:
+                                <ul>
+                                    <li>Realizar revisiones más frecuentes de la medicación y considerar ajustes para minimizar efectos secundarios.</li>
+                                    <li>Coordinar con el médico para simplificar y sincronizar horarios de medicación si es posible.</li>
+                                </ul>
+                                Ejemplo de Plan:
+                                <ul>
+                                    <li>Revisión mensual de la medicación con el médico para ajustar dosis y eliminar medicamentos que puedan afectar el equilibrio.</li>
+                                </ul>
+                            </li>
+                            <li>Asistencia Continua:
+                                <ul>
+                                    <li>Evaluar la necesidad de dispositivos de movilidad avanzados, como andadores con asiento o sillas elevadoras.</li>
+                                    <li>Proporcionar orientación sobre el uso adecuado de dispositivos de asistencia y asegurar que se utilicen de manera constante.</li>
+                                </ul>
+                                Ejemplo de Plan:
+                                <ul>
+                                    <li>Uso constante de un andador con asiento para movilidad.</li>
+                                    <li>Sesiones regulares con un fisioterapeuta para ajustar y adaptar el uso del andador según sea necesario.</li>
+                                    <li>Asistencia domiciliaria para garantizar un entorno seguro y apoyo continuo</li>
+                                </ul>
+                            </li>
+                            <li>Monitoreo Regular:
+                                <ul>
+                                    <li>Establecer un plan de seguimiento más frecuente, con revisiones detalladas para ajustar las intervenciones según sea necesario.</li>
+                                    <li>Coordinar con profesionales de la salud y familiares para garantizar un monitoreo continuo y una respuesta rápida a cualquier cambio en la condición.</li>
+                                </ul>
+                                Ejemplo de Plan:
+                                <ul>
+                                    <li>Revisiones quincenales con el equipo de atención médica para evaluar el progreso y ajustar intervenciones.</li>
+                                    <li>Comunicación regular con familiares y cuidadores para mantener una red de apoyo efectiva.</li>
+                                </ul>
+                            </li>
+                            {% endif %}
+                        </ul>
+                        {% endif %}
+                    </div>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.5.0/d3.js"></script>
                     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>

@@ -1249,11 +1249,14 @@ def generate_plots_paciente(id):
     import pickle
     import math
     import numpy as np
+    from sqlalchemy import asc
     
     tests = db.session.query(
         Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
         .filter_by(id_paciente=id)\
-        .filter(Test.probabilidad_caida.isnot(None)).all()
+        .filter(Test.probabilidad_caida.isnot(None))\
+        .order_by(asc(Test.date)).all()
+
     
     x = [test.date for test in tests]
     y = [test.probabilidad_caida * 100 for test in tests]
@@ -1470,9 +1473,7 @@ def generar_tests_medico():
     acc_data = []
     gyr_data = []
     mag_data = []
-    dates_data = []
     fases_data = []
-    dates_fases_data = []
 
     figAcc = go.Figure()
     figAcc.update_layout(
@@ -1509,7 +1510,8 @@ def generar_tests_medico():
             trace_fases = go.Bar(
                 x=["Fase 1", "Fase 2", "Fase 3", "Fase 4"],
                 y=[fases['fase1'], fases['fase2'], fases['fase3'], fases['fase4']],
-                name=title
+                name=title,
+                showlegend=True
             )
             figFases.add_trace(trace_fases)
         test_data = db.session.query(
@@ -1526,19 +1528,22 @@ def generar_tests_medico():
         trace_acc = go.Bar(
             x=["Aceleracion X", "Aceleracion Y", "Aceleracion Z"],
             y=[acc['x'], acc['y'], acc['z']],
-            name=title
+            name=title,
+            showlegend=True
         )
         figAcc.add_trace(trace_acc)
         trace_gyr = go.Bar(
             x=["Giroscopio X", "Giroscopio Y", "Giroscopio Z"],
             y=[gyr['x'], gyr['y'], gyr['z']],
-            name=title
+            name=title,
+            showlegend=True
         )
         figGyr.add_trace(trace_gyr)
         trace_mag = go.Bar(
             x=["Magnetometro X", "Magnetometro Y", "Magnetometro Z"],
             y=[mag['x'], mag['y'], mag['z']],
-            name=title
+            name=title,
+            showlegend=True
         )
         figMag.add_trace(trace_mag)
 
@@ -1576,9 +1581,9 @@ def generar_tests_medico():
     #enviar aqui tambien plotFasesFinal
     return jsonify({"plotAcc": plotAcc, "plotGyr": plotGyr, "plotMag": plotMag, "plotFases": plotFases, "plotFasesFinal":plotFasesFinal, "metricas": metricas_json})
 
-# Genera los informes del medico    
-@blueprint.route('/plots/generar_informes/', methods=['POST'])
-def generar_informes():
+# Genera los informes del medico para tests individuales   
+@blueprint.route('/plots/generar_informes_individual/', methods=['POST'])
+def generar_informes_individual():
     import json
     import plotly.io as pio
     from reportlab.lib.pagesizes import letter
@@ -1588,12 +1593,84 @@ def generar_informes():
     import tempfile
 
 
-    plotly_plots = request.get_json()
+    data = request.get_json()
+    plotly_plots = data["plots"]
+    paciente = data["paciente"]
     print(len(plotly_plots))
 
     # Create a temporary file to store the PDF
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as pdf_file:
         c = canvas.Canvas(pdf_file.name, pagesize=letter)
+
+        c.setFont("Helvetica", 24)
+        c.drawString(100, 700, "Informe de Fases de la Marcha")
+
+        c.setFont("Helvetica", 16)
+        c.drawString(100, 650, str(paciente['id']) + ", " + paciente['nombre'] + ", " + paciente['apellidos'] + ", " + paciente['identificador'])
+
+        x_offset = 100
+        y_offset = 250
+        width = 400
+        height = 300
+        vertical_spacing = 20
+
+        for plot_json in plotly_plots:
+            fig = pio.from_json(json.dumps(plot_json))
+
+            img_bytes = pio.to_image(fig, format="png")
+
+            # Save the image to a temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_image_file:
+                temp_image_file.write(img_bytes)
+
+            # Open the image using Pillow (PIL)
+            image = Image.open(temp_image_file.name)
+            
+            if (y_offset - vertical_spacing) < 0:
+                c.showPage()
+                y_offset = 700 - height - vertical_spacing
+
+            # Draw the image on the PDF
+            c.drawImage(temp_image_file.name, x=x_offset, y=y_offset, width=width, height=height)
+
+            y_offset -= height - vertical_spacing
+
+        c.save()
+
+    # Return the generated PDF as a file response
+    return send_file(pdf_file.name, as_attachment=True, download_name="informe.pdf")
+
+# Genera los informes del medico para tests de comparativa   
+@blueprint.route('/plots/generar_informes_comparativa/', methods=['POST'])
+def generar_informes_comparativa():
+    import json
+    import plotly.io as pio
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.utils import ImageReader
+    from PIL import Image
+    import io
+    import tempfile
+    import base64
+    from io import BytesIO
+
+    data = request.get_json()
+    plotly_plots = data["plots"]
+    matplotlib_plots = data["fases"]
+    print(len(plotly_plots))
+
+    # Create a temporary file to store the PDF
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as pdf_file:
+        c = canvas.Canvas(pdf_file.name, pagesize=letter)
+
+        c.setFont("Helvetica", 24)
+        c.drawString(100, 700, "Informe de Fases de la Marcha")
+
+        x_offset = 100
+        y_offset = 250
+        width = 400
+        height = 300
+        vertical_spacing = 20
 
         for plot_json in plotly_plots:
             fig = pio.from_json(json.dumps(plot_json))
@@ -1607,9 +1684,29 @@ def generar_informes():
             # Open the image using Pillow (PIL)
             image = Image.open(temp_image_file.name)
 
+            if (y_offset - vertical_spacing) < 0:
+                c.showPage()
+                y_offset = 700 - height - vertical_spacing
+
             # Draw the image on the PDF
-            c.drawImage(temp_image_file.name, x=100, y=100, width=400, height=300)
-            c.showPage()
+            c.drawImage(temp_image_file.name, x=x_offset, y=y_offset, width=width, height=height)
+            
+            y_offset -= height - vertical_spacing
+
+        for plot in matplotlib_plots:
+            image_bytes = base64.b64decode(plot)
+            image = Image.open(BytesIO(image_bytes))
+            img_buffer = BytesIO()
+            image.save(img_buffer, format="PNG")
+            img_buffer.seek(0)
+
+            if (y_offset - vertical_spacing) < 0:
+                c.showPage()
+                y_offset = 700 - height - vertical_spacing
+            
+            c.drawImage(ImageReader(img_buffer), x=x_offset, y=y_offset, width=width, height=height)
+
+            y_offset -= height - vertical_spacing
 
         c.save()
 
@@ -1625,6 +1722,7 @@ def plots_paciente():
     import plotly
     import plotly.graph_objs as go
     from apps import db
+    from sqlalchemy import asc
 
     tests = db.session.query(
         Test.num_test, Test.date)\
@@ -1636,7 +1734,8 @@ def plots_paciente():
     tests = db.session.query(
         Test.num_test, Test.date, Test.probabilidad_caida, Test.data)\
         .filter_by(id_paciente=current_user.id)\
-        .filter(Test.probabilidad_caida.isnot(None)).all()
+        .filter(Test.probabilidad_caida.isnot(None))\
+        .order_by(asc(Test.date)).all()
     
     x = [test.date for test in tests]
     y = [test.probabilidad_caida * 100 for test in tests]
@@ -1682,34 +1781,30 @@ def generar_tests(id):
     acc_data = []
     gyr_data = []
     mag_data = []
-    dates_data = []
     fases_data = []
-    dates_fases_data = []
 
-    graphDataAcc = []
-    layout = go.Layout(
-        barmode='group',
-        title='Comparación de la aceleración',
-        xaxis=dict(title='Eje'),
-        yaxis=dict(title='Aceleración media')
-    )
     figAcc = go.Figure()
     figAcc.update_layout(
         title="Comparación del acelerómetro",
+        yaxis_title="m/s²"
     )
     figGyr = go.Figure()
     figGyr.update_layout(
         title="Comparación del giroscopio",
+        yaxis_title="m/s"
     )
     figMag = go.Figure()
     figMag.update_layout(
         title="Comparación del magnetómetro",
+        yaxis_title="microT"
     )
     figFases = go.Figure()
     figFases.update_layout(
         title="Duración de las fases de la marcha",
+        yaxis_title="Tiempo(s)"
     )
     for test in tests:
+        title = "test " + str(test.num_test)
         fases = None
         blob_data = test.data  
         if blob_data:
@@ -1723,7 +1818,8 @@ def generar_tests(id):
             trace_fases = go.Bar(
                 x=["Fase 1", "Fase 2", "Fase 3", "Fase 4"],
                 y=[fases['fase1'], fases['fase2'], fases['fase3'], fases['fase4']],
-                name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
+                name=title,
+                showlegend=True
             )
             figFases.add_trace(trace_fases)
         test_data = db.session.query(
@@ -1740,26 +1836,126 @@ def generar_tests(id):
         trace_acc = go.Bar(
             x=["Aceleracion X", "Aceleracion Y", "Aceleracion Z"],
             y=[acc['x'], acc['y'], acc['z']],
-            name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
+            name=title,
+            showlegend=True
         )
         figAcc.add_trace(trace_acc)
         trace_gyr = go.Bar(
             x=["Giroscopio X", "Giroscopio Y", "Giroscopio Z"],
             y=[gyr['x'], gyr['y'], gyr['z']],
-            name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
+            name=title,
+            showlegend=True
         )
         figGyr.add_trace(trace_gyr)
         trace_mag = go.Bar(
             x=["Magnetometro X", "Magnetometro Y", "Magnetometro Z"],
             y=[mag['x'], mag['y'], mag['z']],
-            name=test['date'].strftime("%Y-%m-%d %H:%M:%S")
+            name=title,
+            showlegend=True
         )
         figMag.add_trace(trace_mag)
 
+    test = tests[-1]
+    query = db.session.query(
+        TestUnit.item, Test.num_test, Test.id_paciente, Test.date, TestUnit.time, TestUnit.acc_x,
+        TestUnit.acc_y, TestUnit.acc_z, TestUnit.gyr_x, TestUnit.gyr_y, TestUnit.gyr_z,
+        TestUnit.mag_x, TestUnit.mag_y, TestUnit.mag_z,
+        TestUnit.lacc_x, TestUnit.lacc_y, TestUnit.lacc_z,
+        TestUnit.quat_x, TestUnit.quat_y, TestUnit.quat_z, TestUnit.quat_w).\
+                        filter(Test.id_paciente == TestUnit.id_paciente).\
+                            filter(Test.num_test == TestUnit.num_test).\
+                                filter(Test.id_paciente==current_user.id).\
+                                    filter(Test.num_test==test.num_test)
+    df = pd.read_sql(query.statement, db.session.bind)
+
+    from apps.prefall.libraries import genera_grafica_fases_port, genera_metricas_port
+
+    title = "Valores del acelerometro en las 4 marchas del test " + str(test.num_test)
+    plotFasesFinal = genera_grafica_fases_port(df, [1000, 1500], title)
     
     #plotAcc = json.dumps(figAcc, cls=plotly.utils.PlotlyJSONEncoder)
     plotAcc = figAcc.to_dict()
     plotGyr = figGyr.to_dict()
     plotMag = figMag.to_dict()
     plotFases = figFases.to_dict()
-    return jsonify({"plotAcc": plotAcc, "plotGyr": plotGyr, "plotMag": plotMag, "plotFases": plotFases})
+
+    metricas = genera_metricas_port(df)
+    metricas_json = metricas.to_json(orient='records', date_format='iso')
+
+    return jsonify({"plotAcc": plotAcc, "plotGyr": plotGyr, "plotMag": plotMag, "plotFases": plotFases, "plotFasesFinal":plotFasesFinal, "metricas": metricas_json})
+
+# Genera los informes del medico para tests individuales   
+@blueprint.route('/plots/generar_informes_paciente/', methods=['POST'])
+def generar_informes_paciente():
+    import json
+    import plotly.io as pio
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.utils import ImageReader
+    from PIL import Image
+    import io
+    import tempfile
+    import base64
+    from io import BytesIO
+
+
+    data = request.get_json()
+    plotly_plots = data["plots"]
+    matplotlib_plots = data["fases"]
+
+    # Create a temporary file to store the PDF
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as pdf_file:
+        c = canvas.Canvas(pdf_file.name, pagesize=letter)
+
+        c.setFont("Helvetica", 24)
+        c.drawString(100, 700, "Informe de Fases de la Marcha")
+
+        c.setFont("Helvetica", 16)
+        c.drawString(100, 650, str(current_user.id) + ", " + current_user.nombre + ", " + current_user.apellidos + ", " + current_user.identificador)
+
+        x_offset = 100
+        y_offset = 250
+        width = 400
+        height = 300
+        vertical_spacing = 20
+
+        for plot_json in plotly_plots:
+            fig = pio.from_json(json.dumps(plot_json))
+
+            img_bytes = pio.to_image(fig, format="png")
+
+            # Save the image to a temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_image_file:
+                temp_image_file.write(img_bytes)
+
+            # Open the image using Pillow (PIL)
+            image = Image.open(temp_image_file.name)
+            
+            if (y_offset - vertical_spacing) < 0:
+                c.showPage()
+                y_offset = 700 - height - vertical_spacing
+
+            # Draw the image on the PDF
+            c.drawImage(temp_image_file.name, x=x_offset, y=y_offset, width=width, height=height)
+
+            y_offset -= height - vertical_spacing
+
+        for plot in matplotlib_plots:
+            image_bytes = base64.b64decode(plot)
+            image = Image.open(BytesIO(image_bytes))
+            img_buffer = BytesIO()
+            image.save(img_buffer, format="PNG")
+            img_buffer.seek(0)
+
+            if (y_offset - vertical_spacing) < 0:
+                c.showPage()
+                y_offset = 700 - height - vertical_spacing
+            
+            c.drawImage(ImageReader(img_buffer), x=x_offset, y=y_offset, width=width, height=height)
+
+            y_offset -= height - vertical_spacing
+
+        c.save()
+
+    # Return the generated PDF as a file response
+    return send_file(pdf_file.name, as_attachment=True, download_name="informe.pdf")
