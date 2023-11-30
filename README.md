@@ -52,3 +52,5 @@ $env:FLASK_APP = "run.py" #
 ```
 flask run 
 ```
+
+Documentacion en /docs
