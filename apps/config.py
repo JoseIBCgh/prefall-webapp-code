@@ -92,8 +92,8 @@ class DebugConfig(Config):
     #SQLALCHEMY_DATABASE_URI = 'mysql://root:1234@localhost/webapp'
     #SQLALCHEMY_DATABASE_URI = 'mysql://webapp:webapp@localhost/prefall'
 
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:root@srv.ibc.bio:32817/prefall'
-    #SQLALCHEMY_DATABASE_URI = 'mysql://root:root@srv.ibc.bio:32817/prefall_prod'
+    #SQLALCHEMY_DATABASE_URI = 'mysql://root:root@srv.ibc.bio:32817/prefall'
+    SQLALCHEMY_DATABASE_URI = 'mysql://root:root@srv.ibc.bio:32817/prefall_prod'
     
 # Load all possible configurations
 config_dict = {
